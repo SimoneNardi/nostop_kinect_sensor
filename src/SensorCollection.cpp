@@ -100,10 +100,9 @@ void SensorCollection::getForeground(const sensor_msgs::ImageConstPtr& msg)
   m_foreground = cv_ptr->image.clone();
   m_foregroundFLAG = true;
     
-   if(1)
+   if(m_foregroundFLAG)
    {
-      
-        // Update GUI Window
+      // Update GUI Window
       cv::imshow("Foreground Image", m_foreground);
       cv::waitKey(3);
    }
@@ -390,6 +389,7 @@ void SensorCollection::ImageFromKinect(const sensor_msgs::ImageConstPtr& msg)
   
   cv::Mat l_subtract;
   cv::subtract(cv_ptr->image, m_foreground, l_subtract);
+  //cv::threshold(l_subtract,l_subtract,100,255,cv::THRESH_BINARY);
   
   // Update GUI Window
   cv::imshow("Subtraction Image", l_subtract);
