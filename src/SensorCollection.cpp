@@ -8,26 +8,26 @@
 
 #include "ros/ros.h"
 
-// #include <pcl/io/io.h>
-// #include <pcl/visualization/pcl_visualizer.h>
-// #include <pcl_conversions/pcl_conversions.h>
-// 
-// #include <pcl/features/normal_3d.h>
-// #include <pcl/features/pfh.h>
-// 
-// #include <pcl/io/pcd_io.h>
-// #include <pcl/point_types.h>
-// #include <pcl/filters/voxel_grid.h>
+#include <pcl/io/io.h>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl_conversions/pcl_conversions.h>
 
-//#include <pcl/ModelCoefficients.h>
-//#include <pcl/filters/extract_indices.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/features/pfh.h>
+
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
+#include <pcl/filters/voxel_grid.h>
+
+#include <pcl/ModelCoefficients.h>
+#include <pcl/filters/extract_indices.h>
 
 using namespace std;
 using namespace Robotics;
 using namespace Robotics::GameTheory;
 
 static const std::string OPENCV_WINDOW = "Sensor Window";
-//std::shared_ptr<pcl::visualization::PCLVisualizer> g_viewer = nullptr;
+std::shared_ptr<pcl::visualization::PCLVisualizer> g_viewer = nullptr;
  
 /////////////////////////////////////////////
 SensorCollection::SensorCollection()
@@ -35,6 +35,14 @@ SensorCollection::SensorCollection()
 , m_data()
 , m_it(m_node)
 , m_foregroundFLAG(false)
+, m_dp(1)
+, m_min_dist(18)
+, m_cannyEdge(40)
+, m_centerDetect(15)
+, m_minrad(12)
+, m_maxrad(21)
+, m_thr(100)
+, m_maxval(255)
 {}
 
 /////////////////////////////////////////////
@@ -67,16 +75,25 @@ void SensorCollection::subscribe()
 	m_image_sub = m_it.subscribe("/camera/rgb/image_raw", 1, &SensorCollection::ImageFromKinect, this);
 	m_image_pub = m_it.advertise("/sensor/output_video", 1);
 	cv::namedWindow(OPENCV_WINDOW);
-	cv::namedWindow("Subtraction Image");
 	
-// 	m_cloud_sub = m_node.subscribe("/camera/depth/points", 1, &SensorCollection::PointcloudFromKinect, this);
-// 	g_viewer = nullptr; //std::make_shared<pcl::visualization::PCLVisualizer>("3D Viewer");
-// 	if (g_viewer)
-// 	{
-// 	  g_viewer->setBackgroundColor (0.5, 0.5, 0.5);
-// 	  g_viewer->addCoordinateSystem (1.0);
-// 	  g_viewer->initCameraParameters ();
-// 	}
+	//cv::createTrackbar("Inverse ratio resolution", OPENCV_WINDOW, &m_dp, 255);
+	cv::createTrackbar("Min Dist between Centers", OPENCV_WINDOW, &m_min_dist, 255);
+	cv::createTrackbar("Canny Edge Upper Thr", OPENCV_WINDOW, &m_cannyEdge, 255);
+	cv::createTrackbar("Center Detection Thr", OPENCV_WINDOW, &m_centerDetect, 255);
+	cv::createTrackbar("Min rad", OPENCV_WINDOW, &m_minrad, 255);
+	cv::createTrackbar("Max rad", OPENCV_WINDOW, &m_maxrad, 255);
+	
+	cv::createTrackbar("Thr", OPENCV_WINDOW, &m_thr, 255);
+	cv::createTrackbar("Max Val", OPENCV_WINDOW, &m_maxval, 255);
+	
+	m_cloud_sub = m_node.subscribe("/camera/depth/points", 1, &SensorCollection::PointcloudFromKinect, this);
+	g_viewer = std::make_shared<pcl::visualization::PCLVisualizer>("3D Viewer");
+	if (g_viewer)
+	{
+	  g_viewer->setBackgroundColor (0.5, 0.5, 0.5);
+	  g_viewer->addCoordinateSystem (1.0);
+	  g_viewer->initCameraParameters ();
+	}
 }
 
 /////////////////////////////////////////////
@@ -109,21 +126,21 @@ void SensorCollection::getForeground(const sensor_msgs::ImageConstPtr& msg)
      
 }
 
-// /////////////////////////////////////////////
-// void PointcloudFromKinectVisualize(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ )
-// {
-//   // --------------------------------------------
-//   // -----Open 3D viewer and add point cloud-----
-//   // --------------------------------------------
-//   g_viewer->removePointCloud("original cloud");
-//     
-//   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> source_cloud_color_handler (pcl_cloud_, 255, 225, 255);
-//   g_viewer->addPointCloud(pcl_cloud_, source_cloud_color_handler , "original cloud");
-//   g_viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "original cloud");
-//   
-//   g_viewer->spinOnce();
-// }
-/*
+/////////////////////////////////////////////
+void PointcloudFromKinectVisualize(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ )
+{
+  // --------------------------------------------
+  // -----Open 3D viewer and add point cloud-----
+  // --------------------------------------------
+  g_viewer->removePointCloud("original cloud");
+    
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> source_cloud_color_handler (pcl_cloud_, 255, 225, 255);
+  g_viewer->addPointCloud(pcl_cloud_, source_cloud_color_handler , "original cloud");
+  g_viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "original cloud");
+  
+  g_viewer->spinOnce();
+}
+
 /////////////////////////////////////////////
 pcl::PointCloud< pcl::PointXYZ >::Ptr PointcloudDownsample(pcl::PointCloud< pcl::PointXYZ >::ConstPtr cloud)
 {
@@ -192,24 +209,26 @@ void SensorCollection::PointcloudFromKinectProcess(pcl::PointCloud< pcl::PointXY
  
 	pfh.compute(*descriptors);
 
-}*/
+}
 
 /////////////////////////////////////////////
-void detectCircle(cv::Mat const& input, cv::Mat & output)
+void detectCircle(
+  cv::Mat const& input, cv::Mat & output, 
+  int dp_, int min_dist_, int cannyEdge_, int centerDetect_, int minrad_, int maxrad_)
 {
   cv::Mat l_gray;
   /// Convert it to gray
   cvtColor( input, l_gray, CV_BGR2GRAY );
   /// Reduce the noise so we avoid false circle detection
-  //cv::GaussianBlur( tmp, tmp, cv::Size(9, 9), 2, 2 );
+  //cv::GaussianBlur( l_gray, l_gray, cv::Size(9, 9), 2, 2 );
   
-  cv::Mat l_canny;
-  cv::Canny(l_gray, l_canny, 200, 20);
+  cv::Mat l_canny = l_gray.clone(); 
+  //cv::Canny(l_gray, l_canny, 200, 20);
 
   vector<cv::Vec3f> circles;
 
   /// Apply the Hough Transform to find the circles
-  cv::HoughCircles( l_canny, circles, CV_HOUGH_GRADIENT, 1, l_canny.rows/4, 100, 30, 5, 30);
+  cv::HoughCircles( l_canny, circles, CV_HOUGH_GRADIENT, dp_>0?dp_:1, min_dist_>0?min_dist_:1, cannyEdge_>0?cannyEdge_:1, centerDetect_>0?centerDetect_:1, minrad_>0?minrad_:0, maxrad_>0?maxrad_:0);
 
   output = input.clone();
   /// Draw the circles detected
@@ -387,16 +406,16 @@ void SensorCollection::ImageFromKinect(const sensor_msgs::ImageConstPtr& msg)
     return;
   }
   
-  cv::Mat l_subtract;
+  cv::Mat l_subtract = cv_ptr->image.clone();
   cv::subtract(cv_ptr->image, m_foreground, l_subtract);
-  //cv::threshold(l_subtract,l_subtract,100,255,cv::THRESH_BINARY);
+  cv::threshold(l_subtract,l_subtract,m_thr,m_maxval,cv::THRESH_BINARY);
   
   // Update GUI Window
-  cv::imshow("Subtraction Image", l_subtract);
-  cv::waitKey(3);
+//   cv::imshow("Subtraction Image", l_subtract);
+//   cv::waitKey(3);
 
   cv::Mat output;
-  detectCircle(l_subtract, output);
+  detectCircle(l_subtract, output, m_dp, m_min_dist, m_cannyEdge, m_centerDetect, m_minrad, m_maxrad);
   
   // Update GUI Window
   cv::imshow(OPENCV_WINDOW, output);

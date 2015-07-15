@@ -20,7 +20,7 @@
 #include <opencv2/opencv.hpp>
 #include <image_transport/image_transport.h>
 
-//#include <pcl/io/io.h>
+#include <pcl/io/io.h>
 
 namespace Robotics 
 {
@@ -86,6 +86,9 @@ namespace Robotics
 		  bool m_foregroundFLAG;
 		  cv::Mat m_foreground;
 		  
+		  int m_dp, m_min_dist, m_cannyEdge, m_centerDetect, m_minrad, m_maxrad;
+		  int m_thr, m_maxval;
+		  
 		public:
 			SensorCollection();
 			
@@ -96,13 +99,13 @@ namespace Robotics
 			void ImageFromKinect(const sensor_msgs::ImageConstPtr& msg);
 			void getForeground(const sensor_msgs::ImageConstPtr& msg);
 						
-// 			void PointcloudFromKinect(const sensor_msgs::PointCloud2ConstPtr& msg);
+ 			void PointcloudFromKinect(const sensor_msgs::PointCloud2ConstPtr& msg);
 						
 			void subscribe();
 			
 		protected:
 			//void ImageFromKinectProcess(cv::Mat const& input);
-// 			void PointcloudFromKinectProcess(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ );
+ 			void PointcloudFromKinectProcess(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ );
 		};
 
 	}
