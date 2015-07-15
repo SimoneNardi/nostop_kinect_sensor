@@ -41,7 +41,7 @@ SensorCollection::SensorCollection()
 , m_centerDetect(15)
 , m_minrad(12)
 , m_maxrad(21)
-, m_thr(100)
+, m_thr(50)
 , m_maxval(255)
 {}
 
@@ -86,7 +86,7 @@ void SensorCollection::subscribe()
 	cv::createTrackbar("Thr", OPENCV_WINDOW, &m_thr, 255);
 	cv::createTrackbar("Max Val", OPENCV_WINDOW, &m_maxval, 255);
 	
-	m_cloud_sub = m_node.subscribe("/camera/depth/points", 1, &SensorCollection::PointcloudFromKinect, this);
+	//m_cloud_sub = m_node.subscribe("/camera/depth/points", 1, &SensorCollection::PointcloudFromKinect, this);
 	g_viewer = std::make_shared<pcl::visualization::PCLVisualizer>("3D Viewer");
 	if (g_viewer)
 	{
@@ -220,10 +220,10 @@ void detectCircle(
   /// Convert it to gray
   cvtColor( input, l_gray, CV_BGR2GRAY );
   /// Reduce the noise so we avoid false circle detection
-  //cv::GaussianBlur( l_gray, l_gray, cv::Size(9, 9), 2, 2 );
+  cv::GaussianBlur( l_gray, l_gray, cv::Size(9, 9), 2, 2 );
   
   cv::Mat l_canny = l_gray.clone(); 
-  //cv::Canny(l_gray, l_canny, 200, 20);
+  cv::Canny(l_gray, l_canny, 200, 20);
 
   vector<cv::Vec3f> circles;
 
