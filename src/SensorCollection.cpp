@@ -8,26 +8,26 @@
 
 #include "ros/ros.h"
 
-#include <pcl/io/io.h>
-#include <pcl/visualization/pcl_visualizer.h>
-#include <pcl_conversions/pcl_conversions.h>
-
-#include <pcl/features/normal_3d.h>
-#include <pcl/features/pfh.h>
-
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
-#include <pcl/filters/voxel_grid.h>
-
-#include <pcl/ModelCoefficients.h>
-#include <pcl/filters/extract_indices.h>
+// #include <pcl/io/io.h>
+// #include <pcl/visualization/pcl_visualizer.h>
+// #include <pcl_conversions/pcl_conversions.h>
+// 
+// #include <pcl/features/normal_3d.h>
+// #include <pcl/features/pfh.h>
+// 
+// #include <pcl/io/pcd_io.h>
+// #include <pcl/point_types.h>
+// #include <pcl/filters/voxel_grid.h>
+// 
+// #include <pcl/ModelCoefficients.h>
+// #include <pcl/filters/extract_indices.h>
 
 using namespace std;
 using namespace Robotics;
 using namespace Robotics::GameTheory;
 
 static const std::string OPENCV_WINDOW = "Sensor Window";
-std::shared_ptr<pcl::visualization::PCLVisualizer> g_viewer = nullptr;
+// std::shared_ptr<pcl::visualization::PCLVisualizer> g_viewer = nullptr;
  
 /////////////////////////////////////////////
 SensorCollection::SensorCollection()
@@ -56,16 +56,15 @@ SensorCollection::~SensorCollection()
 /////////////////////////////////////////////
 void SensorCollection::subscribe()
 {
-	ROS_INFO("Sensor: Collection subscribe!");
+	std::cout << "Sensor: Collection subscribe!"<< std::endl << std::flush;
   
 	// Subscrive to input video feed and publish output video feed
-	//m_image_sub = m_it.subscribe("/camera/rgb/image_rect", 1, &SensorCollection::getForeground, this);
+	m_image_sub = m_it.subscribe("/camera/rgb/image_rect_color", 1, &SensorCollection::getForeground, this, image_transport::TransportHints("raw"));
 
-	//m_image_sub.reset(new image_transport::SubscriberFilter());
-	//m_image_sub->subscribe(m_it, "image", 1, image_transport::TransportHints("raw"));
-	//m_image_sub->registerCallback(boost::bind(&SensorCollection::getForeground, this, _1));
+// 	m_image_sub.reset(new image_transport::SubscriberFilter());
+// 	m_image_sub->subscribe(m_it, "/camera/rgb/image_rect_color", 1, image_transport::TransportHints("raw"));
+// 	m_image_sub->registerCallback(boost::bind(&SensorCollection::getForeground, this, _1));
   	
-	
 	cv::namedWindow("Foreground Image");
 	
 	m_mutex.lock();
@@ -76,13 +75,15 @@ void SensorCollection::subscribe()
 	  m_mutex.lock();
 	}
 	m_mutex.unlock();
-	  
-	//m_image_sub.shutdown();
-	//m_image_sub = m_it.subscribe("/camera/rgb/image_rect", 1, &SensorCollection::ImageFromKinect, this);
 	
-	//m_image_sub.reset(new image_transport::SubscriberFilter());
-	//m_image_sub->subscribe(m_it, "image", 1, image_transport::TransportHints("raw"));
-	//m_image_sub->registerCallback(boost::bind(&SensorCollection::ImageFromKinect, this, _1));
+	std::cout << "Sensor: ForeGround Collected!"<< std::endl << std::flush;
+	  
+	m_image_sub.shutdown();
+	m_image_sub = m_it.subscribe("/camera/rgb/image_rect_color", 1, &SensorCollection::ImageFromKinect, this, image_transport::TransportHints("raw"));
+	
+// 	m_image_sub.reset(new image_transport::SubscriberFilter());
+// 	m_image_sub->subscribe(m_it, "/camera/rgb/image_rect_color", 1, image_transport::TransportHints("raw"));
+// 	m_image_sub->registerCallback(boost::bind(&SensorCollection::ImageFromKinect, this, _1));
   		
 	m_image_pub = m_it.advertise("/sensor/output_video", 1);
 	cv::namedWindow(OPENCV_WINDOW);
@@ -98,13 +99,13 @@ void SensorCollection::subscribe()
 	cv::createTrackbar("Max Val", OPENCV_WINDOW, &m_maxval, 255);
 	
 	//m_cloud_sub = m_node.subscribe("/camera/depth/points", 1, &SensorCollection::PointcloudFromKinect, this);
-	g_viewer = std::make_shared<pcl::visualization::PCLVisualizer>("3D Viewer");
-	if (g_viewer)
-	{
-	  g_viewer->setBackgroundColor (0.5, 0.5, 0.5);
-	  g_viewer->addCoordinateSystem (1.0);
-	  g_viewer->initCameraParameters ();
-	}
+// 	g_viewer = std::make_shared<pcl::visualization::PCLVisualizer>("3D Viewer");
+// 	if (g_viewer)
+// 	{
+// 	  g_viewer->setBackgroundColor (0.5, 0.5, 0.5);
+// 	  g_viewer->addCoordinateSystem (1.0);
+// 	  g_viewer->initCameraParameters ();
+// 	}
 }
 
 /////////////////////////////////////////////
@@ -138,98 +139,25 @@ void SensorCollection::getForeground(const sensor_msgs::ImageConstPtr& msg)
 }
 
 /////////////////////////////////////////////
-void PointcloudFromKinectVisualize(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ )
-{
-  // --------------------------------------------
-  // -----Open 3D viewer and add point cloud-----
-  // --------------------------------------------
-  g_viewer->removePointCloud("original cloud");
-    
-  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> source_cloud_color_handler (pcl_cloud_, 255, 225, 255);
-  g_viewer->addPointCloud(pcl_cloud_, source_cloud_color_handler , "original cloud");
-  g_viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "original cloud");
-  
-  g_viewer->spinOnce();
-}
-
-/////////////////////////////////////////////
-pcl::PointCloud< pcl::PointXYZ >::Ptr PointcloudDownsample(pcl::PointCloud< pcl::PointXYZ >::ConstPtr cloud)
-{
-	std::cerr << "PointCloud before filtering: " << cloud->width * cloud->height 
-	    << " data points (" << pcl::getFieldsList (*cloud) << ").";
-	    
-	// Create the filtering object
-	pcl::VoxelGrid<pcl::PointXYZ> sor;
-	sor.setInputCloud (cloud);
-	sor.setLeafSize (0.01f, 0.01f, 0.01f);
-	pcl::PointCloud< pcl::PointXYZ >::Ptr cloud_filtered (new pcl::PointCloud< pcl::PointXYZ >);
-	sor.filter (*cloud_filtered);
-
-	std::cerr << "PointCloud after filtering: " << cloud_filtered->width * cloud_filtered->height 
-	    << " data points (" << pcl::getFieldsList (*cloud_filtered) << ").";
-	    
-       return cloud_filtered;
-}
-
-/////////////////////////////////////////////
-void SensorCollection::PointcloudFromKinect(const sensor_msgs::PointCloud2ConstPtr& msg)
-{
-	Lock l_lck(m_mutex);
-	int l_height = msg->height;
-	int l_width = msg->width;
-	  
-	pcl::PointCloud< pcl::PointXYZ > l_pcl_cloud;
-	pcl::fromROSMsg(*msg,l_pcl_cloud);
-	
-	pcl::PointCloud< pcl::PointXYZ >::Ptr l_cloud(new pcl::PointCloud< pcl::PointXYZ > (l_pcl_cloud) );
-	
-	pcl::PointCloud< pcl::PointXYZ >::Ptr l_cloud_filtered = PointcloudDownsample(l_cloud);
-	
-	PointcloudFromKinectProcess(l_cloud_filtered);
-	
-	if (g_viewer)
-	{
-		PointcloudFromKinectVisualize(l_cloud);
-	}
-}
-
-/////////////////////////////////////////////
-void SensorCollection::PointcloudFromKinectProcess(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ )
-{
-	// Object for storing the normals.
-	pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
-	// Object for storing the PFH descriptors for each point.
-	pcl::PointCloud<pcl::PFHSignature125>::Ptr descriptors(new pcl::PointCloud<pcl::PFHSignature125>());
-	
-	// Estimate the normals.
-	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normalEstimation;
-	normalEstimation.setInputCloud(pcl_cloud_);
-	normalEstimation.setRadiusSearch(0.01);
-	pcl::search::KdTree<pcl::PointXYZ>::Ptr kdtree(new pcl::search::KdTree<pcl::PointXYZ>);
-	normalEstimation.setSearchMethod(kdtree);
-	normalEstimation.compute(*normals);
-	
-	// PFH estimation object.
-	pcl::PFHEstimation<pcl::PointXYZ, pcl::Normal, pcl::PFHSignature125> pfh;
-	pfh.setInputCloud(pcl_cloud_);
-	pfh.setInputNormals(normals);
-	pfh.setSearchMethod(kdtree);
-	// Search radius, to look for neighbors. Note: the value given here has to be
-	// larger than the radius used to estimate the normals.
-	pfh.setRadiusSearch(0.008);
- 
-	pfh.compute(*descriptors);
-
-}
-
-/////////////////////////////////////////////
 void detectCircle(
-  cv::Mat const& input, cv::Mat & output, 
+  cv::Mat const& input, cv::Mat & output, cv::Scalar & colormin, cv::Scalar & colormax,
   int dp_, int min_dist_, int cannyEdge_, int centerDetect_, int minrad_, int maxrad_)
 {
+  cv::medianBlur(input, input, 3);
+  
+  // Convert input image to HSV
+  cv::Mat hsv_image;
+  cv::cvtColor(input, hsv_image, cv::COLOR_BGR2HSV);
+
+  // Threshold the HSV image, keep only the red pixels
+  cv::Mat hue_range;
+  cv::inRange(hsv_image, colormin, colormax, hue_range);
+  
+  //cv::addWeighted(lower_red_hue_range, 1.0, upper_red_hue_range, 1.0, 0.0, red_hue_image);
+      
   cv::Mat l_gray;
   /// Convert it to gray
-  cvtColor( input, l_gray, CV_BGR2GRAY );
+  cvtColor( hue_range, l_gray, CV_BGR2GRAY );
   /// Reduce the noise so we avoid false circle detection
   cv::GaussianBlur( l_gray, l_gray, cv::Size(9, 9), 2, 2 );
   
@@ -252,6 +180,51 @@ void detectCircle(
       // circle outline
       cv::circle( output, center, radius, cv::Scalar(0,0,255), 3, 8, 0 );
    }
+}
+
+
+/////////////////////////////////////////////
+void SensorCollection::ImageFromKinect(const sensor_msgs::ImageConstPtr& msg)
+{
+  Lock l_lck(m_mutex);
+  
+  cv_bridge::CvImageConstPtr cv_ptr;
+  try
+  {
+    if (sensor_msgs::image_encodings::isColor(msg->encoding))
+	cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8);
+    else
+	cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
+  }
+  catch (cv_bridge::Exception& e)
+  {
+    ROS_ERROR("cv_bridge exception: %s", e.what());
+    return;
+  }
+  
+  cv::Mat l_subtract = cv_ptr->image.clone();
+  //cv::subtract(cv_ptr->image, m_foreground, l_subtract);
+  cv::threshold(l_subtract,l_subtract,m_thr,m_maxval,cv::THRESH_BINARY);
+  
+  // Update GUI Window
+//   cv::imshow("Subtraction Image", l_subtract);
+//   cv::waitKey(3);
+
+  cv::Mat output;
+  cv::Scalar minColor(0, 100, 100);
+  cv::Scalar maxColor(10, 255, 255);
+  detectCircle(l_subtract, output, minColor, maxColor,
+	       m_dp, m_min_dist, m_cannyEdge, m_centerDetect, m_minrad, m_maxrad);
+  
+  // Update GUI Window
+  cv::imshow(OPENCV_WINDOW, output);
+  cv::waitKey(3);
+  
+  // Output modified video stream
+  m_image_pub.publish(cv_ptr->toImageMsg());
+  
+  m_data.insert( std::make_pair(Color(255,0,0), AgentSensor(5,5,15)) );
+  m_available=true;
 }
 
 /**
@@ -398,46 +371,91 @@ for (int i = 0; i < contours.size(); i++)
 //     cv::circle(cv_ptr->image, cv::Point(50, 50), 10, CV_RGB(255,0,0));
 }
 
+/*
 /////////////////////////////////////////////
-void SensorCollection::ImageFromKinect(const sensor_msgs::ImageConstPtr& msg)
+void PointcloudFromKinectVisualize(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ )
 {
-  Lock l_lck(m_mutex);
+  // --------------------------------------------
+  // -----Open 3D viewer and add point cloud-----
+  // --------------------------------------------
+  g_viewer->removePointCloud("original cloud");
+    
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> source_cloud_color_handler (pcl_cloud_, 255, 225, 255);
+  g_viewer->addPointCloud(pcl_cloud_, source_cloud_color_handler , "original cloud");
+  g_viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "original cloud");
   
-  cv_bridge::CvImageConstPtr cv_ptr;
-  try
-  {
-    if (sensor_msgs::image_encodings::isColor(msg->encoding))
-	cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8);
-    else
-	cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
-  }
-  catch (cv_bridge::Exception& e)
-  {
-    ROS_ERROR("cv_bridge exception: %s", e.what());
-    return;
-  }
-  
-  cv::Mat l_subtract = cv_ptr->image.clone();
-  cv::subtract(cv_ptr->image, m_foreground, l_subtract);
-  cv::threshold(l_subtract,l_subtract,m_thr,m_maxval,cv::THRESH_BINARY);
-  
-  // Update GUI Window
-//   cv::imshow("Subtraction Image", l_subtract);
-//   cv::waitKey(3);
-
-  cv::Mat output;
-  detectCircle(l_subtract, output, m_dp, m_min_dist, m_cannyEdge, m_centerDetect, m_minrad, m_maxrad);
-  
-  // Update GUI Window
-  cv::imshow(OPENCV_WINDOW, output);
-  cv::waitKey(3);
-  
-  // Output modified video stream
-  m_image_pub.publish(cv_ptr->toImageMsg());
-  
-  m_data.insert( std::make_pair(Color(255,0,0), AgentSensor(5,5,15)) );
-  m_available=true;
+  g_viewer->spinOnce();
 }
+
+/////////////////////////////////////////////
+pcl::PointCloud< pcl::PointXYZ >::Ptr PointcloudDownsample(pcl::PointCloud< pcl::PointXYZ >::ConstPtr cloud)
+{
+	std::cerr << "PointCloud before filtering: " << cloud->width * cloud->height 
+	    << " data points (" << pcl::getFieldsList (*cloud) << ").";
+	    
+	// Create the filtering object
+	pcl::VoxelGrid<pcl::PointXYZ> sor;
+	sor.setInputCloud (cloud);
+	sor.setLeafSize (0.01f, 0.01f, 0.01f);
+	pcl::PointCloud< pcl::PointXYZ >::Ptr cloud_filtered (new pcl::PointCloud< pcl::PointXYZ >);
+	sor.filter (*cloud_filtered);
+
+	std::cerr << "PointCloud after filtering: " << cloud_filtered->width * cloud_filtered->height 
+	    << " data points (" << pcl::getFieldsList (*cloud_filtered) << ").";
+	    
+       return cloud_filtered;
+}
+
+/////////////////////////////////////////////
+void SensorCollection::PointcloudFromKinect(const sensor_msgs::PointCloud2ConstPtr& msg)
+{
+	Lock l_lck(m_mutex);
+	int l_height = msg->height;
+	int l_width = msg->width;
+	  
+	pcl::PointCloud< pcl::PointXYZ > l_pcl_cloud;
+	pcl::fromROSMsg(*msg,l_pcl_cloud);
+	
+	pcl::PointCloud< pcl::PointXYZ >::Ptr l_cloud(new pcl::PointCloud< pcl::PointXYZ > (l_pcl_cloud) );
+	
+	pcl::PointCloud< pcl::PointXYZ >::Ptr l_cloud_filtered = PointcloudDownsample(l_cloud);
+	
+	PointcloudFromKinectProcess(l_cloud_filtered);
+	
+	if (g_viewer)
+	{
+		PointcloudFromKinectVisualize(l_cloud);
+	}
+}
+
+/////////////////////////////////////////////
+void SensorCollection::PointcloudFromKinectProcess(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ )
+{
+	// Object for storing the normals.
+	pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+	// Object for storing the PFH descriptors for each point.
+	pcl::PointCloud<pcl::PFHSignature125>::Ptr descriptors(new pcl::PointCloud<pcl::PFHSignature125>());
+	
+	// Estimate the normals.
+	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normalEstimation;
+	normalEstimation.setInputCloud(pcl_cloud_);
+	normalEstimation.setRadiusSearch(0.01);
+	pcl::search::KdTree<pcl::PointXYZ>::Ptr kdtree(new pcl::search::KdTree<pcl::PointXYZ>);
+	normalEstimation.setSearchMethod(kdtree);
+	normalEstimation.compute(*normals);
+	
+	// PFH estimation object.
+	pcl::PFHEstimation<pcl::PointXYZ, pcl::Normal, pcl::PFHSignature125> pfh;
+	pfh.setInputCloud(pcl_cloud_);
+	pfh.setInputNormals(normals);
+	pfh.setSearchMethod(kdtree);
+	// Search radius, to look for neighbors. Note: the value given here has to be
+	// larger than the radius used to estimate the normals.
+	pfh.setRadiusSearch(0.008);
+ 
+	pfh.compute(*descriptors);
+
+}*/
 
 /////////////////////////////////////////////
 nostop_kinect_sensor::SensorData SensorCollection::getMsgs()
@@ -466,3 +484,4 @@ nostop_kinect_sensor::SensorData SensorCollection::getMsgs()
   l_msgs.data = l_result;
   return l_msgs;
 }
+

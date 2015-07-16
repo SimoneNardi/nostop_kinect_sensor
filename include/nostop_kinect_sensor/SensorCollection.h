@@ -21,7 +21,7 @@
 #include <image_transport/image_transport.h>
 #include <image_transport/subscriber_filter.h>
 
-#include <pcl/io/io.h>
+// #include <pcl/io/io.h>
 
 namespace Robotics 
 {
@@ -80,10 +80,8 @@ namespace Robotics
 		  ros::NodeHandle m_node;
 		  
 		  image_transport::ImageTransport m_it;
-		  //boost::shared_ptr<image_transport::SubscriberFilter> m_image_sub;
-		  
-		  //image_transport::ImageTransport m_it;
-		  //image_transport::Subscriber m_image_sub;
+// 		  boost::shared_ptr<image_transport::SubscriberFilter> m_image_sub;
+		  image_transport::Subscriber m_image_sub;
 		  
 		  image_transport::Publisher m_image_pub;
 		  
@@ -105,13 +103,13 @@ namespace Robotics
 			void ImageFromKinect(const sensor_msgs::ImageConstPtr& msg);
 			void getForeground(const sensor_msgs::ImageConstPtr& msg);
 						
- 			void PointcloudFromKinect(const sensor_msgs::PointCloud2ConstPtr& msg);
+//  			void PointcloudFromKinect(const sensor_msgs::PointCloud2ConstPtr& msg);
 						
 			void subscribe();
 			
 		protected:
 			//void ImageFromKinectProcess(cv::Mat const& input);
- 			void PointcloudFromKinectProcess(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ );
+//  			void PointcloudFromKinectProcess(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ );
 		};
 
 	}

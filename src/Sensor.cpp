@@ -9,7 +9,7 @@ int main(int argc, char **argv)
 	
 	ros::init(argc, argv, "sensor"); 
 	
-	ROS_INFO("Sensor: initialize exe");
+	std::cout << "Sensor: initialize exe"<< std::endl << std::flush;
 	
 	// Compute Robot Position:
 	// From Kinect?ROS_INFO
