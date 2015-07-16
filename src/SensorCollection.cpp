@@ -56,7 +56,8 @@ SensorCollection::~SensorCollection()
 /////////////////////////////////////////////
 void SensorCollection::subscribe()
 {
-	std::cout << "Sensor: Collection subscribe!"<< std::endl << std::flush;
+	//std::cout << "Sensor: Collection subscribe!"<< std::endl << std::flush;
+	ROS_INFO("Sensor: Collection subscribe!");
   
 	// Subscrive to input video feed and publish output video feed
 	m_image_sub = m_it.subscribe("/camera/rgb/image_rect_color", 1, &SensorCollection::getForeground, this, image_transport::TransportHints("raw"));
@@ -138,9 +139,42 @@ void SensorCollection::getForeground(const sensor_msgs::ImageConstPtr& msg)
      
 }
 
+enum ColorName
+{
+    red = 0,
+    blue,
+    green,
+    yellow
+};
+  
+/////////////////////////////////////////////
+void  computeColorRange(ColorName name, cv::Scalar &min, cv::Scalar &max)
+{
+    switch(name)
+    {
+      case ColorName::red:
+	min = cv::Scalar(0,100,100);
+	max = cv::Scalar(10,100,100);
+	break;
+      case ColorName::blue:
+	min = cv::Scalar(220,100,100);
+	max = cv::Scalar(240,100,100);
+	break;
+      case ColorName::yellow:
+	min = cv::Scalar(60,100,100);
+	max = cv::Scalar(70,100,100);
+	break;
+      case ColorName::green:
+	min = cv::Scalar(110,100,100);
+	max = cv::Scalar(130,100,100);
+      default:
+	break;
+    }
+}
+
 /////////////////////////////////////////////
 void detectCircle(
-  cv::Mat const& input, cv::Mat & output, cv::Scalar & colormin, cv::Scalar & colormax,
+  cv::Mat const& input, cv::Mat & output, std::vector<ColorName> & colors,
   int dp_, int min_dist_, int cannyEdge_, int centerDetect_, int minrad_, int maxrad_)
 {
   cv::medianBlur(input, input, 3);
@@ -150,8 +184,29 @@ void detectCircle(
   cv::cvtColor(input, hsv_image, cv::COLOR_BGR2HSV);
 
   // Threshold the HSV image, keep only the red pixels
-  cv::Mat hue_range;
-  cv::inRange(hsv_image, colormin, colormax, hue_range);
+  
+  cv::Mat hue_range = hsv_image.clone();
+  for (size_t i=0; i < colors.size(); ++i)
+  {
+      cv::Mat curr_hue_range;
+      cv::Scalar minColor, maxColor;
+      computeColorRange(colors[i], minColor, maxColor);
+      
+      cv::inRange(hsv_image, minColor, maxColor, curr_hue_range);
+      
+      if (i != 0)
+	hue_range = curr_hue_range.clone();
+      else
+	cv::addWeighted(hue_range, 1.0, curr_hue_range, 1.0, 0.0, hue_range);
+      
+      if (colors[i] == ColorName::red)
+      {
+	minColor = cv::Scalar(340, 100, 100);
+	maxColor = cv::Scalar(360, 100, 100);
+	cv::inRange(hsv_image, minColor, maxColor, curr_hue_range);
+	cv::addWeighted(hue_range, 1.0, curr_hue_range, 1.0, 0.0, hue_range);
+      }
+  }
   
   //cv::addWeighted(lower_red_hue_range, 1.0, upper_red_hue_range, 1.0, 0.0, red_hue_image);
       
@@ -211,9 +266,10 @@ void SensorCollection::ImageFromKinect(const sensor_msgs::ImageConstPtr& msg)
 //   cv::waitKey(3);
 
   cv::Mat output;
-  cv::Scalar minColor(0, 100, 100);
-  cv::Scalar maxColor(10, 255, 255);
-  detectCircle(l_subtract, output, minColor, maxColor,
+  std::vector<ColorName> l_colors;
+  l_colors.push_back(ColorName::red);
+  l_colors.push_back(ColorName::blue);
+  detectCircle(l_subtract, output, l_colors,
 	       m_dp, m_min_dist, m_cannyEdge, m_centerDetect, m_minrad, m_maxrad);
   
   // Update GUI Window

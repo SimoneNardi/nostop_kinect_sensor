@@ -11,7 +11,8 @@ using namespace Robotics::GameTheory;
 SensorCollector::SensorCollector()
 : m_sensor(nullptr)
 {
-  std::cout << "Sensor: Collector init!"<< std::endl << std::flush;
+  //std::cout << "Sensor: Collector init!"<< std::endl << std::flush;
+  ROS_INFO("Sensor: Collector init.");
     
   // Publish Sensor Information:
   m_pub = m_node.advertise<nostop_kinect_sensor::SensorData>("sensor", 5);
@@ -30,8 +31,8 @@ void SensorCollector::run()
 {
 	ros::Rate loop_rate(5);
 
-	std::cout << "Sensor Collector is running!"<< std::endl << std::flush;
-	//ROS_INFO("Sensor Collector is running.");
+	//std::cout << "Sensor Collector is running!"<< std::endl << std::flush;
+	ROS_INFO("Sensor Collector is running.");
 
 	int count = 0;
 	while (ros::ok())
