@@ -36,12 +36,12 @@ SensorCollection::SensorCollection()
 , m_it(m_node)
 , m_foregroundFLAG(false)
 , m_dp(1)
-, m_min_dist(18)
-, m_cannyEdge(40)
-, m_centerDetect(15)
-, m_minrad(12)
-, m_maxrad(21)
-, m_thr(50)
+, m_min_dist(300)
+, m_cannyEdge(30)
+, m_centerDetect(17)
+, m_minrad(0)
+, m_maxrad(0)
+, m_thr(40)
 , m_maxval(255)
 {}
 
@@ -155,9 +155,9 @@ void detectCircle(
   
   //cv::addWeighted(lower_red_hue_range, 1.0, upper_red_hue_range, 1.0, 0.0, red_hue_image);
       
-  cv::Mat l_gray;
+  cv::Mat l_gray = hue_range.clone();
   /// Convert it to gray
-  cvtColor( hue_range, l_gray, CV_BGR2GRAY );
+  //cv::cvtColor( hue_range, l_gray, CV_BGR2GRAY );
   /// Reduce the noise so we avoid false circle detection
   cv::GaussianBlur( l_gray, l_gray, cv::Size(9, 9), 2, 2 );
   
