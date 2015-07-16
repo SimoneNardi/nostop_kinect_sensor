@@ -19,6 +19,7 @@
 
 #include <opencv2/opencv.hpp>
 #include <image_transport/image_transport.h>
+#include <image_transport/subscriber_filter.h>
 
 #include <pcl/io/io.h>
 
@@ -77,8 +78,13 @@ namespace Robotics
 		  bool m_available;
 		  
 		  ros::NodeHandle m_node;
+		  
 		  image_transport::ImageTransport m_it;
-		  image_transport::Subscriber m_image_sub;
+		  //boost::shared_ptr<image_transport::SubscriberFilter> m_image_sub;
+		  
+		  //image_transport::ImageTransport m_it;
+		  //image_transport::Subscriber m_image_sub;
+		  
 		  image_transport::Publisher m_image_pub;
 		  
 		  ros::Subscriber m_cloud_sub;

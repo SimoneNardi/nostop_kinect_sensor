@@ -11,6 +11,8 @@ using namespace Robotics::GameTheory;
 SensorCollector::SensorCollector()
 : m_sensor(nullptr)
 {
+  ROS_INFO("Sensor: Collector init!");
+  
   // Publish Sensor Information:
   m_pub = m_node.advertise<nostop_kinect_sensor::SensorData>("sensor", 5);
   m_sensor = std::make_shared<SensorCollection>();

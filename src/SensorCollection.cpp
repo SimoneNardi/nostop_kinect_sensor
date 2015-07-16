@@ -56,8 +56,15 @@ SensorCollection::~SensorCollection()
 /////////////////////////////////////////////
 void SensorCollection::subscribe()
 {
+	ROS_INFO("Sensor: Collection subscribe!");
+  
 	// Subscrive to input video feed and publish output video feed
-	m_image_sub = m_it.subscribe("/camera/rgb/image_raw", 1, &SensorCollection::getForeground, this);
+	//m_image_sub = m_it.subscribe("/camera/rgb/image_rect", 1, &SensorCollection::getForeground, this);
+
+	//m_image_sub.reset(new image_transport::SubscriberFilter());
+	//m_image_sub->subscribe(m_it, "image", 1, image_transport::TransportHints("raw"));
+	//m_image_sub->registerCallback(boost::bind(&SensorCollection::getForeground, this, _1));
+  	
 	
 	cv::namedWindow("Foreground Image");
 	
@@ -70,9 +77,13 @@ void SensorCollection::subscribe()
 	}
 	m_mutex.unlock();
 	  
-	m_image_sub.shutdown();
-		
-	m_image_sub = m_it.subscribe("/camera/rgb/image_raw", 1, &SensorCollection::ImageFromKinect, this);
+	//m_image_sub.shutdown();
+	//m_image_sub = m_it.subscribe("/camera/rgb/image_rect", 1, &SensorCollection::ImageFromKinect, this);
+	
+	//m_image_sub.reset(new image_transport::SubscriberFilter());
+	//m_image_sub->subscribe(m_it, "image", 1, image_transport::TransportHints("raw"));
+	//m_image_sub->registerCallback(boost::bind(&SensorCollection::ImageFromKinect, this, _1));
+  		
 	m_image_pub = m_it.advertise("/sensor/output_video", 1);
 	cv::namedWindow(OPENCV_WINDOW);
 	
@@ -193,7 +204,7 @@ void SensorCollection::PointcloudFromKinectProcess(pcl::PointCloud< pcl::PointXY
 	// Estimate the normals.
 	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normalEstimation;
 	normalEstimation.setInputCloud(pcl_cloud_);
-	normalEstimation.setRadiusSearch(0.03);
+	normalEstimation.setRadiusSearch(0.01);
 	pcl::search::KdTree<pcl::PointXYZ>::Ptr kdtree(new pcl::search::KdTree<pcl::PointXYZ>);
 	normalEstimation.setSearchMethod(kdtree);
 	normalEstimation.compute(*normals);
@@ -205,7 +216,7 @@ void SensorCollection::PointcloudFromKinectProcess(pcl::PointCloud< pcl::PointXY
 	pfh.setSearchMethod(kdtree);
 	// Search radius, to look for neighbors. Note: the value given here has to be
 	// larger than the radius used to estimate the normals.
-	pfh.setRadiusSearch(0.05);
+	pfh.setRadiusSearch(0.008);
  
 	pfh.compute(*descriptors);
 
