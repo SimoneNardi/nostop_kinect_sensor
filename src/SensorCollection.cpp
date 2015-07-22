@@ -204,7 +204,11 @@ void detectCircle(
 	minColor = cv::Scalar(340, 100, 100);
 	maxColor = cv::Scalar(360, 100, 100);
 	cv::inRange(hsv_image, minColor, maxColor, curr_hue_range);
-	cv::addWeighted(hue_range, 1.0, curr_hue_range, 1.0, 0.0, hue_range);
+
+	double alpha = 0.5;
+	double beta = ( 1.0 - alpha );
+
+	cv::addWeighted(hue_range, alpha, curr_hue_range, beta, 0.0, hue_range);
       }
   }
   
