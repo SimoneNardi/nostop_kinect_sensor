@@ -20,7 +20,6 @@
 #include <opencv2/opencv.hpp>
 #include <image_transport/image_transport.h>
 #include <image_transport/subscriber_filter.h>
-
 // #include <pcl/io/io.h>
 
 namespace Robotics 
