@@ -3,8 +3,9 @@
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "highgui.h"
 
 #include "ros/ros.h"
 
@@ -25,6 +26,8 @@
 using namespace std;
 using namespace Robotics;
 using namespace Robotics::GameTheory;
+using namespace cv;
+
 
 static const std::string OPENCV_WINDOW = "Sensor Window";
 // std::shared_ptr<pcl::visualization::PCLVisualizer> g_viewer = nullptr;
@@ -75,6 +78,7 @@ void SensorCollection::subscribe()
 	  ros::spinOnce();
 	  m_mutex.lock();
 	}
+	m_foregroundFLAG = false;
 	m_mutex.unlock();
 	
 	std::cout << "Sensor: ForeGround Collected!"<< std::endl << std::flush;
@@ -172,6 +176,133 @@ void  computeColorRange(ColorName name, cv::Scalar &min, cv::Scalar &max)
     }
 }
 
+/** @function Erosion */
+void Erosion( int erosion_elem, int erosion_size, cv::Mat const& src, cv::Mat& erosion_dst)
+{
+  int erosion_type;
+  if( erosion_elem == 0 ){ erosion_type = MORPH_RECT; }
+  else if( erosion_elem == 1 ){ erosion_type = MORPH_CROSS; }
+  else if( erosion_elem == 2) { erosion_type = MORPH_ELLIPSE; }
+
+  cv::Mat element = cv::getStructuringElement( erosion_type,
+                                       cv::Size( 2*erosion_size + 1, 2*erosion_size+1 ),
+                                       cv::Point( erosion_size, erosion_size ) );
+
+  /// Apply the erosion operation
+  cv::erode( src, erosion_dst, element );
+//   imshow( "Erosion Demo", erosion_dst );
+}
+
+/** @function Dilation */
+void Dilation( int dilation_elem, int dilation_size, cv::Mat const& src, cv::Mat& dilation_dst)
+{
+  int dilation_type;
+  if( dilation_elem == 0 ){ dilation_type = MORPH_RECT; }
+  else if( dilation_elem == 1 ){ dilation_type = MORPH_CROSS; }
+  else if( dilation_elem == 2) { dilation_type = MORPH_ELLIPSE; }
+
+  cv::Mat element = cv::getStructuringElement( dilation_type,
+                                       cv::Size( 2*dilation_size + 1, 2*dilation_size+1 ),
+                                       cv::Point( dilation_size, dilation_size ) );
+  /// Apply the dilation operation
+  cv::dilate( src, dilation_dst, element );
+//   cv::imshow( "Dilation Demo", dilation_dst );
+}
+
+void channel_processing(cv::Mat& channel)
+{
+     cv::adaptiveThreshold(channel, channel, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY, 55, 7);
+    // mop up the dirt
+     
+    Dilation(0, 5, channel, channel);
+    Erosion(0, 5, channel, channel);
+}
+
+double inter_centre_distance(int x1, int y1, int x2, int y2)
+{
+    return sqrt((x1-x2)^2 + (y1-y2)^2);
+}
+
+bool colliding_circles(vector<cv::Vec3f> const& circles)
+{
+    for (auto i = 0; i < circles.size(); ++i)
+    {
+        for (auto j = i+1; j < circles.size(); ++j)
+	{
+	    int x1 = cvRound(circles[i][0]);
+	    int y1 = cvRound(circles[i][1]);
+	    int radius1 = cvRound(circles[i][2]);
+	    
+	    int x2 = cvRound(circles[j][0]);
+	    int y2 = cvRound(circles[j][1]);
+	    int radius2 = cvRound(circles[j][2]);
+
+            // collision or containment:
+            if (inter_centre_distance(x1,y1,x2,y2) < radius1 + radius2)
+                return true;
+	}
+    }
+    return false;
+}
+
+void find_circles(cv::Mat const& processed, vector<cv::Vec3f> & storage, int &low)
+{
+  if (low > 105)
+    return;
+  
+  cv::HoughCircles(processed, storage, CV_HOUGH_GRADIENT, 2, 32.0, 30, low);//, 0, 100) great to add circle constraint sizes.
+  
+  if (storage.size() == 0)
+  {
+    low += 1;
+    find_circles(processed, storage, low);
+  }
+  
+  if (colliding_circles(storage))
+  {
+    low += 1;
+    find_circles(processed, storage, low);
+  }
+  
+  return; 
+}
+
+/////////////////////////////////////////////
+void detectCircle(
+  cv::Mat const& orig, cv::Mat & output, 
+  int dp_, int min_dist_, int cannyEdge_, int centerDetect_, int minrad_, int maxrad_)
+{
+  // create tmp images
+  cv::Mat l_empty_copy;
+  
+  std::vector<cv::Mat> l_channels;
+  l_channels.push_back(l_empty_copy);
+  l_channels.push_back(l_empty_copy);
+  l_channels.push_back(l_empty_copy);
+  
+  cv::split(orig, l_channels);
+  
+  for(size_t i = 0; i < l_channels.size(); ++i)
+  {
+    channel_processing(l_channels[i]);
+  }
+  
+  cv::merge(&l_channels[0], l_channels.size(), output);
+    
+  //   cv::imshow('before canny', output);
+  // cv.SaveImage('case3_processed.jpg',output)
+  //use canny, as HoughCircles seems to prefer ring like circles to filled ones.
+  cv::Canny(output, output, 5, 70, 3);
+  //smooth to reduce noise a bit more
+    //cvSmooth(output, output, CV_GAUSSIAN, 7, 7);
+  // cv::imshow('output', output);
+  //find circles, with parameter search
+  int low = 100;
+  vector<cv::Vec3f> circles;
+  find_circles(output, circles, low);
+  
+}
+
 /////////////////////////////////////////////
 void detectCircle(
   cv::Mat const& input, cv::Mat & output, std::vector<ColorName> & colors,
@@ -262,18 +393,25 @@ void SensorCollection::ImageFromKinect(const sensor_msgs::ImageConstPtr& msg)
   }
   
   cv::Mat l_subtract = cv_ptr->image.clone();
-  //cv::subtract(cv_ptr->image, m_foreground, l_subtract);
+  if (m_foregroundFLAG)
+    cv::subtract(cv_ptr->image, m_foreground, l_subtract);
+  
   cv::threshold(l_subtract,l_subtract,m_thr,m_maxval,cv::THRESH_BINARY);
   
   // Update GUI Window
-//   cv::imshow("Subtraction Image", l_subtract);
-//   cv::waitKey(3);
+  if (m_foregroundFLAG)
+  {
+    cv::imshow("Subtraction Image", l_subtract);
+    cv::waitKey(3);
+  }
 
   cv::Mat output;
   std::vector<ColorName> l_colors;
   l_colors.push_back(ColorName::red);
   l_colors.push_back(ColorName::blue);
-  detectCircle(l_subtract, output, l_colors,
+//   detectCircle(l_subtract, output, l_colors,
+// 	       m_dp, m_min_dist, m_cannyEdge, m_centerDetect, m_minrad, m_maxrad);
+  detectCircle(l_subtract, output, 
 	       m_dp, m_min_dist, m_cannyEdge, m_centerDetect, m_minrad, m_maxrad);
   
   // Update GUI Window

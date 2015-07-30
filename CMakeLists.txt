@@ -78,6 +78,7 @@ link_directories(${catkin_LIBRARY_DIRS})
 include_directories(src/)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/src)
 include_directories(${CMAKE_INSTALL_PREFIX}/include) # this line is to find lemon include files.
+include_directories(${OpenCV_INCLUDE_DIRS})
 
 set(sensor_SOURCES
         src/Sensor.cpp
