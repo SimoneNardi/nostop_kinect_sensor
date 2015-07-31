@@ -409,10 +409,10 @@ void SensorCollection::ImageFromKinect(const sensor_msgs::ImageConstPtr& msg)
   std::vector<ColorName> l_colors;
   l_colors.push_back(ColorName::red);
   l_colors.push_back(ColorName::blue);
-//   detectCircle(l_subtract, output, l_colors,
-// 	       m_dp, m_min_dist, m_cannyEdge, m_centerDetect, m_minrad, m_maxrad);
-  detectCircle(l_subtract, output, 
+  detectCircle(l_subtract, output, l_colors,
 	       m_dp, m_min_dist, m_cannyEdge, m_centerDetect, m_minrad, m_maxrad);
+//   detectCircle(l_subtract, output, 
+// 	       m_dp, m_min_dist, m_cannyEdge, m_centerDetect, m_minrad, m_maxrad);
   
   // Update GUI Window
   cv::imshow(OPENCV_WINDOW, output);
