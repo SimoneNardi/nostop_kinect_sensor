@@ -9,19 +9,20 @@
 
 #include "ros/ros.h"
 
-// #include <pcl/io/io.h>
-// #include <pcl/visualization/pcl_visualizer.h>
-// #include <pcl_conversions/pcl_conversions.h>
-// 
-// #include <pcl/features/normal_3d.h>
-// #include <pcl/features/pfh.h>
-// 
-// #include <pcl/io/pcd_io.h>
-// #include <pcl/point_types.h>
-// #include <pcl/filters/voxel_grid.h>
-// 
-// #include <pcl/ModelCoefficients.h>
-// #include <pcl/filters/extract_indices.h>
+#include <pcl/io/io.h>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl_conversions/pcl_conversions.h>
+
+#include <pcl/features/normal_3d.h>
+#include <pcl/features/pfh.h>
+
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
+#include <pcl/filters/voxel_grid.h>
+
+#include <pcl/ModelCoefficients.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/segmentation/sac_segmentation.h>
 
 using namespace std;
 using namespace Robotics;
@@ -30,7 +31,7 @@ using namespace cv;
 
 
 static const std::string OPENCV_WINDOW = "Sensor Window";
-// std::shared_ptr<pcl::visualization::PCLVisualizer> g_viewer = nullptr;
+std::shared_ptr<pcl::visualization::PCLVisualizer> g_viewer = nullptr;
  
 /////////////////////////////////////////////
 SensorCollection::SensorCollection()
@@ -68,7 +69,7 @@ void SensorCollection::subscribe()
 // 	m_image_sub.reset(new image_transport::SubscriberFilter());
 // 	m_image_sub->subscribe(m_it, "/camera/rgb/image_rect_color", 1, image_transport::TransportHints("raw"));
 // 	m_image_sub->registerCallback(boost::bind(&SensorCollection::getForeground, this, _1));
-  	
+//   	
 	cv::namedWindow("Foreground Image");
 	
 	m_mutex.lock();
@@ -78,13 +79,13 @@ void SensorCollection::subscribe()
 	  ros::spinOnce();
 	  m_mutex.lock();
 	}
-	m_foregroundFLAG = false;
+// 	m_foregroundFLAG = false;
 	m_mutex.unlock();
 	
 	std::cout << "Sensor: ForeGround Collected!"<< std::endl << std::flush;
 	  
 	m_image_sub.shutdown();
-	m_image_sub = m_it.subscribe("/camera/rgb/image_rect_color", 1, &SensorCollection::ImageFromKinect, this, image_transport::TransportHints("raw"));
+// 	m_image_sub = m_it.subscribe("/camera/rgb/image_rect_color", 1, &SensorCollection::ImageFromKinect, this, image_transport::TransportHints("raw"));
 	
 // 	m_image_sub.reset(new image_transport::SubscriberFilter());
 // 	m_image_sub->subscribe(m_it, "/camera/rgb/image_rect_color", 1, image_transport::TransportHints("raw"));
@@ -97,20 +98,20 @@ void SensorCollection::subscribe()
 	cv::createTrackbar("Min Dist between Centers", OPENCV_WINDOW, &m_min_dist, 255);
 	cv::createTrackbar("Canny Edge Upper Thr", OPENCV_WINDOW, &m_cannyEdge, 255);
 	cv::createTrackbar("Center Detection Thr", OPENCV_WINDOW, &m_centerDetect, 255);
-	cv::createTrackbar("Min rad", OPENCV_WINDOW, &m_minrad, 255);
-	cv::createTrackbar("Max rad", OPENCV_WINDOW, &m_maxrad, 255);
+// 	cv::createTrackbar("Min rad", OPENCV_WINDOW, &m_minrad, 255);
+// 	cv::createTrackbar("Max rad", OPENCV_WINDOW, &m_maxrad, 255);
 	
 	cv::createTrackbar("Thr", OPENCV_WINDOW, &m_thr, 255);
 	cv::createTrackbar("Max Val", OPENCV_WINDOW, &m_maxval, 255);
 	
-	//m_cloud_sub = m_node.subscribe("/camera/depth/points", 1, &SensorCollection::PointcloudFromKinect, this);
-// 	g_viewer = std::make_shared<pcl::visualization::PCLVisualizer>("3D Viewer");
-// 	if (g_viewer)
-// 	{
-// 	  g_viewer->setBackgroundColor (0.5, 0.5, 0.5);
-// 	  g_viewer->addCoordinateSystem (1.0);
-// 	  g_viewer->initCameraParameters ();
-// 	}
+	m_cloud_sub = m_node.subscribe("/camera/depth/points", 1, &SensorCollection::PointcloudFromKinect, this);
+	g_viewer = std::make_shared<pcl::visualization::PCLVisualizer>("3D Viewer");
+	if (g_viewer)
+	{
+	  g_viewer->setBackgroundColor (0.5, 0.5, 0.5);
+	  g_viewer->addCoordinateSystem (1.0);
+	  g_viewer->initCameraParameters ();
+	}
 }
 
 /////////////////////////////////////////////
@@ -317,31 +318,31 @@ void detectCircle(
   // Threshold the HSV image, keep only the red pixels
   
   cv::Mat hue_range = hsv_image.clone();
-  for (size_t i=0; i < colors.size(); ++i)
-  {
-      cv::Mat curr_hue_range;
-      cv::Scalar minColor, maxColor;
-      computeColorRange(colors[i], minColor, maxColor);
-      
-      cv::inRange(hsv_image, minColor, maxColor, curr_hue_range);
-      
-      if (i != 0)
-	hue_range = curr_hue_range.clone();
-      else
-	cv::addWeighted(hue_range, 1.0, curr_hue_range, 1.0, 0.0, hue_range);
-      
-      if (colors[i] == ColorName::red)
-      {
-	minColor = cv::Scalar(340, 100, 100);
-	maxColor = cv::Scalar(360, 100, 100);
-	cv::inRange(hsv_image, minColor, maxColor, curr_hue_range);
-
-	double alpha = 0.5;
-	double beta = ( 1.0 - alpha );
-
-	cv::addWeighted(hue_range, alpha, curr_hue_range, beta, 0.0, hue_range);
-      }
-  }
+//   for (size_t i=0; i < colors.size(); ++i)
+//   {
+//       cv::Mat curr_hue_range;
+//       cv::Scalar minColor, maxColor;
+//       computeColorRange(colors[i], minColor, maxColor);
+//       
+//       cv::inRange(hsv_image, minColor, maxColor, curr_hue_range);
+//       
+//       if (i != 0)
+// 	hue_range = curr_hue_range.clone();
+//       else
+// 	cv::addWeighted(hue_range, 1.0, curr_hue_range, 1.0, 0.0, hue_range);
+//       
+//       if (colors[i] == ColorName::red)
+//       {
+// 	minColor = cv::Scalar(340, 100, 100);
+// 	maxColor = cv::Scalar(360, 100, 100);
+// 	cv::inRange(hsv_image, minColor, maxColor, curr_hue_range);
+// 
+// 	double alpha = 0.5;
+// 	double beta = ( 1.0 - alpha );
+// 
+// 	cv::addWeighted(hue_range, alpha, curr_hue_range, beta, 0.0, hue_range);
+//       }
+//   }
   
   //cv::addWeighted(lower_red_hue_range, 1.0, upper_red_hue_range, 1.0, 0.0, red_hue_image);
       
@@ -569,7 +570,7 @@ for (int i = 0; i < contours.size(); i++)
 //     cv::circle(cv_ptr->image, cv::Point(50, 50), 10, CV_RGB(255,0,0));
 }
 
-/*
+
 /////////////////////////////////////////////
 void PointcloudFromKinectVisualize(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ )
 {
@@ -622,14 +623,32 @@ void SensorCollection::PointcloudFromKinect(const sensor_msgs::PointCloud2ConstP
 	
 	if (g_viewer)
 	{
-		PointcloudFromKinectVisualize(l_cloud);
+		PointcloudFromKinectVisualize(l_cloud_filtered);
 	}
 }
 
 /////////////////////////////////////////////
 void SensorCollection::PointcloudFromKinectProcess(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ )
 {
-	// Object for storing the normals.
+  if (1)
+  {
+    pcl::ModelCoefficients coefficients;
+    pcl::PointIndices inliers;
+    pcl::SACSegmentation<pcl::PointXYZ> seg;
+    seg.setOptimizeCoefficients (false);
+    seg.setModelType (pcl::SACMODEL_SPHERE); //detecting SPHERE
+    seg.setMethodType (pcl::SAC_RANSAC);
+    seg.setDistanceThreshold (0.001);
+    seg.setRadiusLimits(0.001, 0.20);
+    seg.setMaxIterations(100000);
+    seg.setInputCloud (pcl_cloud_);
+    seg.segment (inliers, coefficients);
+    ROS_INFO_STREAM("# Inliers points: " << inliers.indices.size());
+    
+  }
+  else
+  {
+  	// Object for storing the normals.
 	pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
 	// Object for storing the PFH descriptors for each point.
 	pcl::PointCloud<pcl::PFHSignature125>::Ptr descriptors(new pcl::PointCloud<pcl::PFHSignature125>());
@@ -652,8 +671,9 @@ void SensorCollection::PointcloudFromKinectProcess(pcl::PointCloud< pcl::PointXY
 	pfh.setRadiusSearch(0.008);
  
 	pfh.compute(*descriptors);
+  }
 
-}*/
+}
 
 /////////////////////////////////////////////
 nostop_kinect_sensor::SensorData SensorCollection::getMsgs()
