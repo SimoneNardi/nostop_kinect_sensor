@@ -662,15 +662,15 @@ void SensorCollection::PointcloudFromKinectProcess(pcl::PointCloud< pcl::PointXY
 	normalEstimation.compute(*normals);
 	
 	// PFH estimation object.
-	pcl::PFHEstimation<pcl::PointXYZ, pcl::Normal, pcl::PFHSignature125> pfh;
-	pfh.setInputCloud(pcl_cloud_);
-	pfh.setInputNormals(normals);
-	pfh.setSearchMethod(kdtree);
+	// pcl::PFHEstimation<pcl::PointXYZ, pcl::Normal, pcl::PFHSignature125> pfh;
+	// pfh.setInputCloud(pcl_cloud_);
+	// pfh.setInputNormals(normals);
+	// pfh.setSearchMethod(kdtree);
 	// Search radius, to look for neighbors. Note: the value given here has to be
 	// larger than the radius used to estimate the normals.
-	pfh.setRadiusSearch(0.008);
+	// pfh.setRadiusSearch(0.008);
  
-	pfh.compute(*descriptors);
+	// pfh.compute(*descriptors);
   }
 
 }
