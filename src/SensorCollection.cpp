@@ -9,20 +9,20 @@
 
 #include "ros/ros.h"
 
-#include <pcl/io/io.h>
-#include <pcl/visualization/pcl_visualizer.h>
-#include <pcl_conversions/pcl_conversions.h>
+#include <pcl-1.7/pcl/io/io.h>
+#include <pcl-1.7/pcl/visualization/pcl_visualizer.h>
+//#include <pcl_conversions/pcl_conversions.h>
 
-#include <pcl/features/normal_3d.h>
-#include <pcl/features/pfh.h>
+#include <pcl-1.7/pcl/features/normal_3d.h>
+#include <pcl-1.7/pcl/features/pfh.h>
 
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
-#include <pcl/filters/voxel_grid.h>
+#include <pcl-1.7/pcl/io/pcd_io.h>
+#include <pcl-1.7/pcl/point_types.h>
+#include <pcl-1.7/pcl/filters/voxel_grid.h>
 
-#include <pcl/ModelCoefficients.h>
-#include <pcl/filters/extract_indices.h>
-#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl-1.7/pcl/ModelCoefficients.h>
+#include <pcl-1.7/pcl/filters/extract_indices.h>
+#include <pcl-1.7/pcl/segmentation/sac_segmentation.h>
 
 using namespace std;
 using namespace Robotics;
@@ -571,12 +571,12 @@ for (int i = 0; i < contours.size(); i++)
 }
 
 
-/////////////////////////////////////////////
+///////////////////////////////////////////
 void PointcloudFromKinectVisualize(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ )
 {
-  // --------------------------------------------
-  // -----Open 3D viewer and add point cloud-----
-  // --------------------------------------------
+  --------------------------------------------
+  -----Open 3D viewer and add point cloud-----
+  --------------------------------------------
   g_viewer->removePointCloud("original cloud");
     
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> source_cloud_color_handler (pcl_cloud_, 255, 225, 255);
@@ -586,13 +586,13 @@ void PointcloudFromKinectVisualize(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pc
   g_viewer->spinOnce();
 }
 
-/////////////////////////////////////////////
+///////////////////////////////////////////
 pcl::PointCloud< pcl::PointXYZ >::Ptr PointcloudDownsample(pcl::PointCloud< pcl::PointXYZ >::ConstPtr cloud)
 {
 	std::cerr << "PointCloud before filtering: " << cloud->width * cloud->height 
 	    << " data points (" << pcl::getFieldsList (*cloud) << ").";
 	    
-	// Create the filtering object
+	Create the filtering object
 	pcl::VoxelGrid<pcl::PointXYZ> sor;
 	sor.setInputCloud (cloud);
 	sor.setLeafSize (0.01f, 0.01f, 0.01f);

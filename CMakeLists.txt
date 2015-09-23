@@ -23,11 +23,11 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge)
 
 find_package( OpenCV REQUIRED )
-find_package( PCL 1.7.1 REQUIRED) # COMPONENT common io visualization)
-
-include_directories(BEFORE ${PCL_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
+# find_package( PCL 1.7.1 REQUIRED) # COMPONENT common io visualization)
+# 
+# include_directories(BEFORE ${PCL_INCLUDE_DIRS})
+# link_directories(${PCL_LIBRARY_DIRS})
+# add_definitions(${PCL_DEFINITIONS})
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -87,7 +87,7 @@ set(sensor_SOURCES
 )
 
 add_executable(Sensor ${sensor_SOURCES})
-target_link_libraries(Sensor ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon ${PCL_LIBRARIES})
+target_link_libraries(Sensor ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon )#${PCL_LIBRARIES})
 add_dependencies(Sensor nostop_kinect_sensor_gencpp)
 
 
