@@ -20,7 +20,7 @@
 #include <opencv2/opencv.hpp>
 #include <image_transport/image_transport.h>
 #include <image_transport/subscriber_filter.h>
-#include <pcl-1.7/pcl/io/io.h>
+// #include <pcl-1.7/pcl/io/io.h>
 
 namespace Robotics 
 {
@@ -102,13 +102,13 @@ namespace Robotics
 			void ImageFromKinect(const sensor_msgs::ImageConstPtr& msg);
 			void getForeground(const sensor_msgs::ImageConstPtr& msg);
 						
- 			void PointcloudFromKinect(const sensor_msgs::PointCloud2ConstPtr& msg);
+//  			void PointcloudFromKinect(const sensor_msgs::PointCloud2ConstPtr& msg);
 						
 			void subscribe();
 			
 		protected:
 // 			void ImageFromKinectProcess(cv::Mat const& input);
- 			void PointcloudFromKinectProcess(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ );
+//  			void PointcloudFromKinectProcess(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ );
 		};
 
 	}

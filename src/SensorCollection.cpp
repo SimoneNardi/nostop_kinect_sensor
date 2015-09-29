@@ -9,20 +9,20 @@
 
 #include "ros/ros.h"
 
-#include <pcl-1.7/pcl/io/io.h>
-#include <pcl-1.7/pcl/visualization/pcl_visualizer.h>
-//#include <pcl_conversions/pcl_conversions.h>
-
-#include <pcl-1.7/pcl/features/normal_3d.h>
-#include <pcl-1.7/pcl/features/pfh.h>
-
-#include <pcl-1.7/pcl/io/pcd_io.h>
-#include <pcl-1.7/pcl/point_types.h>
-#include <pcl-1.7/pcl/filters/voxel_grid.h>
-
-#include <pcl-1.7/pcl/ModelCoefficients.h>
-#include <pcl-1.7/pcl/filters/extract_indices.h>
-#include <pcl-1.7/pcl/segmentation/sac_segmentation.h>
+// #include <pcl-1.7/pcl/io/io.h>
+// #include <pcl-1.7/pcl/visualization/pcl_visualizer.h>
+// //#include <pcl_conversions/pcl_conversions.h>
+// 
+// #include <pcl-1.7/pcl/features/normal_3d.h>
+// #include <pcl-1.7/pcl/features/pfh.h>
+// 
+// #include <pcl-1.7/pcl/io/pcd_io.h>
+// #include <pcl-1.7/pcl/point_types.h>
+// #include <pcl-1.7/pcl/filters/voxel_grid.h>
+// 
+// #include <pcl-1.7/pcl/ModelCoefficients.h>
+// #include <pcl-1.7/pcl/filters/extract_indices.h>
+// #include <pcl-1.7/pcl/segmentation/sac_segmentation.h>
 
 using namespace std;
 using namespace Robotics;
@@ -31,7 +31,7 @@ using namespace cv;
 
 
 static const std::string OPENCV_WINDOW = "Sensor Window";
-std::shared_ptr<pcl::visualization::PCLVisualizer> g_viewer = nullptr;
+// std::shared_ptr<pcl::visualization::PCLVisualizer> g_viewer = nullptr;
  
 /////////////////////////////////////////////
 SensorCollection::SensorCollection()
@@ -104,14 +104,14 @@ void SensorCollection::subscribe()
 	cv::createTrackbar("Thr", OPENCV_WINDOW, &m_thr, 255);
 	cv::createTrackbar("Max Val", OPENCV_WINDOW, &m_maxval, 255);
 	
-	m_cloud_sub = m_node.subscribe("/camera/depth/points", 1, &SensorCollection::PointcloudFromKinect, this);
-	g_viewer = std::make_shared<pcl::visualization::PCLVisualizer>("3D Viewer");
-	if (g_viewer)
-	{
-	  g_viewer->setBackgroundColor (0.5, 0.5, 0.5);
-	  g_viewer->addCoordinateSystem (1.0);
-	  g_viewer->initCameraParameters ();
-	}
+// 	m_cloud_sub = m_node.subscribe("/camera/depth/points", 1, &SensorCollection::PointcloudFromKinect, this);
+// 	g_viewer = std::make_shared<pcl::visualization::PCLVisualizer>("3D Viewer");
+// 	if (g_viewer)
+// 	{
+// 	  g_viewer->setBackgroundColor (0.5, 0.5, 0.5);
+// 	  g_viewer->addCoordinateSystem (1.0);
+// 	  g_viewer->initCameraParameters ();
+// 	}
 }
 
 /////////////////////////////////////////////
@@ -571,109 +571,109 @@ for (int i = 0; i < contours.size(); i++)
 }
 
 
-///////////////////////////////////////////
-void PointcloudFromKinectVisualize(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ )
-{
-  --------------------------------------------
-  -----Open 3D viewer and add point cloud-----
-  --------------------------------------------
-  g_viewer->removePointCloud("original cloud");
-    
-  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> source_cloud_color_handler (pcl_cloud_, 255, 225, 255);
-  g_viewer->addPointCloud(pcl_cloud_, source_cloud_color_handler , "original cloud");
-  g_viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "original cloud");
-  
-  g_viewer->spinOnce();
-}
-
-///////////////////////////////////////////
-pcl::PointCloud< pcl::PointXYZ >::Ptr PointcloudDownsample(pcl::PointCloud< pcl::PointXYZ >::ConstPtr cloud)
-{
-	std::cerr << "PointCloud before filtering: " << cloud->width * cloud->height 
-	    << " data points (" << pcl::getFieldsList (*cloud) << ").";
-	    
-	Create the filtering object
-	pcl::VoxelGrid<pcl::PointXYZ> sor;
-	sor.setInputCloud (cloud);
-	sor.setLeafSize (0.01f, 0.01f, 0.01f);
-	pcl::PointCloud< pcl::PointXYZ >::Ptr cloud_filtered (new pcl::PointCloud< pcl::PointXYZ >);
-	sor.filter (*cloud_filtered);
-
-	std::cerr << "PointCloud after filtering: " << cloud_filtered->width * cloud_filtered->height 
-	    << " data points (" << pcl::getFieldsList (*cloud_filtered) << ").";
-	    
-       return cloud_filtered;
-}
-
-/////////////////////////////////////////////
-void SensorCollection::PointcloudFromKinect(const sensor_msgs::PointCloud2ConstPtr& msg)
-{
-	Lock l_lck(m_mutex);
-	int l_height = msg->height;
-	int l_width = msg->width;
-	  
-	pcl::PointCloud< pcl::PointXYZ > l_pcl_cloud;
-	pcl::fromROSMsg(*msg,l_pcl_cloud);
-	
-	pcl::PointCloud< pcl::PointXYZ >::Ptr l_cloud(new pcl::PointCloud< pcl::PointXYZ > (l_pcl_cloud) );
-	
-	pcl::PointCloud< pcl::PointXYZ >::Ptr l_cloud_filtered = PointcloudDownsample(l_cloud);
-	
-	PointcloudFromKinectProcess(l_cloud_filtered);
-	
-	if (g_viewer)
-	{
-		PointcloudFromKinectVisualize(l_cloud_filtered);
-	}
-}
-
-/////////////////////////////////////////////
-void SensorCollection::PointcloudFromKinectProcess(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ )
-{
-  if (1)
-  {
-    pcl::ModelCoefficients coefficients;
-    pcl::PointIndices inliers;
-    pcl::SACSegmentation<pcl::PointXYZ> seg;
-    seg.setOptimizeCoefficients (false);
-    seg.setModelType (pcl::SACMODEL_SPHERE); //detecting SPHERE
-    seg.setMethodType (pcl::SAC_RANSAC);
-    seg.setDistanceThreshold (0.001);
-    seg.setRadiusLimits(0.001, 0.20);
-    seg.setMaxIterations(100000);
-    seg.setInputCloud (pcl_cloud_);
-    seg.segment (inliers, coefficients);
-    ROS_INFO_STREAM("# Inliers points: " << inliers.indices.size());
-    
-  }
-  else
-  {
-  	// Object for storing the normals.
-	pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
-	// Object for storing the PFH descriptors for each point.
-	pcl::PointCloud<pcl::PFHSignature125>::Ptr descriptors(new pcl::PointCloud<pcl::PFHSignature125>());
-	
-	// Estimate the normals.
-	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normalEstimation;
-	normalEstimation.setInputCloud(pcl_cloud_);
-	normalEstimation.setRadiusSearch(0.01);
-	pcl::search::KdTree<pcl::PointXYZ>::Ptr kdtree(new pcl::search::KdTree<pcl::PointXYZ>);
-	normalEstimation.setSearchMethod(kdtree);
-	normalEstimation.compute(*normals);
-	
-	// PFH estimation object.
-	// pcl::PFHEstimation<pcl::PointXYZ, pcl::Normal, pcl::PFHSignature125> pfh;
-	// pfh.setInputCloud(pcl_cloud_);
-	// pfh.setInputNormals(normals);
-	// pfh.setSearchMethod(kdtree);
-	// Search radius, to look for neighbors. Note: the value given here has to be
-	// larger than the radius used to estimate the normals.
-	// pfh.setRadiusSearch(0.008);
- 
-	// pfh.compute(*descriptors);
-  }
-
-}
+// ///////////////////////////////////////////
+// void PointcloudFromKinectVisualize(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ )
+// {
+//   --------------------------------------------
+//   -----Open 3D viewer and add point cloud-----
+//   --------------------------------------------
+//   g_viewer->removePointCloud("original cloud");
+//     
+//   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> source_cloud_color_handler (pcl_cloud_, 255, 225, 255);
+//   g_viewer->addPointCloud(pcl_cloud_, source_cloud_color_handler , "original cloud");
+//   g_viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "original cloud");
+//   
+//   g_viewer->spinOnce();
+// }
+// 
+// ///////////////////////////////////////////
+// pcl::PointCloud< pcl::PointXYZ >::Ptr PointcloudDownsample(pcl::PointCloud< pcl::PointXYZ >::ConstPtr cloud)
+// {
+// 	std::cerr << "PointCloud before filtering: " << cloud->width * cloud->height 
+// 	    << " data points (" << pcl::getFieldsList (*cloud) << ").";
+// 	    
+// 	Create the filtering object
+// 	pcl::VoxelGrid<pcl::PointXYZ> sor;
+// 	sor.setInputCloud (cloud);
+// 	sor.setLeafSize (0.01f, 0.01f, 0.01f);
+// 	pcl::PointCloud< pcl::PointXYZ >::Ptr cloud_filtered (new pcl::PointCloud< pcl::PointXYZ >);
+// 	sor.filter (*cloud_filtered);
+// 
+// 	std::cerr << "PointCloud after filtering: " << cloud_filtered->width * cloud_filtered->height 
+// 	    << " data points (" << pcl::getFieldsList (*cloud_filtered) << ").";
+// 	    
+//        return cloud_filtered;
+// }
+// 
+// /////////////////////////////////////////////
+// void SensorCollection::PointcloudFromKinect(const sensor_msgs::PointCloud2ConstPtr& msg)
+// {
+// 	Lock l_lck(m_mutex);
+// 	int l_height = msg->height;
+// 	int l_width = msg->width;
+// 	  
+// 	pcl::PointCloud< pcl::PointXYZ > l_pcl_cloud;
+// 	pcl::fromROSMsg(*msg,l_pcl_cloud);
+// 	
+// 	pcl::PointCloud< pcl::PointXYZ >::Ptr l_cloud(new pcl::PointCloud< pcl::PointXYZ > (l_pcl_cloud) );
+// 	
+// 	pcl::PointCloud< pcl::PointXYZ >::Ptr l_cloud_filtered = PointcloudDownsample(l_cloud);
+// 	
+// 	PointcloudFromKinectProcess(l_cloud_filtered);
+// 	
+// 	if (g_viewer)
+// 	{
+// 		PointcloudFromKinectVisualize(l_cloud_filtered);
+// 	}
+// }
+// 
+// /////////////////////////////////////////////
+// void SensorCollection::PointcloudFromKinectProcess(pcl::PointCloud< pcl::PointXYZ >::ConstPtr pcl_cloud_ )
+// {
+//   if (1)
+//   {
+//     pcl::ModelCoefficients coefficients;
+//     pcl::PointIndices inliers;
+//     pcl::SACSegmentation<pcl::PointXYZ> seg;
+//     seg.setOptimizeCoefficients (false);
+//     seg.setModelType (pcl::SACMODEL_SPHERE); //detecting SPHERE
+//     seg.setMethodType (pcl::SAC_RANSAC);
+//     seg.setDistanceThreshold (0.001);
+//     seg.setRadiusLimits(0.001, 0.20);
+//     seg.setMaxIterations(100000);
+//     seg.setInputCloud (pcl_cloud_);
+//     seg.segment (inliers, coefficients);
+//     ROS_INFO_STREAM("# Inliers points: " << inliers.indices.size());
+//     
+//   }
+//   else
+//   {
+//   	// Object for storing the normals.
+// 	pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+// 	// Object for storing the PFH descriptors for each point.
+// 	pcl::PointCloud<pcl::PFHSignature125>::Ptr descriptors(new pcl::PointCloud<pcl::PFHSignature125>());
+// 	
+// 	// Estimate the normals.
+// 	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normalEstimation;
+// 	normalEstimation.setInputCloud(pcl_cloud_);
+// 	normalEstimation.setRadiusSearch(0.01);
+// 	pcl::search::KdTree<pcl::PointXYZ>::Ptr kdtree(new pcl::search::KdTree<pcl::PointXYZ>);
+// 	normalEstimation.setSearchMethod(kdtree);
+// 	normalEstimation.compute(*normals);
+// 	
+// 	// PFH estimation object.
+// 	// pcl::PFHEstimation<pcl::PointXYZ, pcl::Normal, pcl::PFHSignature125> pfh;
+// 	// pfh.setInputCloud(pcl_cloud_);
+// 	// pfh.setInputNormals(normals);
+// 	// pfh.setSearchMethod(kdtree);
+// 	// Search radius, to look for neighbors. Note: the value given here has to be
+// 	// larger than the radius used to estimate the normals.
+// 	// pfh.setRadiusSearch(0.008);
+//  
+// 	// pfh.compute(*descriptors);
+//   }
+// 
+// }
 
 /////////////////////////////////////////////
 nostop_kinect_sensor::SensorData SensorCollection::getMsgs()
