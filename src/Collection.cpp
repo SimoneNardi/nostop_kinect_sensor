@@ -9,7 +9,6 @@
 
 #include "ros/ros.h"
 
-
 using namespace std;
 using namespace Robotics;
 using namespace Robotics::GameTheory;
@@ -24,6 +23,8 @@ Collection::Collection()
 , m_data()
 , m_it(m_node)
 , m_foregroundFLAG(false)
+, image_ok(false)
+, count(0)
 , m_dp(1)
 , m_min_dist(300)
 , m_cannyEdge(30)
@@ -48,31 +49,41 @@ void Collection::subscribe()
 	ROS_INFO("Sensor: Collection subscribe!");
   
 	// Legge e mostra cosa vede la camera
-	m_image_sub = m_it.subscribe("/camera/rgb/image_rect_color", 1, &Collection::getForeground, this, image_transport::TransportHints("raw"));
-
-	cv::namedWindow("Foreground Image");
 	
-	m_mutex.lock();
+	cv::namedWindow("Foreground Image");
+	cv::namedWindow(OPENCV_WINDOW);
+	m_image_pub = m_it.advertise("/sensor/output_video", 1);
+	m_image_sub = m_it.subscribe("/camera/rgb/image_rect_color", 1, &Collection::getForeground, this, image_transport::TransportHints("raw"));
+	m_image_sub2 = m_it.subscribe("/sensor/output_video",1, &Collection::toPub, this, image_transport::TransportHints("raw"));
+// 	m_mutex.lock();
 	while (!m_foregroundFLAG)
 	{
-	  m_mutex.unlock();
+// 	  m_mutex.unlock();
 	  ros::spinOnce();
-	  m_mutex.lock();
+// 	  m_mutex.lock();
 	}
-// 	m_foregroundFLAG = false;
-	m_mutex.unlock();
 	
+	m_foregroundFLAG = false;
+// 	m_mutex.unlock();
+		
+// 	m_image_sub.shutdown();
+//  	m_image_sub2.shutdown();
+	
+// 	if(!image_ok)
+// 	{ 
+// 	  cv:waitKey(1000);
+// 	  m_image_pub.shutdown();
+// 	  image_ok = true;
+// 	}
+// 	
 	std::cout << "Sensor: ForeGround Collected!"<< std::endl << std::flush;
-	m_image_sub.shutdown();
-	m_image_pub = m_it.advertise("/sensor/output_video", 1);
-	cv::namedWindow(OPENCV_WINDOW);
-
+	
 }
 
-/////////////////////////////////////////////
+///////////////////////////////////////////// IMMAGINI SOTTOSCRITTE
 void Collection::getForeground(const sensor_msgs::ImageConstPtr& msg)
 {
-  Lock l_lck(m_mutex);
+  //Lock l_lck(m_mutex);
   cv_bridge::CvImageConstPtr cv_ptr;
   try
   {
@@ -95,10 +106,47 @@ void Collection::getForeground(const sensor_msgs::ImageConstPtr& msg)
       // Update GUI Window
       cv::imshow("Foreground Image", m_foreground);
       cv::waitKey(3);
+      m_image_pub.publish(msg);
+      if (count==50)
+      {
+	m_image_pub.shutdown();
+      } else {
+	count = count+1;
+	
+      }
    }
      
 }
 
+///////////////////////////////////////////// IMMAGINI DA PUBBLICARE
+void Collection::toPub(const sensor_msgs::ImageConstPtr& msg)
+{
+  //Lock l_lck(m_mutex);
+  cv_bridge::CvImageConstPtr cv_ptr;
+  try
+  {
+    if (sensor_msgs::image_encodings::isColor(msg->encoding))
+	cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8);
+    else
+	cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
+  }
+  catch (cv_bridge::Exception& e)
+  {
+    ROS_ERROR("cv_bridge exception: %s", e.what());
+    return;
+  }
+  
+  pubblicata = cv_ptr->image.clone();
+  m_foregroundFLAG = true;
+    
+   if(m_foregroundFLAG)
+   {
+      // Update GUI Window
+      cv::imshow(OPENCV_WINDOW, pubblicata);
+      cv::waitKey(3);
+   }	
+     
+}
 // enum ColorName
 // {
 //     red = 0,
@@ -492,30 +540,30 @@ void Collection::getForeground(const sensor_msgs::ImageConstPtr& msg)
 // }
 // 
 // /////////////////////////////////////////////
-nostop_kinect_sensor::SensorData Collection::getMsgs()
-{
-  Lock l_lck(m_mutex);
-  std::vector<nostop_kinect_sensor::AgentSensorData> l_result;
-  if(m_available)
-  {
-    for(auto it = m_data.begin(); it!= m_data.end(); ++it)
-    {
-      nostop_kinect_sensor::AgentSensorData l_elem;
-	Color l_color = (*it).first;
-	l_elem.r = l_color.r;
-	l_elem.g = l_color.g;
-	l_elem.b = l_color.b;
-	AgentSensor l_agSens = (*it).second;
-	l_elem.x = l_agSens.x;
-	l_elem.y = l_agSens.y;
-	l_elem.heading = l_agSens.heading;
-	
-	l_result.push_back(l_elem);
-    }
-    m_available=false;
-  }
-  nostop_kinect_sensor::SensorData l_msgs;
-  l_msgs.data = l_result;
-  return l_msgs;
-}
-
+// nostop_kinect_sensor::SensorData Collection::getMsgs()
+// {
+//   Lock l_lck(m_mutex);
+//   std::vector<nostop_kinect_sensor::AgentSensorData> l_result;
+//   if(m_available)
+//   {
+//     for(auto it = m_data.begin(); it!= m_data.end(); ++it)
+//     {
+//       nostop_kinect_sensor::AgentSensorData l_elem;
+// 	Color l_color = (*it).first;
+// 	l_elem.r = l_color.r;
+// 	l_elem.g = l_color.g;
+// 	l_elem.b = l_color.b;
+// 	AgentSensor l_agSens = (*it).second;
+// 	l_elem.x = l_agSens.x;
+// 	l_elem.y = l_agSens.y;
+// 	l_elem.heading = l_agSens.heading;
+// 	
+// 	l_result.push_back(l_elem);
+//     }
+//     m_available=false;
+//   }
+//   nostop_kinect_sensor::SensorData l_msgs;
+//   l_msgs.data = l_result;
+//   return l_msgs;
+// }
+// 
