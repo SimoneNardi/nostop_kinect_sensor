@@ -81,14 +81,21 @@ include_directories(${CMAKE_INSTALL_PREFIX}/include) # this line is to find lemo
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 set(sensor_SOURCES
-        src/Sensor.cpp
-        src/SensorCollection.cpp
-        src/SensorCollector.cpp
+#         src/Sensor.cpp
+#         src/SensorCollection.cpp
+#         src/SensorCollector.cpp
+        src/Collection.cpp
+        src/Collector.cpp
+        src/sensor_node.cpp
 )
 
-add_executable(Sensor ${sensor_SOURCES})
-target_link_libraries(Sensor ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon )#${PCL_LIBRARIES})
-add_dependencies(Sensor nostop_kinect_sensor_gencpp)
+# add_executable(Sensor ${sensor_SOURCES})
+# target_link_libraries(Sensor ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon )#${PCL_LIBRARIES})
+# add_dependencies(Sensor nostop_kinect_sensor_gencpp)
+
+add_executable(sensor_node ${sensor_SOURCES})
+target_link_libraries(sensor_node ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon )#${PCL_LIBRARIES})
+add_dependencies(sensor_node nostop_kinect_sensor_gencpp)
 
 
 #############
@@ -96,7 +103,12 @@ add_dependencies(Sensor nostop_kinect_sensor_gencpp)
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS Sensor
+# install(TARGETS Sensor
+#  EXPORT nostop_kinect_sensor
+#    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#  )
+ 
+ install(TARGETS sensor_node
  EXPORT nostop_kinect_sensor
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
