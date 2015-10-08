@@ -80,17 +80,19 @@ namespace Robotics
 		  
 		  image_transport::ImageTransport m_it;
 		  image_transport::Subscriber m_image_sub;
-		  image_transport::Subscriber m_image_sub2;
+		  image_transport::Subscriber m_image_sub_circles;
+		  image_transport::Subscriber m_image_sub_photo;
 		  image_transport::Publisher m_image_pub;
 		  
 		  ros::Subscriber m_cloud_sub;
 		  
 		  bool m_foregroundFLAG;
 		  cv::Mat m_foreground;
+		  cv::Mat m_processed;
 		  
-		  int count;
-		  int wait_time;//x*100 -> x*3.6 secondi
-		  cv::Mat pubblicata;// immagine da pubblicare su topic per elaborazione
+		  int m_count;
+		  int m_wait_time;//x*100 -> x*3.6 s (to do )
+		  cv::Mat m_photo;// 
 		  
 		  int m_dp, m_min_dist, m_cannyEdge, m_centerDetect, m_minrad, m_maxrad;
 		  int m_thr, m_maxval;
@@ -101,11 +103,12 @@ namespace Robotics
 			~Collection();
 			
 // 			nostop_kinect_sensor::SensorData getMsgs();
-			
+			void subscribe();
+			void searchCircles();
 			void ImageFromKinect(const sensor_msgs::ImageConstPtr& msg);
 			void getForeground(const sensor_msgs::ImageConstPtr& msg);
 			void toPub(const sensor_msgs::ImageConstPtr& msg);
-			void subscribe();
+			void test_ricerca(const sensor_msgs::ImageConstPtr& msg);
 		};
 
 	}

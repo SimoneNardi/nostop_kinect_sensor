@@ -17,7 +17,7 @@ Collector::Collector(): m_sensor(nullptr)
   m_sensor = std::make_shared<Collection>();
   
   m_sensor->subscribe();
-  
+  m_sensor->searchCircles();
 }
 
 /////////////////////////////////////////////

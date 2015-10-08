@@ -15,13 +15,10 @@ int main(int argc, char **argv)
 	Robotics::GameTheory::Collector l_Collector;
 	l_Collector.start();
 	
-// 	ros::spin();
-	ROS_INFO("PRE FOR");
-	for(int i = 1;i<1e8;i++)
+	for(int i = 1;i<1e4;i++) // TO DO IN SECOND
 	{
 	  ros::spinOnce();
 	}
-	ROS_INFO("FINE");
 	l_Collector.stop();
 	return 0;
 }
