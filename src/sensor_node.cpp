@@ -14,8 +14,14 @@ int main(int argc, char **argv)
 	// From Simulator?
 	Robotics::GameTheory::Collector l_Collector;
 	l_Collector.start();
-		
-	ros::spin();
-
+	
+// 	ros::spin();
+	ROS_INFO("PRE FOR");
+	for(int i = 1;i<1e8;i++)
+	{
+	  ros::spinOnce();
+	}
+	ROS_INFO("FINE");
+	l_Collector.stop();
 	return 0;
 }

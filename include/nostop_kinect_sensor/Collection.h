@@ -88,7 +88,8 @@ namespace Robotics
 		  bool m_foregroundFLAG;
 		  cv::Mat m_foreground;
 		  
-		  bool image_ok;int count;
+		  int count;
+		  int wait_time;//x*100 -> x*3.6 secondi
 		  cv::Mat pubblicata;// immagine da pubblicare su topic per elaborazione
 		  
 		  int m_dp, m_min_dist, m_cannyEdge, m_centerDetect, m_minrad, m_maxrad;

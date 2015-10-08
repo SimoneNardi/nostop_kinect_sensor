@@ -8,6 +8,7 @@
 #include "highgui.h"
 
 #include "ros/ros.h"
+#include "ros/subscriber.h"
 
 using namespace std;
 using namespace Robotics;
@@ -23,7 +24,7 @@ Collection::Collection()
 , m_data()
 , m_it(m_node)
 , m_foregroundFLAG(false)
-, image_ok(false)
+, wait_time(140)
 , count(0)
 , m_dp(1)
 , m_min_dist(300)
@@ -40,14 +41,14 @@ Collection::~Collection()
 {
 	cv::destroyWindow(OPENCV_WINDOW); //destroy the window with the name, "MySensorWindow"
 	cv::destroyWindow("Foreground Image");
-	cv::destroyWindow("Subtraction Image");
+// 	cv::destroyWindow("Subtraction Image");
 }
 
 /////////////////////////////////////////////
 void Collection::subscribe()
 {
 	ROS_INFO("Sensor: Collection subscribe!");
-  
+	
 	// Legge e mostra cosa vede la camera
 	
 	cv::namedWindow("Foreground Image");
@@ -65,25 +66,16 @@ void Collection::subscribe()
 	
 	m_foregroundFLAG = false;
 // 	m_mutex.unlock();
-		
-// 	m_image_sub.shutdown();
-//  	m_image_sub2.shutdown();
-	
-// 	if(!image_ok)
-// 	{ 
-// 	  cv:waitKey(1000);
-// 	  m_image_pub.shutdown();
-// 	  image_ok = true;
-// 	}
-// 	
+
 	std::cout << "Sensor: ForeGround Collected!"<< std::endl << std::flush;
-	
+
 }
 
-///////////////////////////////////////////// IMMAGINI SOTTOSCRITTE
+/// IMMAGINI SOTTOSCRITTE
 void Collection::getForeground(const sensor_msgs::ImageConstPtr& msg)
 {
-  //Lock l_lck(m_mutex);
+//   Lock l_lck(m_mutex);
+
   cv_bridge::CvImageConstPtr cv_ptr;
   try
   {
@@ -99,6 +91,7 @@ void Collection::getForeground(const sensor_msgs::ImageConstPtr& msg)
   }
   
   m_foreground = cv_ptr->image.clone();
+  
   m_foregroundFLAG = true;
     
    if(m_foregroundFLAG)
@@ -107,18 +100,19 @@ void Collection::getForeground(const sensor_msgs::ImageConstPtr& msg)
       cv::imshow("Foreground Image", m_foreground);
       cv::waitKey(3);
       m_image_pub.publish(msg);
-      if (count==50)
+      if (count == wait_time)
       {
+	m_image_sub2.shutdown();
 	m_image_pub.shutdown();
+	count = count+1;
       } else {
 	count = count+1;
-	
       }
    }
      
 }
 
-///////////////////////////////////////////// IMMAGINI DA PUBBLICARE
+/// IMMAGINI DA PUBBLICARE
 void Collection::toPub(const sensor_msgs::ImageConstPtr& msg)
 {
   //Lock l_lck(m_mutex);
@@ -145,7 +139,7 @@ void Collection::toPub(const sensor_msgs::ImageConstPtr& msg)
       cv::imshow(OPENCV_WINDOW, pubblicata);
       cv::waitKey(3);
    }	
-     
+
 }
 // enum ColorName
 // {

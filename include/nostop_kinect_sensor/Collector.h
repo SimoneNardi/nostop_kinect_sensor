@@ -26,9 +26,7 @@ namespace Robotics
 		  mutable Mutex m_mutex;
 		  
 		  std::shared_ptr<Collection> m_sensor;
-		  
 		  bool m_notify;
-		  
 		  ros::NodeHandle m_node;
 		  ros::Publisher m_pub;
 		  
