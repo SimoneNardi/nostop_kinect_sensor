@@ -6,9 +6,7 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "highgui.h"
-
 #include "ros/ros.h"
-// #include "ros/subscriber.h"
 
 using namespace std;
 using namespace Robotics;
@@ -28,11 +26,11 @@ Collection::Collection()
 , m_wait_time(140)
 , m_count(0)
 , m_dp(1)
-, m_min_dist(300)
-, m_cannyEdge(30)
-, m_centerDetect(17)
-, m_minrad(0)
-, m_maxrad(0)
+, m_minDist(300)
+, m_param1(30)
+, m_param2(17)
+, m_minR(0)
+, m_maxR(0)
 , m_thr(40)
 , m_maxval(255)
 {}
@@ -143,20 +141,13 @@ void Collection::toPub(const sensor_msgs::ImageConstPtr& msg)
 void Collection::searchCircles()
 {	
 	ROS_INFO("Searching init.");
-	m_image_sub_circles = m_it.subscribe("/camera/rgb/image_rect_color", 1, &Collection::test_ricerca, this, image_transport::TransportHints("raw"));
+	m_image_sub_circles = m_it.subscribe("/camera/rgb/image_rect_color", 1, &Collection::search_test, this, image_transport::TransportHints("raw"));
 }
 
-void Collection::test_ricerca(const sensor_msgs::ImageConstPtr& msg)
+void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 { 
   vector<cv::Vec3f> l_circles;
-  int l_method = CV_HOUGH_GRADIENT;
-  double l_dp = 1;
-  double l_minDist = 32 ;
-  double l_param1 = 30;
-  double l_param2 = 1000;
-  int l_minR = 0;
-  int l_maxR = 0;
-  
+ 
   cv_bridge::CvImageConstPtr cv_ptr;
   try{
   cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
@@ -167,16 +158,26 @@ void Collection::test_ricerca(const sensor_msgs::ImageConstPtr& msg)
     return;
   }
   m_processed = cv_ptr->image.clone();
-  cv::HoughCircles(m_processed,l_circles,l_method,l_dp,l_minDist,l_param1,l_param2,l_minR,l_maxR);
+  cv::HoughCircles(m_processed,l_circles,CV_HOUGH_GRADIENT,m_dp,m_minDist,m_param1,m_param2,m_minR,m_maxR);
+ 
+  cv::createTrackbar("Inverse ratio resolution", SENSOR_CV_WINDOW, &m_dp, 255);
+  cv::createTrackbar("Min Dist between Centers", SENSOR_CV_WINDOW, &m_minDist, 255);
+  cv::createTrackbar("Param 1", SENSOR_CV_WINDOW, &m_param1, 255);
+  cv::createTrackbar("Param 2", SENSOR_CV_WINDOW, &m_param2, 255);
+  cv::createTrackbar("Min rad", SENSOR_CV_WINDOW, &m_minR, 255);
+  cv::createTrackbar("Max rad", SENSOR_CV_WINDOW, &m_maxR, 255);
+//   cv::createTrackbar("Thr", SENSOR_CV_WINDOW, &l_thr, 255);
+//   cv::createTrackbar("Max Val", SENSOR_CV_WINDOW, &l_maxval, 255);	
+  
   /// Draw the circles detected
   for( size_t i = 0; i < l_circles.size(); i++ )
   {
       cv::Point center(cvRound(l_circles[i][0]), cvRound(l_circles[i][1]));
       int radius = cvRound(l_circles[i][2]);
       // circle center
-      cv::circle( m_processed, center, 3, cv::Scalar(0,255,0), -1, 8, 0 );
+      cv::circle( m_photo, center, 3, cv::Scalar(0,255,0), -1, 8, 0 );
       // circle outline
-      cv::circle( m_processed, center, radius, cv::Scalar(0,0,255), 3, 8, 0 );
+      cv::circle( m_photo, center, radius, cv::Scalar(0,0,255), 3, 8, 0 );
    }
   if(l_circles.size()==0)
   { 
@@ -188,6 +189,10 @@ void Collection::test_ricerca(const sensor_msgs::ImageConstPtr& msg)
   }
 }
 
+
+        
+	
+	
 // enum ColorName
 // {
 //     red = 0,

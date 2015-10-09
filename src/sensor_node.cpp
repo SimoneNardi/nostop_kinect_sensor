@@ -1,7 +1,11 @@
 #include "ros/ros.h"
-
 #include "Collector.h"
 #include "Collection.h"
+
+void ShutDown(const ros::TimerEvent&)
+{
+ ros::shutdown();
+}
 
 int main(int argc, char **argv)
 {
@@ -14,11 +18,13 @@ int main(int argc, char **argv)
 	// From Simulator?
 	Robotics::GameTheory::Collector l_Collector;
 	l_Collector.start();
+      
+	ros::NodeHandle n;
+
+	ros::Timer l_timer=n.createTimer(ros::Duration(100000), ShutDown);
+	ros::spin();
 	
-	for(int i = 1;i<1e4;i++) // TO DO IN SECOND
-	{
-	  ros::spinOnce();
-	}
 	l_Collector.stop();
+     
 	return 0;
 }

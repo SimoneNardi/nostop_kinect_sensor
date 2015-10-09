@@ -94,7 +94,7 @@ namespace Robotics
 		  int m_wait_time;//x*100 -> x*3.6 s (to do )
 		  cv::Mat m_photo;// 
 		  
-		  int m_dp, m_min_dist, m_cannyEdge, m_centerDetect, m_minrad, m_maxrad;
+		  int m_dp, m_minDist, m_param1, m_param2, m_minR, m_maxR;
 		  int m_thr, m_maxval;
 		  
 		public:
@@ -108,7 +108,7 @@ namespace Robotics
 			void ImageFromKinect(const sensor_msgs::ImageConstPtr& msg);
 			void getForeground(const sensor_msgs::ImageConstPtr& msg);
 			void toPub(const sensor_msgs::ImageConstPtr& msg);
-			void test_ricerca(const sensor_msgs::ImageConstPtr& msg);
+			void search_test(const sensor_msgs::ImageConstPtr& msg);
 		};
 
 	}
