@@ -47,7 +47,7 @@ Collection::~Collection()
 {
 	cv::destroyWindow(FOREGROUND_CV_WINDOW); //destroy the window with the name, "MySensorWindow"
 	cv::destroyWindow(SENSOR_CV_WINDOW);
-// 	cv::destroyWindow("Subtraction Image");
+	cv::destroyWindow(FILTERED_CV_WINDOW);
 }
 
 /////////////////////////////////////////////
@@ -92,7 +92,7 @@ void Collection::getForeground(const sensor_msgs::ImageConstPtr& msg)
   }
   
   m_foreground = cv_ptr->image.clone();
-  
+  m_photo_support = cv_ptr->image.clone();
   m_foregroundFLAG = true;
     
    if(m_foregroundFLAG)
@@ -156,19 +156,21 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 { 
   vector<cv::Vec3f> l_circles;
   cv::Mat l_first_filtered_image,l_second_filtered_image;
-  cv_bridge::CvImageConstPtr cv_ptr;
-  try{
-  cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
-  }
-  catch (cv_bridge::Exception& e)
-  {
-    ROS_ERROR("cv_bridge exception: %s", e.what());
-    return;
-  }
-  m_processed = cv_ptr->image.clone();
+//   cv_bridge::CvImageConstPtr cv_ptr;
+//   try{
+//   cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
+//   }
+//   catch (cv_bridge::Exception& e)
+//   {
+//     ROS_ERROR("cv_bridge exception: %s", e.what());
+//     return;
+//   }
+//   m_processed = cv_ptr->image.clone();
   
-  // Filtering 
+  // First pass of filtering 
   l_first_filtered_image = abs(m_foreground-m_photo);
+  
+  // Second passo of filtering
   cv::createTrackbar("Min red", FILTERED_CV_WINDOW, &m_min_red, 255);
   cv::createTrackbar("Max red", FILTERED_CV_WINDOW, &m_max_red, 255);
   cv::createTrackbar("Min green", FILTERED_CV_WINDOW, &m_min_green, 255);
@@ -182,9 +184,6 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
   
   
   // Find circles
-  
-  cv::HoughCircles(l_second_filtered_image,l_circles,CV_HOUGH_GRADIENT,m_dp,m_minDist,m_param1,m_param2,m_minR,m_maxR);
- 
   cv::createTrackbar("Inverse ratio resolution", SENSOR_CV_WINDOW, &m_dp, 255);
   cv::createTrackbar("Min Dist between Centers", SENSOR_CV_WINDOW, &m_minDist, 255);
   cv::createTrackbar("Param 1", SENSOR_CV_WINDOW, &m_param1, 255);
@@ -193,6 +192,9 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
   cv::createTrackbar("Max rad", SENSOR_CV_WINDOW, &m_maxR, 255);
 //  cv::createTrackbar("Thr", SENSOR_CV_WINDOW, &l_thr, 255);
 // cv::createTrackbar("Max Val", SENSOR_CV_WINDOW, &l_maxval, 255);	
+  cv::HoughCircles(l_second_filtered_image,l_circles,CV_HOUGH_GRADIENT,m_dp,m_minDist,m_param1,m_param2,m_minR,m_maxR);
+ 
+
   
   
   /// Draw the circles detected
