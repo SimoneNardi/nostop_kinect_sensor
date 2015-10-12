@@ -21,7 +21,7 @@ int main(int argc, char **argv)
       
 	ros::NodeHandle n;
 
-	ros::Timer l_timer=n.createTimer(ros::Duration(100000), ShutDown);
+// 	ros::Timer l_timer=n.createTimer(ros::Duration(100000), ShutDown);
 	ros::spin();
 	
 	l_Collector.stop();
