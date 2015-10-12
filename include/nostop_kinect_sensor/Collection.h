@@ -110,6 +110,8 @@ namespace Robotics
 			void getForeground(const sensor_msgs::ImageConstPtr& msg);
 			void toPub(const sensor_msgs::ImageConstPtr& msg);
 			void search_test(const sensor_msgs::ImageConstPtr& msg);
+			
+		  
 		};
 
 	}

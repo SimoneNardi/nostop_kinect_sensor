@@ -28,10 +28,10 @@ Collection::Collection()
 , m_count(0)
 , m_dp(1)
 , m_minDist(300)
-, m_param1(30)
-, m_param2(255)
-, m_minR(255)
-, m_maxR(255)
+, m_param1(15)
+, m_param2(16)
+, m_minR(15)
+, m_maxR(30)
 , m_max_red(255)
 , m_min_red(0)
 , m_max_green(255)
@@ -168,7 +168,7 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
   m_processed = cv_ptr->image.clone();
   
   // Filtering 
-  l_first_filtered_image = m_foreground;//abs(m_foreground-m_photo);
+  l_first_filtered_image = abs(m_foreground-m_photo);
   cv::createTrackbar("Min red", FILTERED_CV_WINDOW, &m_min_red, 255);
   cv::createTrackbar("Max red", FILTERED_CV_WINDOW, &m_max_red, 255);
   cv::createTrackbar("Min green", FILTERED_CV_WINDOW, &m_min_green, 255);
@@ -182,6 +182,7 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
   
   
   // Find circles
+  
   cv::HoughCircles(l_second_filtered_image,l_circles,CV_HOUGH_GRADIENT,m_dp,m_minDist,m_param1,m_param2,m_minR,m_maxR);
  
   cv::createTrackbar("Inverse ratio resolution", SENSOR_CV_WINDOW, &m_dp, 255);
@@ -190,8 +191,8 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
   cv::createTrackbar("Param 2", SENSOR_CV_WINDOW, &m_param2, 255);
   cv::createTrackbar("Min rad", SENSOR_CV_WINDOW, &m_minR, 255);
   cv::createTrackbar("Max rad", SENSOR_CV_WINDOW, &m_maxR, 255);
-//   cv::createTrackbar("Thr", SENSOR_CV_WINDOW, &l_thr, 255);
-//   cv::createTrackbar("Max Val", SENSOR_CV_WINDOW, &l_maxval, 255);	
+//  cv::createTrackbar("Thr", SENSOR_CV_WINDOW, &l_thr, 255);
+// cv::createTrackbar("Max Val", SENSOR_CV_WINDOW, &l_maxval, 255);	
   
   
   /// Draw the circles detected
@@ -206,7 +207,7 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
       cv::imshow(FOREGROUND_CV_WINDOW,m_photo_support);
    }
    
-//    
+   
 //   if(l_circles.size()==0)
 //   { 
 //     ROS_INFO("NOT FOUND");
@@ -217,9 +218,6 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 //   }
 }
 
-
-        
-	
 	
 // enum ColorName
 // {
