@@ -159,7 +159,7 @@ void Collection::searchCircles()
 void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 { 
   vector<cv::Vec3f> l_circles;
-  cv::Mat l_first_filtered_image,l_second_filtered_image, l_third_filtered_image;
+  cv::Mat l_first_filtered_image,l_pre_first_filtered_image,l_second_filtered_image, l_third_filtered_image;
 //   cv_bridge::CvImageConstPtr cv_ptr;
 //   try{
 //   cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
@@ -172,41 +172,76 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 //   m_processed = cv_ptr->image.clone();
   
   // First step of filtering 
- // l_first_filtered_image = abs(m_foreground-m_photo);
-  cv::split(m_foreground,m_channel);
-  cv::split(m_photo,m_channel2);
-  for (int i=1;i<m_foreground.rows;i++)
-  {
-    for (int j=1;j<m_foreground.cols;j++)
-    {
-      if (abs(m_channel[0][i][j]-m_channel2[0][i][j])<10)
-      {
-	m_channel3[0][i][j]=0;
-      }
-      else{
-	    m_channel3[0][i][j]=m_channel[0][i][j];
-      }
-//       if (abs(m_channel[1][i][j]-m_channel2[1][i][j])<10)
-//       {
-// 	m_channel3[1][i][j]=0;
-//       }
-//       else{
-// 	    m_channel3[1][i][j]=m_channel[1][i][j];
-//       }
-//       if (abs(m_channel[2][i][j]-m_channel2[2][i][j])<10)
-//       {
-// 	m_channel3[2][i][j]=0;
-//       }
-//       else{
-// 	    m_channel3[2][i][j]=m_channel[2][i][j];
-//       }
-    }
-  }
-  m_channel3[0]=Mat::zeros(Size(m_photo.cols,m_photo.rows),CV_32F);
-  m_channel3[1]=Mat::zeros(Size(m_photo.cols,m_photo.rows),CV_32F);
-  m_channel3[2]=Mat::zeros(Size(m_photo.cols,m_photo.rows),CV_32F);
-  cv::merge(m_channel3,3,l_first_filtered_image);
-  cv::imshow("After First Filtering",l_first_filtered_image);
+ l_pre_first_filtered_image = abs(m_foreground-m_photo);
+ // TO DO THE SECOND FIRST FILTERING
+  l_first_filtered_image = l_pre_first_filtered_image;
+ //////////////// Test 
+//   cv::split(l_pre_first_filtered_image,m_channel);
+//   cv::split(m_photo,m_channel2);
+//   vector<Vec2i> r_foreground, g_foreground,b_foreground;
+// //   vector<Vec2i> r_photo,g_photo,b_photo;
+//   vector<Vec2i> r_filtered,g_filtered,b_filtered;
+//   b_foreground.assign(m_channel[0].datastart, m_channel[0].dataend);
+//   g_foreground.assign(m_channel[1].datastart, m_channel[1].dataend);
+//   r_foreground.assign(m_channel[2].datastart, m_channel[2].dataend);
+// //   b_photo.assign(m_channel2[0].datastart, m_channel2[0].dataend);
+// //   g_photo.assign(m_channel2[1].datastart, m_channel2[1].dataend);
+// //   r_photo.assign(m_channel2[2].datastart, m_channel2[2].dataend);
+//   r_filtered = r_foreground;
+//   g_filtered = g_foreground;
+//   b_filtered = b_foreground;
+//   int rows = (int) m_foreground.rows;
+//   int cols = (int) m_foreground.cols;
+//      for(int i = 1 ;i<m_foreground.cols;i++)
+//      {
+//        for(int j = 1 ;j<m_foreground.rows;j++)
+//        {
+//        if (b_foreground[i][j] < 10){
+// 	 b_filtered[i][j] = 0;
+//        }
+//        if (g_foreground[i][j] < 10){
+// 	 g_filtered[i][j] = 0;
+//        }
+//        if (r_foreground[i][j] < 10){
+// 	 r_filtered[i][j] = 0;
+//        }
+//        }
+//     }
+// //   for (int i=1;i<m_foreground.rows;i++)
+// //   {
+// //     for (int j=1;j<m_foreground.cols;j++)
+// //     {
+// //       if (abs(b_foreground[i][j]-b_photo[i][j])<10)
+// //       {
+// // 	b_filtered[i][j] = 0;
+// //       }
+// //       else{
+// // 	    b_filtered[i][j] = b_foreground[i][j];
+// //       }
+// //       if (abs(g_foreground[i][j]-g_photo[i][j])<10)
+// //       {
+// // 	g_filtered[i][j]=0;
+// //       }
+// //       else{
+// // 	    g_filtered[i][j] = g_foreground[i][j];
+// //       }
+// //       if (abs(r_foreground[i][j]-r_photo[i][j])<10)
+// //       {
+// // 	r_filtered[i][j]=0;
+// //       }
+// //       else{
+// // 	    r_filtered[i][j]=r_foreground[i][j];
+// //       }
+// //     }
+// //   }
+// //   m_channel3[0]=Mat::zeros(Size(m_photo.cols,m_photo.rows),CV_32F);
+// //   m_channel3[1]=Mat::zeros(Size(m_photo.cols,m_photo.rows),CV_32F);
+// //   m_channel3[2]=Mat::zeros(Size(m_photo.cols,m_photo.rows),CV_32F);
+//   m_channel3[0] = (cv::Mat) b_filtered;
+//   m_channel3[1] = (cv::Mat) g_filtered;
+//   m_channel3[2] = (cv::Mat) r_filtered;
+//   cv::merge(m_channel3,3,l_first_filtered_image);
+//   cv::imshow("After First Filtering",l_first_filtered_image);
   
 
   // Second step of filtering
