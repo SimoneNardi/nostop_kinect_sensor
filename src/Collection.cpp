@@ -29,7 +29,7 @@ Collection::Collection()
 , m_dp(1)
 , m_minDist(300)
 , m_param1(15)
-, m_param2(16)
+, m_param2(14)
 , m_minR(15)
 , m_maxR(30)
 , m_max_red(255)
@@ -156,7 +156,7 @@ void Collection::searchCircles()
 void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 { 
   vector<cv::Vec3f> l_circles;
-  cv::Mat l_first_filtered_image,l_second_filtered_image, l_first2_filtered_image;
+  cv::Mat l_first_filtered_image,l_second_filtered_image, l_third_filtered_image;
 //   cv_bridge::CvImageConstPtr cv_ptr;
 //   try{
 //   cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
@@ -168,35 +168,27 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 //   }
 //   m_processed = cv_ptr->image.clone();
   
-  // First pass of filtering 
+  // First step of filtering 
   l_first_filtered_image = abs(m_foreground-m_photo);
   cv::imshow("After First Filtering",l_first_filtered_image);
-  // Second passo of filtering
+  
+  // Second step of filtering
   cv::createTrackbar("Min red", FILTERED_CV_WINDOW, &m_min_red, 255);
   cv::createTrackbar("Max red", FILTERED_CV_WINDOW, &m_max_red, 255);
   cv::createTrackbar("Min green", FILTERED_CV_WINDOW, &m_min_green, 255);
   cv::createTrackbar("Max green", FILTERED_CV_WINDOW, &m_max_green, 255);
   cv::createTrackbar("Min blue", FILTERED_CV_WINDOW, &m_min_blue, 255);
   cv::createTrackbar("Max blue", FILTERED_CV_WINDOW, &m_max_blue, 255);
-  cv::inRange(l_first_filtered_image,cv::Scalar(m_min_blue,m_min_green,m_min_red),Scalar(m_max_blue,m_max_green,m_max_red),l_second_filtered_image);  cv::namedWindow(FILTERED_CV_WINDOW);
+  cv::inRange(l_first_filtered_image,cv::Scalar(m_min_blue,m_min_green,m_min_red),Scalar(m_max_blue,m_max_green,m_max_red),l_second_filtered_image);  
+  cv::namedWindow(FILTERED_CV_WINDOW);
   cv::imshow(FILTERED_CV_WINDOW,l_second_filtered_image);
-  //cv::medianBlur(l_second_filtered_image, l_first2_filtered_image, 29);
+  //cv::medianBlur(l_second_filtered_image, l_third_filtered_image, 29);
  
-   cv::createTrackbar("element size", "test", &m_erosion_size, 20);
-   Erosion(0, m_erosion_size, l_second_filtered_image, l_first2_filtered_image);
-   cv::imshow("test",l_first2_filtered_image);
-  //test gaussian blur
-//   int scale=1;int delta=0;int ddepth=CV_16S;cv::Mat grad;
-//   cv::GaussianBlur(l_second_filtered_image, l_first2_filtered_image, Size(3,3),0, 0,BORDER_DEFAULT);
-//   //cv::cvtColor(l_first2_filtered_image,l_first2_filtered_image_gray, CV_RGB2GRAY);
-//   l_first2_filtered_image=l_first2_filtered_image_gray;
-//   cv::Mat grad_x, grad_y, abs_grad_x, abs_grad_y;
-//   cv::Sobel(l_first2_filtered_image_gray,grad_x,ddepth,1,0,3,scale,delta, BORDER_DEFAULT);
-//   cv::Sobel(l_first2_filtered_image_gray,grad_y,ddepth,0,1,3,scale,delta, BORDER_DEFAULT);
-//   cv::convertScaleAbs(grad_x,abs_grad_x);
-//   cv::convertScaleAbs(grad_y,abs_grad_y);
-//   cv::addWeighted(abs_grad_x,0.5,abs_grad_y,0.5,0,grad);
-  //cv::imshow("test", l_first2_filtered_image_gray);
+ //Third step of filtering
+   cv::createTrackbar("element size", "After third filtering", &m_erosion_size, 20);
+   Erosion(0, m_erosion_size, l_second_filtered_image, l_third_filtered_image);
+   cv::imshow("After third filtering",l_third_filtered_image);
+
   // Find circles
   cv::createTrackbar("Inverse ratio resolution", SENSOR_CV_WINDOW, &m_dp, 255);
   cv::createTrackbar("Min Dist between Centers", SENSOR_CV_WINDOW, &m_minDist, 255);
@@ -206,7 +198,7 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
   cv::createTrackbar("Max rad", SENSOR_CV_WINDOW, &m_maxR, 255);
 //  cv::createTrackbar("Thr", SENSOR_CV_WINDOW, &l_thr, 255);
 // cv::createTrackbar("Max Val", SENSOR_CV_WINDOW, &l_maxval, 255);	
-  cv::HoughCircles(l_first2_filtered_image,l_circles,CV_HOUGH_GRADIENT,m_dp,m_minDist,m_param1,m_param2,m_minR,m_maxR);
+  cv::HoughCircles(l_third_filtered_image,l_circles,CV_HOUGH_GRADIENT,m_dp,m_minDist,m_param1,m_param2,m_minR,m_maxR);
  
 
   
@@ -223,6 +215,18 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
       cv::imshow(FOREGROUND_CV_WINDOW,m_photo_support);
    }
    
+//Test gaussian blur
+//   int scale=1;int delta=0;int ddepth=CV_16S;cv::Mat grad;
+//   cv::GaussianBlur(l_second_filtered_image, l_first2_filtered_image, Size(3,3),0, 0,BORDER_DEFAULT);
+//   //cv::cvtColor(l_first2_filtered_image,l_first2_filtered_image_gray, CV_RGB2GRAY);
+//   l_first2_filtered_image=l_first2_filtered_image_gray;
+//   cv::Mat grad_x, grad_y, abs_grad_x, abs_grad_y;
+//   cv::Sobel(l_first2_filtered_image_gray,grad_x,ddepth,1,0,3,scale,delta, BORDER_DEFAULT);
+//   cv::Sobel(l_first2_filtered_image_gray,grad_y,ddepth,0,1,3,scale,delta, BORDER_DEFAULT);
+//   cv::convertScaleAbs(grad_x,abs_grad_x);
+//   cv::convertScaleAbs(grad_y,abs_grad_y);
+//   cv::addWeighted(abs_grad_x,0.5,abs_grad_y,0.5,0,grad);
+  //cv::imshow("test", l_first2_filtered_image_gray);   
    
 //   if(l_circles.size()==0)
 //   { 
