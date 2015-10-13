@@ -21,7 +21,6 @@
 #include <image_transport/image_transport.h>
 #include <image_transport/subscriber_filter.h>
 
-
 namespace Robotics 
 {
 	namespace GameTheory
@@ -90,15 +89,20 @@ namespace Robotics
 		  cv::Mat m_foreground;
 		  cv::Mat m_processed;
 		  
+		  
 		  int m_count;
 		  int m_wait_time;//x*100 -> x*3.6 s (to do )
 		  cv::Mat m_photo;
 		  cv::Mat m_photo_support;
+		  cv::Mat m_channel[3];
+		  cv::Mat m_channel2[3];
+		  cv::Mat m_channel3[3];
 		  
 		  int m_dp, m_minDist, m_param1, m_param2, m_minR, m_maxR;
 		  int m_thr, m_maxval;
 		  int m_min_red,m_max_red, m_min_green,m_max_green,m_min_blue,m_max_blue;
-		  int m_erosion_size;
+		  int m_erosion_size, m_median;
+
 		public:
 			Collection();
 			

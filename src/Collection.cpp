@@ -1,5 +1,5 @@
 #include "Collection.h"
-
+#include <opencv2/core/core.hpp>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
@@ -7,6 +7,7 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "highgui.h"
 #include "ros/ros.h"
+#include <opencv2/video/background_segm.hpp>
 
 using namespace std;
 using namespace Robotics;
@@ -17,6 +18,7 @@ using namespace cv;
 static const std::string FOREGROUND_CV_WINDOW = "Foreground Window (with circles)";
 static const std::string SENSOR_CV_WINDOW = "Sensor view Window";
 static const std::string FILTERED_CV_WINDOW = "Filtered view Window";
+
  
 /////////////////////////////////////////////
 Collection::Collection()
@@ -30,15 +32,16 @@ Collection::Collection()
 , m_minDist(300)
 , m_param1(15)
 , m_param2(14)
-, m_minR(15)
-, m_maxR(30)
-, m_max_red(255)
+, m_minR(7)
+, m_maxR(18)
+, m_max_red(45)
 , m_min_red(0)
 , m_max_green(255)
 , m_min_green(0)
 , m_max_blue(255)
 , m_min_blue(0)
 , m_erosion_size(0)
+, m_median(19)
 , m_thr(40)
 , m_maxval(255)
 {}
@@ -102,14 +105,14 @@ void Collection::getForeground(const sensor_msgs::ImageConstPtr& msg)
       cv::imshow(SENSOR_CV_WINDOW, m_foreground);
       cv::waitKey(3);
       m_image_pub.publish(msg);
-      if (m_count == m_wait_time)
-      {
+       if (m_count == m_wait_time)
+       {
 	m_image_sub_photo.shutdown();
 	m_image_pub.shutdown();
 	m_count = m_count+1;
-      } else {
+       } else {
 	m_count = m_count+1;
-      }
+       }
    }
      
 }
@@ -169,9 +172,43 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 //   m_processed = cv_ptr->image.clone();
   
   // First step of filtering 
-  l_first_filtered_image = abs(m_foreground-m_photo);
+ // l_first_filtered_image = abs(m_foreground-m_photo);
+  cv::split(m_foreground,m_channel);
+  cv::split(m_photo,m_channel2);
+  for (int i=1;i<m_foreground.rows;i++)
+  {
+    for (int j=1;j<m_foreground.cols;j++)
+    {
+      if (abs(m_channel[0][i][j]-m_channel2[0][i][j])<10)
+      {
+	m_channel3[0][i][j]=0;
+      }
+      else{
+	    m_channel3[0][i][j]=m_channel[0][i][j];
+      }
+//       if (abs(m_channel[1][i][j]-m_channel2[1][i][j])<10)
+//       {
+// 	m_channel3[1][i][j]=0;
+//       }
+//       else{
+// 	    m_channel3[1][i][j]=m_channel[1][i][j];
+//       }
+//       if (abs(m_channel[2][i][j]-m_channel2[2][i][j])<10)
+//       {
+// 	m_channel3[2][i][j]=0;
+//       }
+//       else{
+// 	    m_channel3[2][i][j]=m_channel[2][i][j];
+//       }
+    }
+  }
+  m_channel3[0]=Mat::zeros(Size(m_photo.cols,m_photo.rows),CV_32F);
+  m_channel3[1]=Mat::zeros(Size(m_photo.cols,m_photo.rows),CV_32F);
+  m_channel3[2]=Mat::zeros(Size(m_photo.cols,m_photo.rows),CV_32F);
+  cv::merge(m_channel3,3,l_first_filtered_image);
   cv::imshow("After First Filtering",l_first_filtered_image);
   
+
   // Second step of filtering
   cv::createTrackbar("Min red", FILTERED_CV_WINDOW, &m_min_red, 255);
   cv::createTrackbar("Max red", FILTERED_CV_WINDOW, &m_max_red, 255);
@@ -182,11 +219,12 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
   cv::inRange(l_first_filtered_image,cv::Scalar(m_min_blue,m_min_green,m_min_red),Scalar(m_max_blue,m_max_green,m_max_red),l_second_filtered_image);  
   cv::namedWindow(FILTERED_CV_WINDOW);
   cv::imshow(FILTERED_CV_WINDOW,l_second_filtered_image);
-  //cv::medianBlur(l_second_filtered_image, l_third_filtered_image, 29);
+  cv::createTrackbar("element", "After third filtering", &m_median, 255);
+  cv::medianBlur(l_second_filtered_image, l_third_filtered_image, 2*m_median-1);
  
  //Third step of filtering
-   cv::createTrackbar("element size", "After third filtering", &m_erosion_size, 20);
-   Erosion(0, m_erosion_size, l_second_filtered_image, l_third_filtered_image);
+//    cv::createTrackbar("element size", "After third filtering", &m_erosion_size, 20);
+//    Erosion(0, m_erosion_size, l_second_filtered_image, l_third_filtered_image);
    cv::imshow("After third filtering",l_third_filtered_image);
 
   // Find circles
@@ -239,22 +277,22 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 }
 
 /* @function Erosion */
-void Collection::Erosion( int erosion_elem, int erosion_size, cv::Mat const& src, cv::Mat& erosion_dst)
-{
-  int erosion_type;
-  if( erosion_elem == 0 ){ erosion_type = MORPH_RECT; }
-  else if( erosion_elem == 1 ){ erosion_type = MORPH_CROSS; }
-  else if( erosion_elem == 2) { erosion_type = MORPH_ELLIPSE; }
-
-  cv::Mat element = cv::getStructuringElement( erosion_type,
-                                       cv::Size( 2*erosion_size + 1, 2*erosion_size+1 ),
-                                       cv::Point( erosion_size, erosion_size ) );
-
-  /// Apply the erosion operation
-  cv::erode( src, erosion_dst, element );
-//   imshow( "Erosion Demo", erosion_dst );
-}
-	
+// void Collection::Erosion( int erosion_elem, int erosion_size, cv::Mat const& src, cv::Mat& erosion_dst)
+// {
+//   int erosion_type;
+//   if( erosion_elem == 0 ){ erosion_type = MORPH_RECT; }
+//   else if( erosion_elem == 1 ){ erosion_type = MORPH_CROSS; }
+//   else if( erosion_elem == 2) { erosion_type = MORPH_ELLIPSE; }
+// 
+//   cv::Mat element = cv::getStructuringElement( erosion_type,
+//                                        cv::Size( 2*erosion_size + 1, 2*erosion_size+1 ),
+//                                        cv::Point( erosion_size, erosion_size ) );
+// 
+//   /// Apply the erosion operation
+//   cv::erode( src, erosion_dst, element );
+// //   imshow( "Erosion Demo", erosion_dst );
+// }
+// 	
 // enum ColorName
 // {
 //     red = 0,

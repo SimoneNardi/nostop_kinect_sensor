@@ -7,6 +7,7 @@ void ShutDown(const ros::TimerEvent&)
  ros::shutdown();
 }
 
+
 int main(int argc, char **argv)
 {
 	ROS_INFO("Sensor: init!");
