@@ -14,7 +14,7 @@ using namespace Robotics::GameTheory;
 using namespace cv;
 
 
-static const std::string FOREGROUND_CV_WINDOW = "Foreground photo Window (with circles)";
+static const std::string FOREGROUND_CV_WINDOW = "Foreground Window (with circles)";
 static const std::string SENSOR_CV_WINDOW = "Sensor view Window";
 static const std::string FILTERED_CV_WINDOW = "Filtered view Window";
  
