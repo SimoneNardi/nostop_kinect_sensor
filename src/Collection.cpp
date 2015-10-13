@@ -38,6 +38,7 @@ Collection::Collection()
 , m_min_green(0)
 , m_max_blue(255)
 , m_min_blue(0)
+, m_erosion_size(0)
 , m_thr(40)
 , m_maxval(255)
 {}
@@ -155,7 +156,7 @@ void Collection::searchCircles()
 void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 { 
   vector<cv::Vec3f> l_circles;
-  cv::Mat l_first_filtered_image,l_second_filtered_image;
+  cv::Mat l_first_filtered_image,l_second_filtered_image, l_first2_filtered_image;
 //   cv_bridge::CvImageConstPtr cv_ptr;
 //   try{
 //   cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
@@ -169,7 +170,7 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
   
   // First pass of filtering 
   l_first_filtered_image = abs(m_foreground-m_photo);
-  
+  cv::imshow("After First Filtering",l_first_filtered_image);
   // Second passo of filtering
   cv::createTrackbar("Min red", FILTERED_CV_WINDOW, &m_min_red, 255);
   cv::createTrackbar("Max red", FILTERED_CV_WINDOW, &m_max_red, 255);
@@ -177,12 +178,25 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
   cv::createTrackbar("Max green", FILTERED_CV_WINDOW, &m_max_green, 255);
   cv::createTrackbar("Min blue", FILTERED_CV_WINDOW, &m_min_blue, 255);
   cv::createTrackbar("Max blue", FILTERED_CV_WINDOW, &m_max_blue, 255);
-  cv::inRange(l_first_filtered_image,cv::Scalar(m_min_blue,m_min_green,m_min_red),Scalar(m_max_blue,m_max_green,m_max_red),l_second_filtered_image);
-  cv::imshow("After First Filtering",l_first_filtered_image);
-  cv::namedWindow(FILTERED_CV_WINDOW);
+  cv::inRange(l_first_filtered_image,cv::Scalar(m_min_blue,m_min_green,m_min_red),Scalar(m_max_blue,m_max_green,m_max_red),l_second_filtered_image);  cv::namedWindow(FILTERED_CV_WINDOW);
   cv::imshow(FILTERED_CV_WINDOW,l_second_filtered_image);
-  
-  
+  //cv::medianBlur(l_second_filtered_image, l_first2_filtered_image, 29);
+ 
+   cv::createTrackbar("element size", "test", &m_erosion_size, 20);
+   Erosion(0, m_erosion_size, l_second_filtered_image, l_first2_filtered_image);
+   cv::imshow("test",l_first2_filtered_image);
+  //test gaussian blur
+//   int scale=1;int delta=0;int ddepth=CV_16S;cv::Mat grad;
+//   cv::GaussianBlur(l_second_filtered_image, l_first2_filtered_image, Size(3,3),0, 0,BORDER_DEFAULT);
+//   //cv::cvtColor(l_first2_filtered_image,l_first2_filtered_image_gray, CV_RGB2GRAY);
+//   l_first2_filtered_image=l_first2_filtered_image_gray;
+//   cv::Mat grad_x, grad_y, abs_grad_x, abs_grad_y;
+//   cv::Sobel(l_first2_filtered_image_gray,grad_x,ddepth,1,0,3,scale,delta, BORDER_DEFAULT);
+//   cv::Sobel(l_first2_filtered_image_gray,grad_y,ddepth,0,1,3,scale,delta, BORDER_DEFAULT);
+//   cv::convertScaleAbs(grad_x,abs_grad_x);
+//   cv::convertScaleAbs(grad_y,abs_grad_y);
+//   cv::addWeighted(abs_grad_x,0.5,abs_grad_y,0.5,0,grad);
+  //cv::imshow("test", l_first2_filtered_image_gray);
   // Find circles
   cv::createTrackbar("Inverse ratio resolution", SENSOR_CV_WINDOW, &m_dp, 255);
   cv::createTrackbar("Min Dist between Centers", SENSOR_CV_WINDOW, &m_minDist, 255);
@@ -192,7 +206,7 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
   cv::createTrackbar("Max rad", SENSOR_CV_WINDOW, &m_maxR, 255);
 //  cv::createTrackbar("Thr", SENSOR_CV_WINDOW, &l_thr, 255);
 // cv::createTrackbar("Max Val", SENSOR_CV_WINDOW, &l_maxval, 255);	
-  cv::HoughCircles(l_second_filtered_image,l_circles,CV_HOUGH_GRADIENT,m_dp,m_minDist,m_param1,m_param2,m_minR,m_maxR);
+  cv::HoughCircles(l_first2_filtered_image,l_circles,CV_HOUGH_GRADIENT,m_dp,m_minDist,m_param1,m_param2,m_minR,m_maxR);
  
 
   
@@ -220,6 +234,22 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 //   }
 }
 
+/* @function Erosion */
+void Collection::Erosion( int erosion_elem, int erosion_size, cv::Mat const& src, cv::Mat& erosion_dst)
+{
+  int erosion_type;
+  if( erosion_elem == 0 ){ erosion_type = MORPH_RECT; }
+  else if( erosion_elem == 1 ){ erosion_type = MORPH_CROSS; }
+  else if( erosion_elem == 2) { erosion_type = MORPH_ELLIPSE; }
+
+  cv::Mat element = cv::getStructuringElement( erosion_type,
+                                       cv::Size( 2*erosion_size + 1, 2*erosion_size+1 ),
+                                       cv::Point( erosion_size, erosion_size ) );
+
+  /// Apply the erosion operation
+  cv::erode( src, erosion_dst, element );
+//   imshow( "Erosion Demo", erosion_dst );
+}
 	
 // enum ColorName
 // {
@@ -254,22 +284,8 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 //     }
 // }
 // 
-// /** @function Erosion */
-// void Erosion( int erosion_elem, int erosion_size, cv::Mat const& src, cv::Mat& erosion_dst)
-// {
-//   int erosion_type;
-//   if( erosion_elem == 0 ){ erosion_type = MORPH_RECT; }
-//   else if( erosion_elem == 1 ){ erosion_type = MORPH_CROSS; }
-//   else if( erosion_elem == 2) { erosion_type = MORPH_ELLIPSE; }
-// 
-//   cv::Mat element = cv::getStructuringElement( erosion_type,
-//                                        cv::Size( 2*erosion_size + 1, 2*erosion_size+1 ),
-//                                        cv::Point( erosion_size, erosion_size ) );
-// 
-//   /// Apply the erosion operation
-//   cv::erode( src, erosion_dst, element );
-// //   imshow( "Erosion Demo", erosion_dst );
-// }
+
+
 // 
 // /** @function Dilation */
 // void Dilation( int dilation_elem, int dilation_size, cv::Mat const& src, cv::Mat& dilation_dst)

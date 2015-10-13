@@ -97,7 +97,8 @@ namespace Robotics
 		  
 		  int m_dp, m_minDist, m_param1, m_param2, m_minR, m_maxR;
 		  int m_thr, m_maxval;
-		  int m_min_red,m_max_red, m_min_green,m_max_green,m_min_blue,m_max_blue;		  
+		  int m_min_red,m_max_red, m_min_green,m_max_green,m_min_blue,m_max_blue;
+		  int m_erosion_size;
 		public:
 			Collection();
 			
@@ -110,7 +111,7 @@ namespace Robotics
 			void getForeground(const sensor_msgs::ImageConstPtr& msg);
 			void toPub(const sensor_msgs::ImageConstPtr& msg);
 			void search_test(const sensor_msgs::ImageConstPtr& msg);
-			
+			void Erosion(int erosion_elem, int erosion_size, cv::Mat const& src, cv::Mat& erosion_dst);
 		  
 		};
 
