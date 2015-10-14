@@ -93,10 +93,10 @@ set(sensor_SOURCES
 # target_link_libraries(Sensor ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon )#${PCL_LIBRARIES})
 # add_dependencies(Sensor nostop_kinect_sensor_gencpp)
 
+
 add_executable(sensor_node ${sensor_SOURCES})
 target_link_libraries(sensor_node ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon )#${PCL_LIBRARIES})
 add_dependencies(sensor_node nostop_kinect_sensor_gencpp)
-
 
 #############
 ## Install ##
@@ -108,6 +108,7 @@ add_dependencies(sensor_node nostop_kinect_sensor_gencpp)
 #    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 #  )
  
+
  install(TARGETS sensor_node
  EXPORT nostop_kinect_sensor
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

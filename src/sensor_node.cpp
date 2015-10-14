@@ -17,9 +17,11 @@ int main(int argc, char **argv)
 	// Compute Robot Position:
 	// From Kinect?ROS_INFO
 	// From Simulator?
+	
 	Robotics::GameTheory::Collector l_Collector;
+	
 	l_Collector.start();
-      
+     
 	ros::NodeHandle n;
 
 // 	ros::Timer l_timer=n.createTimer(ros::Duration(100000), ShutDown);

@@ -1,13 +1,15 @@
 #include "Collection.h"
+
 #include <opencv2/core/core.hpp>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/video/video.hpp"
 #include "highgui.h"
 #include "ros/ros.h"
-#include <opencv2/video/background_segm.hpp>
 
 using namespace std;
 using namespace Robotics;
@@ -44,6 +46,10 @@ Collection::Collection()
 , m_median(19)
 , m_thr(40)
 , m_maxval(255)
+, m_kf(m_stateSize,m_measSize,m_contrSize,m_type)
+, m_state(m_stateSize,1,m_type)
+, m_meas(m_measSize,1,m_type)
+, m_found(false)
 {}
 
 /////////////////////////////////////////////
@@ -159,7 +165,7 @@ void Collection::searchCircles()
 void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 { 
   vector<cv::Vec3f> l_circles;
-  cv::Mat l_first_filtered_image,l_pre_first_filtered_image,l_second_filtered_image, l_third_filtered_image;
+  cv::Mat l_first_filtered_image,l_second_filtered_image, l_third_filtered_image;
 //   cv_bridge::CvImageConstPtr cv_ptr;
 //   try{
 //   cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
@@ -172,123 +178,222 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 //   m_processed = cv_ptr->image.clone();
   
   // First step of filtering 
- l_pre_first_filtered_image = abs(m_foreground-m_photo);
- // TO DO THE SECOND FIRST FILTERING
-  l_first_filtered_image = l_pre_first_filtered_image;
- //////////////// Test 
-//   cv::split(l_pre_first_filtered_image,m_channel);
-//   cv::split(m_photo,m_channel2);
-//   vector<Vec2i> r_foreground, g_foreground,b_foreground;
-// //   vector<Vec2i> r_photo,g_photo,b_photo;
-//   vector<Vec2i> r_filtered,g_filtered,b_filtered;
-//   b_foreground.assign(m_channel[0].datastart, m_channel[0].dataend);
-//   g_foreground.assign(m_channel[1].datastart, m_channel[1].dataend);
-//   r_foreground.assign(m_channel[2].datastart, m_channel[2].dataend);
-// //   b_photo.assign(m_channel2[0].datastart, m_channel2[0].dataend);
-// //   g_photo.assign(m_channel2[1].datastart, m_channel2[1].dataend);
-// //   r_photo.assign(m_channel2[2].datastart, m_channel2[2].dataend);
-//   r_filtered = r_foreground;
-//   g_filtered = g_foreground;
-//   b_filtered = b_foreground;
-//   int rows = (int) m_foreground.rows;
-//   int cols = (int) m_foreground.cols;
-//      for(int i = 1 ;i<m_foreground.cols;i++)
-//      {
-//        for(int j = 1 ;j<m_foreground.rows;j++)
-//        {
-//        if (b_foreground[i][j] < 10){
-// 	 b_filtered[i][j] = 0;
-//        }
-//        if (g_foreground[i][j] < 10){
-// 	 g_filtered[i][j] = 0;
-//        }
-//        if (r_foreground[i][j] < 10){
-// 	 r_filtered[i][j] = 0;
-//        }
-//        }
-//     }
-// //   for (int i=1;i<m_foreground.rows;i++)
-// //   {
-// //     for (int j=1;j<m_foreground.cols;j++)
-// //     {
-// //       if (abs(b_foreground[i][j]-b_photo[i][j])<10)
-// //       {
-// // 	b_filtered[i][j] = 0;
-// //       }
-// //       else{
-// // 	    b_filtered[i][j] = b_foreground[i][j];
-// //       }
-// //       if (abs(g_foreground[i][j]-g_photo[i][j])<10)
-// //       {
-// // 	g_filtered[i][j]=0;
-// //       }
-// //       else{
-// // 	    g_filtered[i][j] = g_foreground[i][j];
-// //       }
-// //       if (abs(r_foreground[i][j]-r_photo[i][j])<10)
-// //       {
-// // 	r_filtered[i][j]=0;
-// //       }
-// //       else{
-// // 	    r_filtered[i][j]=r_foreground[i][j];
-// //       }
-// //     }
-// //   }
-// //   m_channel3[0]=Mat::zeros(Size(m_photo.cols,m_photo.rows),CV_32F);
-// //   m_channel3[1]=Mat::zeros(Size(m_photo.cols,m_photo.rows),CV_32F);
-// //   m_channel3[2]=Mat::zeros(Size(m_photo.cols,m_photo.rows),CV_32F);
-//   m_channel3[0] = (cv::Mat) b_filtered;
-//   m_channel3[1] = (cv::Mat) g_filtered;
-//   m_channel3[2] = (cv::Mat) r_filtered;
-//   cv::merge(m_channel3,3,l_first_filtered_image);
-//   cv::imshow("After First Filtering",l_first_filtered_image);
-  
+ l_first_filtered_image = abs(m_foreground-m_photo);
+   
+ // Kalman Filter
+    cv::setIdentity(m_kf.transitionMatrix);
+    m_kf.measurementMatrix = cv::Mat::zeros(m_measSize,m_stateSize,m_type);
+    m_kf.measurementMatrix.at<int64>(0) = 1.0f;
+    m_kf.measurementMatrix.at<int64>(7) = 1.0f;
+    m_kf.measurementMatrix.at<int64>(16) = 1.0f;
+    m_kf.measurementMatrix.at<int64>(23) = 1.0f;
+    
+    double precTick = m_ticks;
+    m_ticks = (double) cv::getTickCount();
+ 
+     double dT = (m_ticks-precTick) / cv::getTickFrequency(); //seconds
+ 
+      // Frame acquisition
+     cv::Mat res;
+     m_foreground.copyTo(res);
+     if (m_found)
+          {
+         // >>>> Matrix A
+         m_kf.transitionMatrix.at<float>(2) = dT;
+         m_kf.transitionMatrix.at<float>(9) = dT;
+         // <<<< Matrix A
+         m_state = m_kf.predict();  
+	 cv::Rect predRect;          
+	 predRect.width = m_state.at<float>(4);          
+	 predRect.height = m_state.at<float>(5);          
+	 predRect.x = m_state.at<float>(0) - predRect.width / 2;          
+	 predRect.y = m_state.at<float>(1) - predRect.height / 2;            
+	 cv::Point center;          
+	 center.x = m_state.at<float>(0);          
+	 center.y = m_state.at<float>(1);          
+	 cv::circle(res, center, 2, CV_RGB(255,0,0), -1);            
+	 cv::rectangle(res, predRect, CV_RGB(255,0,0), 2);       
+	
+      }  
+	// >>>>> Noise smoothing
+        cv::Mat blur;
+        cv::GaussianBlur(m_foreground, blur, cv::Size(5, 5), 3.0, 3.0);
+        // <<<<< Noise smoothing
 
+        // >>>>> HSV conversion
+        cv::Mat frmHsv;
+        cv::cvtColor(blur, frmHsv, CV_BGR2HSV);
+        // <<<<< HSV conversion
+
+        // >>>>> Color Thresholding
+        // Note: change parameters for different colors
+        cv::Mat rangeRes = cv::Mat::zeros(m_foreground.size(), CV_8UC1);
+        cv::inRange(frmHsv, cv::Scalar(200 / 2, 100, 80),cv::Scalar(300 / 2, 255, 255), rangeRes);
+        // <<<<< Color Thresholding
+
+        // >>>>> Improving the result
+        cv::erode(rangeRes, rangeRes, cv::Mat(), cv::Point(-1, -1), 2);
+        cv::dilate(rangeRes, rangeRes, cv::Mat(), cv::Point(-1, -1), 2);
+      // <<<<< Improving the result         
+	// Thresholding viewing       
+	cv::imshow("Threshold", rangeRes);        
+	// >>>>> Contours detection
+	vector<vector<cv::Point> > contours;
+	cv::findContours(rangeRes, contours, CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
+      // <<<<< Contours detection         
+	// >>>>> Filtering
+      vector<vector<cv::Point> > balls;
+      vector<cv::Rect> ballsBox;
+
+      for (size_t i = 0; i < contours.size(); i++)       
+      {  
+	cv::Rect bBox;          
+	bBox = cv::boundingRect(contours[i]);            
+	float ratio = (float) bBox.width / (float) bBox.height;          
+	if (ratio > 1.0f)
+            ratio = 1.0f / ratio;
+	    
+         // Searching for a bBox almost square
+         if (ratio > 0.75 && bBox.area() >= 400)
+         {
+            balls.push_back(contours[i]);
+            ballsBox.push_back(bBox);
+         }
+      }
+     
+      // <<<<< Filtering
+        for (size_t i = 0; i < contours.size(); i++)
+        {
+            cv::Rect bBox;
+            bBox = cv::boundingRect(contours[i]);
+
+            float ratio = (float) bBox.width / (float) bBox.height;
+            if (ratio > 1.0f)
+                ratio = 1.0f / ratio;
+
+            // Searching for a bBox almost square
+            if (ratio > 0.75 && bBox.area() >= 400)
+            {
+                balls.push_back(contours[i]);
+                ballsBox.push_back(bBox);
+            }
+        }
+        // <<<<< Filtering
+
+        // >>>>> Detection result
+        for (size_t i = 0; i < balls.size(); i++)
+        {
+            cv::drawContours(res, balls, i, CV_RGB(20,150,20), 1);
+            cv::rectangle(res, ballsBox[i], CV_RGB(0,255,0), 2);
+
+            cv::Point center;
+            center.x = ballsBox[i].x + ballsBox[i].width / 2;
+            center.y = ballsBox[i].y + ballsBox[i].height / 2;
+            cv::circle(res, center, 2, CV_RGB(20,150,20), -1);
+        }
+      // <<<<< Detection result         // >>>>> Kalman Update
+      if (balls.size() == 0)
+      {
+         m_notFoundCount++;         
+	 if( m_notFoundCount >= 100 )
+         {
+            m_found = false;
+         }
+//          else{
+// 	    m_kf.statePost = m_state;
+// 	 }
+      }
+      else
+      {
+	
+         m_notFoundCount = 0;
+ 
+         m_meas.at<float>(0) = ballsBox[0].x + ballsBox[0].width / 2;
+         m_meas.at<float>(1) = ballsBox[0].y + ballsBox[0].height / 2;
+         m_meas.at<float>(2) = (float)ballsBox[0].width;
+         m_meas.at<float>(3) = (float)ballsBox[0].height;
+	 
+// 	 m_meas.at<int64>(0) = center.x;
+//          m_meas.at<int64>(1) = center.y;
+//          m_meas.at<int64>(2) = center.x*2;
+//          m_meas.at<int64>(3) = center.y*2;
+ 
+         if (!m_found) // First detection!
+         {
+	   ROS_INFO("FIRST DETECTION");
+            // >>>> Initialization
+            m_kf.errorCovPre.at<float>(0) = 1; // px
+            m_kf.errorCovPre.at<float>(7) = 1; // px
+            m_kf.errorCovPre.at<float>(14) = 1;
+            m_kf.errorCovPre.at<float>(21) = 1;
+            m_kf.errorCovPre.at<float>(28) = 1; // px
+            m_kf.errorCovPre.at<float>(35) = 1; // px
+ 
+            m_state.at<float>(0) = m_meas.at<float>(0);
+            m_state.at<float>(1) = m_meas.at<float>(1);
+            m_state.at<float>(2) = 0;
+            m_state.at<float>(3) = 0;
+            m_state.at<float>(4) = m_meas.at<float>(2);
+            m_state.at<float>(5) = m_meas.at<float>(3);
+            // <<<< Inizializzazione
+ 
+            m_found = true;
+         }
+         else
+	 {
+            m_kf.correct(m_meas); // Kalman Correction
+	 }
+      }
+      // <<<<< Kalman Update
+      
+   // Final result
+      cv::imshow("Risultato finale", res);
+      cv::waitKey(1);
   // Second step of filtering
-  cv::createTrackbar("Min red", FILTERED_CV_WINDOW, &m_min_red, 255);
-  cv::createTrackbar("Max red", FILTERED_CV_WINDOW, &m_max_red, 255);
-  cv::createTrackbar("Min green", FILTERED_CV_WINDOW, &m_min_green, 255);
-  cv::createTrackbar("Max green", FILTERED_CV_WINDOW, &m_max_green, 255);
-  cv::createTrackbar("Min blue", FILTERED_CV_WINDOW, &m_min_blue, 255);
-  cv::createTrackbar("Max blue", FILTERED_CV_WINDOW, &m_max_blue, 255);
-  cv::inRange(l_first_filtered_image,cv::Scalar(m_min_blue,m_min_green,m_min_red),Scalar(m_max_blue,m_max_green,m_max_red),l_second_filtered_image);  
-  cv::namedWindow(FILTERED_CV_WINDOW);
-  cv::imshow(FILTERED_CV_WINDOW,l_second_filtered_image);
-  cv::createTrackbar("element", "After third filtering", &m_median, 255);
-  cv::medianBlur(l_second_filtered_image, l_third_filtered_image, 2*m_median-1);
+//   cv::createTrackbar("Min red", FILTERED_CV_WINDOW, &m_min_red, 255);
+//   cv::createTrackbar("Max red", FILTERED_CV_WINDOW, &m_max_red, 255);
+//   cv::createTrackbar("Min green", FILTERED_CV_WINDOW, &m_min_green, 255);
+//   cv::createTrackbar("Max green", FILTERED_CV_WINDOW, &m_max_green, 255);
+//   cv::createTrackbar("Min blue", FILTERED_CV_WINDOW, &m_min_blue, 255);
+//   cv::createTrackbar("Max blue", FILTERED_CV_WINDOW, &m_max_blue, 255);
+//   cv::inRange(l_first_filtered_image,cv::Scalar(m_min_blue,m_min_green,m_min_red),Scalar(m_max_blue,m_max_green,m_max_red),l_second_filtered_image);  
+//   cv::namedWindow(FILTERED_CV_WINDOW);
+//   cv::imshow(FILTERED_CV_WINDOW,l_second_filtered_image);
+//   cv::createTrackbar("element", "After third filtering", &m_median, 255);
+//   cv::medianBlur(l_second_filtered_image, l_third_filtered_image, 2*m_median-1);
  
  //Third step of filtering
 //    cv::createTrackbar("element size", "After third filtering", &m_erosion_size, 20);
 //    Erosion(0, m_erosion_size, l_second_filtered_image, l_third_filtered_image);
-   cv::imshow("After third filtering",l_third_filtered_image);
+//    cv::imshow("After third filtering",l_third_filtered_image);
 
   // Find circles
-  cv::createTrackbar("Inverse ratio resolution", SENSOR_CV_WINDOW, &m_dp, 255);
-  cv::createTrackbar("Min Dist between Centers", SENSOR_CV_WINDOW, &m_minDist, 255);
-  cv::createTrackbar("Param 1", SENSOR_CV_WINDOW, &m_param1, 255);
-  cv::createTrackbar("Param 2", SENSOR_CV_WINDOW, &m_param2, 255);
-  cv::createTrackbar("Min rad", SENSOR_CV_WINDOW, &m_minR, 255);
-  cv::createTrackbar("Max rad", SENSOR_CV_WINDOW, &m_maxR, 255);
+//   cv::createTrackbar("Inverse ratio resolution", SENSOR_CV_WINDOW, &m_dp, 255);
+//   cv::createTrackbar("Min Dist between Centers", SENSOR_CV_WINDOW, &m_minDist, 255);
+//   cv::createTrackbar("Param 1", SENSOR_CV_WINDOW, &m_param1, 255);
+//   cv::createTrackbar("Param 2", SENSOR_CV_WINDOW, &m_param2, 255);
+//   cv::createTrackbar("Min rad", SENSOR_CV_WINDOW, &m_minR, 255);
+//   cv::createTrackbar("Max rad", SENSOR_CV_WINDOW, &m_maxR, 255);
 //  cv::createTrackbar("Thr", SENSOR_CV_WINDOW, &l_thr, 255);
 // cv::createTrackbar("Max Val", SENSOR_CV_WINDOW, &l_maxval, 255);	
-  cv::HoughCircles(l_third_filtered_image,l_circles,CV_HOUGH_GRADIENT,m_dp,m_minDist,m_param1,m_param2,m_minR,m_maxR);
+//   cv::HoughCircles(l_third_filtered_image,l_circles,CV_HOUGH_GRADIENT,m_dp,m_minDist,m_param1,m_param2,m_minR,m_maxR);
  
 
   
   
   /// Draw the circles detected
-  for( size_t i = 0; i < l_circles.size(); i++ )
-  {
-      cv::Point center(cvRound(l_circles[i][0]), cvRound(l_circles[i][1]));
-      int radius = cvRound(l_circles[i][2]);
-      // circle center
-      cv::circle(m_photo_support, center, 3, cv::Scalar(0,255,0), -1, 8, 0 );
-      // circle outline
-      cv::circle( m_photo_support, center, radius, cv::Scalar(255,0,0), 3, 8, 0 );  
-      cv::imshow(FOREGROUND_CV_WINDOW,m_photo_support);
-   }
+//   for( size_t i = 0; i < l_circles.size(); i++ )
+//   {
+//       cv::Point center(cvRound(l_circles[i][0]), cvRound(l_circles[i][1]));
+//       int radius = cvRound(l_circles[i][2]);
+//       // circle center
+//       cv::circle(m_photo_support, center, 3, cv::Scalar(0,255,0), -1, 8, 0 );
+//       // circle outline
+//       cv::circle( m_photo_support, center, radius, cv::Scalar(255,0,0), 3, 8, 0 );  
+//       cv::imshow(FOREGROUND_CV_WINDOW,m_photo_support);
+//    }
    
-//Test gaussian blur
+//   Test gaussian blur
 //   int scale=1;int delta=0;int ddepth=CV_16S;cv::Mat grad;
 //   cv::GaussianBlur(l_second_filtered_image, l_first2_filtered_image, Size(3,3),0, 0,BORDER_DEFAULT);
 //   //cv::cvtColor(l_first2_filtered_image,l_first2_filtered_image_gray, CV_RGB2GRAY);

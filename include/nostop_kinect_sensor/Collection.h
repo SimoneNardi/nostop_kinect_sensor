@@ -21,6 +21,19 @@
 #include <image_transport/image_transport.h>
 #include <image_transport/subscriber_filter.h>
 
+// KALMAN 
+#include <opencv2/core/core.hpp>
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/video/video.hpp"
+#include "highgui.h"
+#include "ros/ros.h"
+
+
 namespace Robotics 
 {
 	namespace GameTheory
@@ -97,12 +110,26 @@ namespace Robotics
 		  cv::Mat m_channel[3];
 		  cv::Mat m_channel2[3];
 		  cv::Mat m_channel3[3];
+		  int m_red_filter,m_blue_filter,m_green_filter;
 		  
 		  int m_dp, m_minDist, m_param1, m_param2, m_minR, m_maxR;
 		  int m_thr, m_maxval;
 		  int m_min_red,m_max_red, m_min_green,m_max_green,m_min_blue,m_max_blue;
 		  int m_erosion_size, m_median;
 
+		   // KALMAN FILTER
+		  double m_ticks;
+		  bool m_found;
+		  int m_notFoundCount = 0;
+		  int m_stateSize = 6;
+		  int m_measSize = 4;
+		  int m_contrSize = 0;
+		  unsigned int m_type = CV_32F; 
+		  cv::Mat m_state;
+		  cv::Mat m_meas;
+		  cv::KalmanFilter m_kf;
+		  
+		  
 		public:
 			Collection();
 			
