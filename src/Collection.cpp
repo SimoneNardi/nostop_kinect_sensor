@@ -1,4 +1,8 @@
 #include "Collection.h"
+<<<<<<< HEAD
+#include "Tracker.h"
+=======
+>>>>>>> 45a327a634e67330b3a53eb71bf3c3811c6bf853
 
 #include <opencv2/core/core.hpp>
 #include <image_transport/image_transport.h>
@@ -27,7 +31,7 @@ Collection::Collection()
 : m_available(false)
 , m_data()
 , m_it(m_node)
-, m_foregroundFLAG(false)
+, m_stream_videoFLAG(false)
 , m_wait_time(140)
 , m_count(0)
 , m_dp(1)
@@ -50,7 +54,16 @@ Collection::Collection()
 , m_state(m_stateSize,1,m_type)
 , m_meas(m_measSize,1,m_type)
 , m_found(false)
+<<<<<<< HEAD
+, m_tracker_ptr(nullptr)
+{
+  // TRACKER
+  m_tracker_ptr = std::make_shared<Tracker>();
+//   m_tracker_ptr->test();
+}
+=======
 {}
+>>>>>>> 45a327a634e67330b3a53eb71bf3c3811c6bf853
 
 /////////////////////////////////////////////
 Collection::~Collection()
@@ -64,22 +77,21 @@ Collection::~Collection()
 void Collection::subscribe()
 {
 	ROS_INFO("Sensor: Collection subscribe!");
-	
+	ROS_INFO("%d",m_tracker_ptr->passaggio());
 	cv::namedWindow(SENSOR_CV_WINDOW);
 	cv::namedWindow(FOREGROUND_CV_WINDOW);
 	m_image_pub = m_it.advertise("/sensor/output_video", 1);
 	m_image_sub = m_it.subscribe("/camera/rgb/image_rect_color", 1, &Collection::getForeground, this, image_transport::TransportHints("raw"));
 	m_image_sub_photo = m_it.subscribe("/sensor/output_video",1, &Collection::toPub, this, image_transport::TransportHints("raw"));
 	
-	while (!m_foregroundFLAG)
+	while (!m_stream_videoFLAG)
 	{
 	  ros::spinOnce();
 	}
 	
-	m_foregroundFLAG = false;
-
+	m_stream_videoFLAG = false;
 	std::cout << "Sensor: ForeGround Collected!"<< std::endl << std::flush;
-
+  
 }
 
 //////////////////////////////////////////
@@ -101,14 +113,14 @@ void Collection::getForeground(const sensor_msgs::ImageConstPtr& msg)
     return;
   }
   
-  m_foreground = cv_ptr->image.clone();
+  m_stream_video = cv_ptr->image.clone();
   m_photo_support = cv_ptr->image.clone();
-  m_foregroundFLAG = true;
+  m_stream_videoFLAG = true;
     
-   if(m_foregroundFLAG)
+   if(m_stream_videoFLAG)
    {
       // Update GUI Window
-      cv::imshow(SENSOR_CV_WINDOW, m_foreground);
+      cv::imshow(SENSOR_CV_WINDOW,m_stream_video);
       cv::waitKey(3);
       m_image_pub.publish(msg);
        if (m_count == m_wait_time)
@@ -143,9 +155,9 @@ void Collection::toPub(const sensor_msgs::ImageConstPtr& msg)
   
   m_photo = cv_ptr->image.clone();
   m_photo_support = cv_ptr->image.clone();
-  m_foregroundFLAG = true;
+  m_stream_videoFLAG = true;
     
-   if(m_foregroundFLAG)
+   if(m_stream_videoFLAG)
    {
       // Update GUI Window
       cv::imshow(FOREGROUND_CV_WINDOW, m_photo);
@@ -165,6 +177,9 @@ void Collection::searchCircles()
 void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 { 
   vector<cv::Vec3f> l_circles;
+<<<<<<< HEAD
+  
+=======
   cv::Mat l_first_filtered_image,l_second_filtered_image, l_third_filtered_image;
 //   cv_bridge::CvImageConstPtr cv_ptr;
 //   try{
@@ -180,6 +195,7 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
   // First step of filtering 
  l_first_filtered_image = abs(m_foreground-m_photo);
    
+>>>>>>> 45a327a634e67330b3a53eb71bf3c3811c6bf853
  // Kalman Filter
     cv::setIdentity(m_kf.transitionMatrix);
     m_kf.measurementMatrix = cv::Mat::zeros(m_measSize,m_stateSize,m_type);
@@ -195,6 +211,190 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
  
       // Frame acquisition
      cv::Mat res;
+<<<<<<< HEAD
+     m_stream_video.copyTo(res);
+     
+     // Filtering
+     cv::Mat rangeRes;
+     
+     // Red Ball HSV values (H had *0.5 scale factor)
+     int64_t lb_r[3],ub_r[3]; 
+     lb_r[0] = 0; 
+     lb_r[1] = 150;
+     lb_r[2] = 150;
+     ub_r[0] = 30;
+     ub_r[1] = 255;
+     ub_r[2] = 255;
+     filtering(m_stream_video,rangeRes,lb_r,ub_r);  
+//      
+//      // Blue Ball HSV values (H had *0.5 scale factor)
+//      int64_t lb_b[3],ub_b[3]; 
+//      lb_b[0] = 100; 
+//      lb_b[1] = 100;
+//      lb_b[2] = 100;
+//      ub_b[0] = 135;
+//      ub_b[1] = 255;
+//      ub_b[2] = 255;
+//      filtering(m_stream_video,rangeRes,lb_b,ub_b);  
+     
+//      // Green Ball HSV values (H had *0.5 scale factor)
+//      int64_t lb_g[3],ub_g[3]; 
+//      lb_g[0] = 30; 
+//      lb_g[1] = 100;
+//      lb_g[2] = 50;
+//      ub_g[0] = 90;
+//      ub_g[1] = 255;
+//      ub_g[2] = 255;
+//      filtering(m_stream_video,rangeRes,lb_g,ub_g);  
+     
+//      // Yellow Ball HSV values (H had *0.5 scale factor)
+//      int64_t lb_y[3],ub_y[3]; 
+//      lb_y[0] = 15; 
+//      lb_y[1] = 100;
+//      lb_y[2] = 100;
+//      ub_y[0] = 45;
+//      ub_y[1] = 255;
+//      ub_y[2] = 255;
+//      filtering(m_stream_video,rangeRes,lb_y,ub_y);  
+     
+     // Thresholding viewing       
+     cv::imshow("Threshold", rangeRes); 
+     
+    
+     // >>>>> Contours detection
+//       vector<vector<cv::Point> > contours;
+//     cv::findContours(rangeRes, contours, CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
+       // <<<<< Contours detection         
+//      if (m_found)
+//           {
+//          // >>>> Matrix A
+//          m_kf.transitionMatrix.at<float>(2) = dT;
+//          m_kf.transitionMatrix.at<float>(9) = dT;
+//          // <<<< Matrix A
+//          m_state = m_kf.predict();  
+// 	 cv::Rect predRect;          
+// 	 predRect.width = m_state.at<float>(4);          
+// 	 predRect.height = m_state.at<float>(5);          
+// 	 predRect.x = m_state.at<float>(0) - predRect.width / 2;          
+// 	 predRect.y = m_state.at<float>(1) - predRect.height / 2;            
+// 	 cv::Point center;          
+// 	 center.x = m_state.at<float>(0);          
+// 	 center.y = m_state.at<float>(1);          
+// 	 cv::circle(res, center, 2, CV_RGB(255,0,0), -1);            
+// 	 cv::rectangle(res, predRect, CV_RGB(255,0,0), 2);       
+// 	
+//       }  
+// 	
+// 	// >>>>> Filtering
+//       vector<vector<cv::Point> > balls;
+//       vector<cv::Rect> ballsBox;
+// 
+//       for (size_t i = 0; i < contours.size(); i++)       
+//       {  
+// 	cv::Rect bBox;          
+// 	bBox = cv::boundingRect(contours[i]);            
+// 	float ratio = (float) bBox.width / (float) bBox.height;          
+// 	if (ratio > 1.0f)
+//             ratio = 1.0f / ratio;
+// 	    
+//          // Searching for a bBox almost square
+//          if (ratio > 0.75 && bBox.area() >= 400)
+//          {
+//             balls.push_back(contours[i]);
+//             ballsBox.push_back(bBox);
+//          }
+//       }
+//      
+// 
+//         // >>>>> Detection result
+//         for (size_t i = 0; i < balls.size(); i++)
+//         {
+//             cv::drawContours(res, balls, i, CV_RGB(20,150,20), 1);
+//             cv::rectangle(res, ballsBox[i], CV_RGB(0,255,0), 2);
+// 
+//             cv::Point center;
+//             center.x = ballsBox[i].x + ballsBox[i].width / 2;
+//             center.y = ballsBox[i].y + ballsBox[i].height / 2;
+//             cv::circle(res, center, 2, CV_RGB(20,150,20), -1);
+//         }
+//       // <<<<< Detection result         // >>>>> Kalman Update
+//       if (balls.size() == 0)
+//       {
+//          m_notFoundCount++;         
+// 	 if( m_notFoundCount >= 100 )
+//          {
+//             m_found = false;
+//          }
+// //          else{
+// // 	    m_kf.statePost = m_state;
+// // 	 }
+//       }
+//       else
+//       {
+// 	
+//          m_notFoundCount = 0;
+//  
+//          m_meas.at<float>(0) = ballsBox[0].x + ballsBox[0].width / 2;
+//          m_meas.at<float>(1) = ballsBox[0].y + ballsBox[0].height / 2;
+//          m_meas.at<float>(2) = (float)ballsBox[0].width;
+//          m_meas.at<float>(3) = (float)ballsBox[0].height;
+// 	 
+// 
+//          if (!m_found) // First detection!
+//          {
+// 	   ROS_INFO("FIRST DETECTION");
+//             // >>>> Initialization
+//             m_kf.errorCovPre.at<float>(0) = 1; // px
+//             m_kf.errorCovPre.at<float>(7) = 1; // px
+//             m_kf.errorCovPre.at<float>(14) = 1;
+//             m_kf.errorCovPre.at<float>(21) = 1;
+//             m_kf.errorCovPre.at<float>(28) = 1; // px
+//             m_kf.errorCovPre.at<float>(35) = 1; // px
+//  
+//             m_state.at<float>(0) = m_meas.at<float>(0);
+//             m_state.at<float>(1) = m_meas.at<float>(1);
+//             m_state.at<float>(2) = 0;
+//             m_state.at<float>(3) = 0;
+//             m_state.at<float>(4) = m_meas.at<float>(2);
+//             m_state.at<float>(5) = m_meas.at<float>(3);
+//             // <<<< Inizializzazione
+//  
+//             m_found = true;
+//          }
+//          else
+// 	 {
+//             m_kf.correct(m_meas); // Kalman Correction
+// 	 }
+//       }
+//       // <<<<< Kalman Update
+//       
+//    // Final result
+//       cv::imshow("Risultato finale", res);
+//       cv::waitKey(1);
+  
+}
+
+void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
+{
+     cv::Mat blur;
+     cv::GaussianBlur(src, blur, cv::Size(5, 5), 3.0, 3.0);
+     // <<<<< Noise smoothing
+     
+     // >>>>> HSV conversion
+     cv::Mat frmHsv;
+     cv::cvtColor(blur, frmHsv, CV_BGR2HSV);
+     // <<<<< HSV conversion
+
+     // >>>>> Color Thresholding
+     // Note: change parameters for different colors
+     cv::Mat rangeRes = cv::Mat::zeros(src.size(), CV_8UC1);
+     cv::inRange(frmHsv, cv::Scalar(lb[0], lb[1], lb[2]),cv::Scalar(ub[0], ub[1], ub[2]), rangeRes);
+     // <<<<< Color Thresholding
+
+     // >>>>> Improving the result
+     cv::erode(rangeRes, dst, cv::Mat(), cv::Point(-1, -1), 2);
+     cv::dilate(dst, dst, cv::Mat(), cv::Point(-1, -1), 2);
+=======
      m_foreground.copyTo(res);
      if (m_found)
           {
@@ -414,6 +614,7 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 //   { 
 //     ROS_INFO("FOUND");
 //   }
+>>>>>>> 45a327a634e67330b3a53eb71bf3c3811c6bf853
 }
 
 /* @function Erosion */

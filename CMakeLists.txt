@@ -87,6 +87,7 @@ set(sensor_SOURCES
         src/Collection.cpp
         src/Collector.cpp
         src/sensor_node.cpp
+        src/Tracker.cpp
 )
 
 # add_executable(Sensor ${sensor_SOURCES})

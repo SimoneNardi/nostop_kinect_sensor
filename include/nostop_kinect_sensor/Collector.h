@@ -20,7 +20,7 @@ namespace Robotics
 	namespace GameTheory
 	{
 		class Collection;
-	  
+		
 		class Collector: public ThreadBase	  	
 		{
 		  mutable Mutex m_mutex;

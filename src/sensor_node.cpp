@@ -1,6 +1,7 @@
 #include "ros/ros.h"
 #include "Collector.h"
 #include "Collection.h"
+#include "Tracker.h"
 
 void ShutDown(const ros::TimerEvent&)
 {
@@ -20,6 +21,10 @@ int main(int argc, char **argv)
 	
 	Robotics::GameTheory::Collector l_Collector;
 	
+<<<<<<< HEAD
+	
+=======
+>>>>>>> 45a327a634e67330b3a53eb71bf3c3811c6bf853
 	l_Collector.start();
      
 	ros::NodeHandle n;

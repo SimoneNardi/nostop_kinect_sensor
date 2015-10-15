@@ -1,6 +1,7 @@
 #include "Collector.h"
 #include "Collection.h"
 
+
 #include "nostop_kinect_sensor/SensorData.h"
 
 using namespace std;
@@ -12,10 +13,11 @@ Collector::Collector(): m_sensor(nullptr)
 {
   ROS_INFO("Sensor: Collector init.");
     
-  // Publish Sensor Information:
+  // Publish Sensor Information: 
+  // COLLECTION
   m_pub = m_node.advertise<nostop_kinect_sensor::SensorData>("sensor", 5);
   m_sensor = std::make_shared<Collection>();
-  
+
   m_sensor->subscribe();
   m_sensor->searchCircles();
 }

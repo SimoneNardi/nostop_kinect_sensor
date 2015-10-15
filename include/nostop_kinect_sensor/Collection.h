@@ -39,7 +39,7 @@ namespace Robotics
 	namespace GameTheory
 	{
 		class Guard;
-	  
+		class Tracker;
 		struct Color
 		{
 		  int r;
@@ -79,9 +79,11 @@ namespace Robotics
 		  
 		  AgentSensor(double x_, double y_, double heading_) : x(x_), y(y_), heading(heading_) {}
 		};
+		 
 		
 		class Collection
 		{
+		  std::shared_ptr<Tracker> m_tracker_ptr;
 		  mutable Mutex m_mutex;
 		  
 		  std::map<Color, AgentSensor, ColorCompare> m_data;
@@ -98,8 +100,8 @@ namespace Robotics
 		  
 		  ros::Subscriber m_cloud_sub;
 		  
-		  bool m_foregroundFLAG;
-		  cv::Mat m_foreground;
+		  bool m_stream_videoFLAG;
+		  cv::Mat m_stream_video;
 		  cv::Mat m_processed;
 		  
 		  
@@ -142,7 +144,8 @@ namespace Robotics
 			void getForeground(const sensor_msgs::ImageConstPtr& msg);
 			void toPub(const sensor_msgs::ImageConstPtr& msg);
 			void search_test(const sensor_msgs::ImageConstPtr& msg);
-			void Erosion(int erosion_elem, int erosion_size, cv::Mat const& src, cv::Mat& erosion_dst);
+// 			void Erosion(int erosion_elem, int erosion_size, cv::Mat const& src, cv::Mat& erosion_dst);
+			void filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[]);
 		  
 		};
 
