@@ -20,7 +20,6 @@ using namespace Robotics::GameTheory;
 using namespace cv;
 
 
-static const std::string FOREGROUND_CV_WINDOW = "Foreground Window (with circles)";
 static const std::string SENSOR_CV_WINDOW = "Sensor view Window";
 static const std::string FILTERED_CV_WINDOW = "Filtered view Window";
 
@@ -31,8 +30,6 @@ Collection::Collection()
 , m_data()
 , m_it(m_node)
 , m_stream_videoFLAG(false)
-, m_wait_time(140)
-, m_count(0)
 , m_dp(1)
 , m_minDist(300)
 , m_param1(15)
@@ -64,7 +61,6 @@ Collection::Collection()
 /////////////////////////////////////////////
 Collection::~Collection()
 {
-	cv::destroyWindow(FOREGROUND_CV_WINDOW); //destroy the window with the name, "MySensorWindow"
 	cv::destroyWindow(SENSOR_CV_WINDOW);
 	cv::destroyWindow(FILTERED_CV_WINDOW);
 }
@@ -75,10 +71,7 @@ void Collection::subscribe()
 	ROS_INFO("Sensor: Collection subscribe!");
 	ROS_INFO("%d",m_tracker_ptr->passaggio());
 	cv::namedWindow(SENSOR_CV_WINDOW);
-	cv::namedWindow(FOREGROUND_CV_WINDOW);
-	m_image_pub = m_it.advertise("/sensor/output_video", 1);
 	m_image_sub = m_it.subscribe("/camera/rgb/image_rect_color", 1, &Collection::getForeground, this, image_transport::TransportHints("raw"));
-	m_image_sub_photo = m_it.subscribe("/sensor/output_video",1, &Collection::toPub, this, image_transport::TransportHints("raw"));
 	
 	while (!m_stream_videoFLAG)
 	{
@@ -93,7 +86,6 @@ void Collection::subscribe()
 //////////////////////////////////////////
 void Collection::getForeground(const sensor_msgs::ImageConstPtr& msg)
 {
-//   Lock l_lck(m_mutex);
 
   cv_bridge::CvImageConstPtr cv_ptr;
   try
@@ -110,58 +102,15 @@ void Collection::getForeground(const sensor_msgs::ImageConstPtr& msg)
   }
   
   m_stream_video = cv_ptr->image.clone();
-  m_photo_support = cv_ptr->image.clone();
   m_stream_videoFLAG = true;
     
    if(m_stream_videoFLAG)
    {
       // Update GUI Window
       cv::imshow(SENSOR_CV_WINDOW,m_stream_video);
-      cv::waitKey(3);
-      m_image_pub.publish(msg);
-       if (m_count == m_wait_time)
-       {
-	m_image_sub_photo.shutdown();
-	m_image_pub.shutdown();
-	m_count = m_count+1;
-       } else {
-	m_count = m_count+1;
-       }
-   }
-     
+      cv::waitKey(3);     
 }
-
-//////////////////////////////////////////////////////////
-void Collection::toPub(const sensor_msgs::ImageConstPtr& msg)
-{
-  //Lock l_lck(m_mutex);
-  cv_bridge::CvImageConstPtr cv_ptr;
-  try
-  {
-    if (sensor_msgs::image_encodings::isColor(msg->encoding))
-	cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8);
-    else
-	cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
-  }
-  catch (cv_bridge::Exception& e)
-  {
-    ROS_ERROR("cv_bridge exception: %s", e.what());
-    return;
-  }
-  
-  m_photo = cv_ptr->image.clone();
-  m_photo_support = cv_ptr->image.clone();
-  m_stream_videoFLAG = true;
-    
-   if(m_stream_videoFLAG)
-   {
-      // Update GUI Window
-      cv::imshow(FOREGROUND_CV_WINDOW, m_photo);
-      cv::waitKey(3);
-   }	
-
 }
-
 
 /////////////////////////////////////////////////////
 void Collection::searchCircles()
@@ -187,25 +136,25 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
      // Filtering
      cv::Mat rangeRes;
      
-     // Red Ball HSV values (H had *0.5 scale factor)
-     int64_t lb_r[3],ub_r[3]; 
-     lb_r[0] = 0; 
-     lb_r[1] = 150;
-     lb_r[2] = 150;
-     ub_r[0] = 30;
-     ub_r[1] = 255;
-     ub_r[2] = 255;
-     filtering(m_stream_video,rangeRes,lb_r,ub_r);  
+//      // Red Ball HSV values (H had *0.5 scale factor)
+//      int64_t lb_r[3],ub_r[3]; 
+//      lb_r[0] = 0; 
+//      lb_r[1] = 150;
+//      lb_r[2] = 150;
+//      ub_r[0] = 30;
+//      ub_r[1] = 255;
+//      ub_r[2] = 255;
+//      filtering(m_stream_video,rangeRes,lb_r,ub_r);  
 //      
-//      // Blue Ball HSV values (H had *0.5 scale factor)
-//      int64_t lb_b[3],ub_b[3]; 
-//      lb_b[0] = 100; 
-//      lb_b[1] = 100;
-//      lb_b[2] = 100;
-//      ub_b[0] = 135;
-//      ub_b[1] = 255;
-//      ub_b[2] = 255;
-//      filtering(m_stream_video,rangeRes,lb_b,ub_b);  
+     // Blue Ball HSV values (H had *0.5 scale factor)
+     int64_t lb_b[3],ub_b[3]; 
+     lb_b[0] = 100; 
+     lb_b[1] = 100;
+     lb_b[2] = 100;
+     ub_b[0] = 135;
+     ub_b[1] = 255;
+     ub_b[2] = 255;
+     filtering(m_stream_video,rangeRes,lb_b,ub_b);  
      
 //      // Green Ball HSV values (H had *0.5 scale factor)
 //      int64_t lb_g[3],ub_g[3]; 
@@ -234,27 +183,24 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 
 void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
 {
+     // Noise smoothing
      cv::Mat blur;
      cv::GaussianBlur(src, blur, cv::Size(5, 5), 3.0, 3.0);
-     // <<<<< Noise smoothing
      
-     // >>>>> HSV conversion
+     //  HSV conversion
      cv::Mat frmHsv;
      cv::cvtColor(blur, frmHsv, CV_BGR2HSV);
-     // <<<<< HSV conversion
 
-     // >>>>> Color Thresholding
-     // Note: change parameters for different colors
+     //  Color Thresholding
      cv::Mat rangeRes = cv::Mat::zeros(src.size(), CV_8UC1);
      cv::inRange(frmHsv, cv::Scalar(lb[0], lb[1], lb[2]),cv::Scalar(ub[0], ub[1], ub[2]), rangeRes);
-     // <<<<< Color Thresholding
 
      // >>>>> Improving the result
      cv::erode(rangeRes, dst, cv::Mat(), cv::Point(-1, -1), 2);
      cv::dilate(dst, dst, cv::Mat(), cv::Point(-1, -1), 2);
         
-	// Thresholding viewing       
-	cv::imshow("Threshold", rangeRes);        
+     // Thresholding viewing       
+     cv::imshow("Threshold", rangeRes);        
   
 }
 

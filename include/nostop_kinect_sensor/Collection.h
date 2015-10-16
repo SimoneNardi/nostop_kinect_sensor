@@ -95,8 +95,6 @@ namespace Robotics
 		  image_transport::ImageTransport m_it;
 		  image_transport::Subscriber m_image_sub;
 		  image_transport::Subscriber m_image_sub_circles;
-		  image_transport::Subscriber m_image_sub_photo;
-		  image_transport::Publisher m_image_pub;
 		  
 		  ros::Subscriber m_cloud_sub;
 		  
@@ -105,8 +103,6 @@ namespace Robotics
 		  cv::Mat m_processed;
 		  
 		  
-		  int m_count;
-		  int m_wait_time;//x*100 -> x*3.6 s (to do )
 		  cv::Mat m_photo;
 		  cv::Mat m_photo_support;
 		  cv::Mat m_channel[3];
