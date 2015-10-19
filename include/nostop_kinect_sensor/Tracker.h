@@ -7,6 +7,8 @@
 #define TRACKER_H
 #pragma once
 
+#include <opencv2/core/core.hpp>
+
 #include "ros/ros.h"
 
 #include <memory>
@@ -18,14 +20,23 @@ namespace Robotics
 		
 		class Tracker
 		{
-			int m_test;
+			int m_stateSize = 6, m_measSize = 4, m_contrSize = 0;
+			unsigned int type = CV_32F;
+			cv::KalmanFilter m_kf;
+			cv::Mat m_state;
+			cv::Mat m_meas;
+			cv::Mat m_drawCircle;
+			double m_ticks;
+			bool m_found;
+			int m_notFoundCount = 0;
+		  
 
 		protected:
 			
 		public:
 			Tracker();
-			void test();
-			int passaggio();
+			void matrixSettings(cv::KalmanFilter m_kf);
+			void findCircles(cv::Mat thresholded_image, cv:: Mat drawCircle);
 			~Tracker();
 		};
 

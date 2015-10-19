@@ -22,6 +22,7 @@ using namespace cv;
 
 static const std::string SENSOR_CV_WINDOW = "Sensor view Window";
 static const std::string FILTERED_CV_WINDOW = "Filtered view Window";
+static const std::string FOUNDED_CIRCLES_WINDOW = "Founded circles Window";
 
  
 /////////////////////////////////////////////
@@ -46,15 +47,17 @@ Collection::Collection()
 , m_median(19)
 , m_thr(40)
 , m_maxval(255)
-, m_kf(m_stateSize,m_measSize,m_contrSize,m_type)
-, m_state(m_stateSize,1,m_type)
-, m_meas(m_measSize,1,m_type)
-, m_found(false)
-, m_tracker_ptr(nullptr)
+, m_tracker_ptr_blue(nullptr)
+, m_tracker_ptr_green(nullptr)
+, m_tracker_ptr_red(nullptr)
+, m_tracker_ptr_yellow(nullptr)
 {
   // TRACKER
-  m_tracker_ptr = std::make_shared<Tracker>();
-//   m_tracker_ptr->test();
+  m_tracker_ptr_blue = std::make_shared<Tracker>();
+  m_tracker_ptr_green = std::make_shared<Tracker>();
+  m_tracker_ptr_red = std::make_shared<Tracker>();
+  m_tracker_ptr_yellow = std::make_shared<Tracker>();
+  
 }
 
 
@@ -69,7 +72,6 @@ Collection::~Collection()
 void Collection::subscribe()
 {
 	ROS_INFO("Sensor: Collection subscribe!");
-	ROS_INFO("%d",m_tracker_ptr->passaggio());
 	cv::namedWindow(SENSOR_CV_WINDOW);
 	m_image_sub = m_it.subscribe("/camera/rgb/image_rect_color", 1, &Collection::getForeground, this, image_transport::TransportHints("raw"));
 	
@@ -86,7 +88,6 @@ void Collection::subscribe()
 //////////////////////////////////////////
 void Collection::getForeground(const sensor_msgs::ImageConstPtr& msg)
 {
-
   cv_bridge::CvImageConstPtr cv_ptr;
   try
   {
@@ -122,63 +123,86 @@ void Collection::searchCircles()
 void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 { 
   vector<cv::Vec3f> l_circles;
-    
-    double precTick = m_ticks;
-    m_ticks = (double) cv::getTickCount();
- 
-     double dT = (m_ticks-precTick) / cv::getTickFrequency(); //seconds
- 
-      // Frame acquisition
-     cv::Mat res;
-
-     m_stream_video.copyTo(res);
+     cv::Mat withCircle_blue,withCircle_green,withCircle_red,withCircle_yellow,l_bg,l_ry;
+//      withCircle_blue=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type);
+     withCircle_green=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+     withCircle_red=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+     withCircle_yellow=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+     l_bg=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+     l_ry==Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+     m_stream_video.copyTo(withCircle_blue);
+//      m_stream_video.copyTo(withCircle_green);
+//      m_stream_video.copyTo(withCircle_red);
+//      m_stream_video.copyTo(withCircle_yellow);
      
      // Filtering
-     cv::Mat rangeRes;
      
-//      // Red Ball HSV values (H had *0.5 scale factor)
-//      int64_t lb_r[3],ub_r[3]; 
-//      lb_r[0] = 0; 
-//      lb_r[1] = 150;
-//      lb_r[2] = 150;
-//      ub_r[0] = 30;
-//      ub_r[1] = 255;
-//      ub_r[2] = 255;
-//      filtering(m_stream_video,rangeRes,lb_r,ub_r);  
 //      
      // Blue Ball HSV values (H had *0.5 scale factor)
      int64_t lb_b[3],ub_b[3]; 
-     lb_b[0] = 100; 
-     lb_b[1] = 100;
-     lb_b[2] = 100;
-     ub_b[0] = 135;
+     lb_b[0] = 200*0.5; 
+     lb_b[1] = 140;
+     lb_b[2] = 140;
+     ub_b[0] = 320*0.5;
      ub_b[1] = 255;
      ub_b[2] = 255;
-     filtering(m_stream_video,rangeRes,lb_b,ub_b);  
+     filtering(m_stream_video,m_only_blue,lb_b,ub_b);  
      
-//      // Green Ball HSV values (H had *0.5 scale factor)
-//      int64_t lb_g[3],ub_g[3]; 
-//      lb_g[0] = 30; 
-//      lb_g[1] = 100;
-//      lb_g[2] = 50;
-//      ub_g[0] = 90;
-//      ub_g[1] = 255;
-//      ub_g[2] = 255;
-//      filtering(m_stream_video,rangeRes,lb_g,ub_g);  
+     // Green Ball HSV values (H had *0.5 scale factor)
+     int64_t lb_g[3],ub_g[3]; 
+     lb_g[0] = 30; 
+     lb_g[1] = 100;
+     lb_g[2] = 50;
+     ub_g[0] = 90;
+     ub_g[1] = 255;
+     ub_g[2] = 255;
+     filtering(m_stream_video,m_only_green,lb_g,ub_g);  
      
-//      // Yellow Ball HSV values (H had *0.5 scale factor)
-//      int64_t lb_y[3],ub_y[3]; 
-//      lb_y[0] = 15; 
-//      lb_y[1] = 100;
-//      lb_y[2] = 100;
-//      ub_y[0] = 45;
-//      ub_y[1] = 255;
-//      ub_y[2] = 255;
-//      filtering(m_stream_video,rangeRes,lb_y,ub_y);  
+     // Red Ball HSV values (H had *0.5 scale factor)
+     cv::Mat l_only_lower_red, l_only_upper_red;
+     int64_t lb_r[3],ub_r[3]; 
+     lb_r[0] = 0; 
+     lb_r[1] = 100;
+     lb_r[2] = 150;
+     ub_r[0] = 10;
+     ub_r[1] = 255;
+     ub_r[2] = 255;
+     filtering(m_stream_video,l_only_lower_red,lb_r,ub_r);  
+     
+     lb_r[0] = 160; 
+     lb_r[1] = 100;
+     lb_r[2] = 150;
+     ub_r[0] = 179;
+     ub_r[1] = 255;
+     ub_r[2] = 255;
+     filtering(m_stream_video,l_only_upper_red,lb_r,ub_r);  
+     cv::addWeighted(l_only_lower_red,1.0,l_only_upper_red,1.0,0.0,m_only_red);
+     
+     
+     // Yellow Ball HSV values (H had *0.5 scale factor)
+     int64_t lb_y[3],ub_y[3]; 
+     lb_y[0] = 15; 
+     lb_y[1] = 100;
+     lb_y[2] = 100;
+     ub_y[0] = 45;
+     ub_y[1] = 255;
+     ub_y[2] = 255;
+     filtering(m_stream_video,m_only_yellow,lb_y,ub_y);  
      
      // Thresholding viewing       
-     cv::imshow("Threshold", rangeRes); 
-
+    
+     cv::imshow("Threshold Blue", m_only_blue);
+     cv::imshow("Threshold Green", m_only_green);
+     cv::imshow("Threshold Red", m_only_red);
+     cv::imshow("Threshold Yellow", m_only_yellow);
+     m_tracker_ptr_blue->findCircles(m_only_blue, withCircle_blue);
+     m_tracker_ptr_green->findCircles(m_only_green, withCircle_green);
+     m_tracker_ptr_red->findCircles(m_only_red, withCircle_red);
+     m_tracker_ptr_yellow->findCircles(m_only_yellow, withCircle_yellow);
+     cv::addWeighted(withCircle_blue,1.0,withCircle_green,1.0,0.0,l_bg);
+     cv::addWeighted(withCircle_red,1.0,withCircle_yellow,1.0,0.0,l_ry);
+     cv::addWeighted(l_bg,1.0,l_ry,1.0,0.0,m_circlesFounded);
+     cv::imshow(FOUNDED_CIRCLES_WINDOW,m_circlesFounded);
 }
 
 void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
@@ -197,10 +221,7 @@ void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
 
      // >>>>> Improving the result
      cv::erode(rangeRes, dst, cv::Mat(), cv::Point(-1, -1), 2);
-     cv::dilate(dst, dst, cv::Mat(), cv::Point(-1, -1), 2);
-        
-     // Thresholding viewing       
-     cv::imshow("Threshold", rangeRes);        
+     cv::dilate(dst, dst, cv::Mat(), cv::Point(-1, -1), 2);    
   
 }
 

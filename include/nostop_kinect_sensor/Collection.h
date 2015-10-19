@@ -83,7 +83,11 @@ namespace Robotics
 		
 		class Collection
 		{
-		  std::shared_ptr<Tracker> m_tracker_ptr;
+		  std::shared_ptr<Tracker> m_tracker_ptr_blue;
+		  std::shared_ptr<Tracker> m_tracker_ptr_green;
+		  std::shared_ptr<Tracker> m_tracker_ptr_red;
+		  std::shared_ptr<Tracker> m_tracker_ptr_yellow;
+		  
 		  mutable Mutex m_mutex;
 		  
 		  std::map<Color, AgentSensor, ColorCompare> m_data;
@@ -101,6 +105,7 @@ namespace Robotics
 		  bool m_stream_videoFLAG;
 		  cv::Mat m_stream_video;
 		  cv::Mat m_processed;
+		  cv::Mat m_circlesFounded;
 		  
 		  
 		  cv::Mat m_photo;
@@ -114,18 +119,12 @@ namespace Robotics
 		  int m_thr, m_maxval;
 		  int m_min_red,m_max_red, m_min_green,m_max_green,m_min_blue,m_max_blue;
 		  int m_erosion_size, m_median;
-
-		   // KALMAN FILTER
-		  double m_ticks;
-		  bool m_found;
-		  int m_notFoundCount = 0;
-		  int m_stateSize = 6;
-		  int m_measSize = 4;
-		  int m_contrSize = 0;
-		  unsigned int m_type = CV_32F; 
-		  cv::Mat m_state;
-		  cv::Mat m_meas;
-		  cv::KalmanFilter m_kf;
+		  
+		  //FILTERING
+		  cv::Mat m_only_blue;
+		  cv::Mat m_only_green;
+		  cv::Mat m_only_red;
+		  cv::Mat m_only_yellow;
 		  
 		  
 		public:
