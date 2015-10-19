@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp 
   std_msgs 
   message_generation 
+  rosbag
   base_math
   image_transport
   cv_bridge)
@@ -66,7 +67,7 @@ find_package( OpenCV REQUIRED )
 catkin_package(
   INCLUDE_DIRS include/${PROJECT_NAME}/
   LIBRARIES ${PROJECT_NAME}
-  DEPENDS base_math image_transport cv_bridge
+  DEPENDS base_math image_transport cv_bridge 
 )
 
 ###########

@@ -11,6 +11,12 @@
 #include "ros/ros.h"
 #include <iostream>
 #include "Tracker.h"
+#include <std_msgs/Float32.h>
+#include <rosbag/query.h>
+#include <rosbag/view.h>
+#include <rosbag/message_instance.h>
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
 
 
 using namespace std;
@@ -24,6 +30,7 @@ m_kf(m_stateSize,m_measSize,m_contrSize,type)
 , m_state(m_stateSize,1,type)
 , m_meas(m_measSize,1,type)
 , m_found(false)
+, m_close(true)
 {
   matrixSettings(m_kf);
 }
@@ -152,8 +159,127 @@ void Tracker::findCircles(cv::Mat thresholded_image, cv::Mat m_drawCircle)
             // <<<< Initialization
  
             m_found = true;
+
+	    
          }
          else
             m_kf.correct(m_meas); // Kalman Correction
       }
  }
+ 
+ 
+ 
+void Tracker::toPublish(std::string color)
+{
+  
+  std_msgs::Float32 pos;
+  float x,y;
+  x = m_state.at<float>(0);
+  y = m_state.at<float>(1);
+  pos.data = (x,y);
+  m_pub_position = tracker.advertise<std_msgs::Float32>("/position",1);// 640x480 upper-left corner == (0,0)
+  m_pub_position.publish<std_msgs::Float32>(pos);
+  ROS_INFO("Publish x! %f",x);
+  ROS_INFO("Publish y! %f",y);
+    
+}
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ /*
+void Tracker::write2bag(std::string color)
+{
+    if(m_close){
+      m_bag.open(color+".bag",rosbag::bagmode::Write);
+      m_close = false;
+    }
+    if (m_found)
+    {
+      std_msgs::Float32 x_bag,y_bag;
+      float x,y;
+      x = m_state.at<float>(0);
+      y = m_state.at<float>(1);
+      x_bag.data = x;
+      y_bag.data = y;
+      m_bag.write<std_msgs::Float32>("x",ros::Time::now(),x_bag);
+      m_bag.write<std_msgs::Float32>("y",ros::Time::now(),y_bag);
+      } else{
+	if(m_notFoundCount>=10){
+	    m_bag.close();
+	    m_close = true;
+	  }else{
+	     std_msgs::Float32 x_bag,y_bag;
+	    float x,y;
+	    x = m_state.at<float>(0);
+	    y = m_state.at<float>(1);
+	    x_bag.data = x;
+	    y_bag.data = y;
+	    m_bag.write<std_msgs::Float32>("x",ros::Time::now(),x_bag);
+	    m_bag.write<std_msgs::Float32>("y",ros::Time::now(),y_bag);
+	    }
+      } 
+}
+      
+void Tracker::bag2read(std::string color)
+{ 
+  m_bag.open(color+".bag",rosbag::bagmode::Read);
+  float x;
+  std::vector<std::string> topics;
+  topics.push_back(std::string("x"));
+  topics.push_back(std::string("y"));
+  
+  rosbag::View view(m_bag, rosbag::TopicQuery(topics));
+  foreach(rosbag::MessageInstance const m,view)
+  {
+    std_msgs::Float32::ConstPtr s = m.instantiate<std_msgs::Float32>();
+    x = s->data;
+    
+    ROS_INFO("%f",x);
+  }
+  m_bag.close();
+}
+*/

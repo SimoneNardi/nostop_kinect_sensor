@@ -203,6 +203,8 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
      cv::addWeighted(withCircle_red,1.0,withCircle_yellow,1.0,0.0,l_ry);
      cv::addWeighted(l_bg,1.0,l_ry,1.0,0.0,m_circlesFounded);
      cv::imshow(FOUNDED_CIRCLES_WINDOW,m_circlesFounded);
+     m_tracker_ptr_blue->toPublish("blue");
+       
 }
 
 void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])

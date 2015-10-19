@@ -10,6 +10,7 @@
 #include <opencv2/core/core.hpp>
 
 #include "ros/ros.h"
+#include "rosbag/bag.h"
 
 #include <memory>
 
@@ -29,7 +30,10 @@ namespace Robotics
 			double m_ticks;
 			bool m_found;
 			int m_notFoundCount = 0;
-		  
+// 			rosbag::Bag m_bag;
+// 			bool m_close;
+			ros::NodeHandle tracker;
+			ros::Publisher m_pub_position;
 
 		protected:
 			
@@ -37,6 +41,10 @@ namespace Robotics
 			Tracker();
 			void matrixSettings(cv::KalmanFilter m_kf);
 			void findCircles(cv::Mat thresholded_image, cv:: Mat drawCircle);
+// 			void write2bag(std::string color);
+// 			void bag2read(std::string color);
+			void toPublish(std::string color);
+			
 			~Tracker();
 		};
 
