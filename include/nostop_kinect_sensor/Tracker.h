@@ -31,7 +31,7 @@ namespace Robotics
 			bool m_found;
 			int m_notFoundCount = 0;
 // 			rosbag::Bag m_bag;
-// 			bool m_close;
+			bool m_close;
 			ros::NodeHandle tracker;
 			ros::Publisher m_pub_position;
 
