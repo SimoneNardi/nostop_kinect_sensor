@@ -88,7 +88,7 @@ namespace Robotics
 		  std::shared_ptr<Tracker> m_tracker_ptr_red;
 		  std::shared_ptr<Tracker> m_tracker_ptr_yellow;
 		  
-		  mutable Mutex m_mutex;
+// 		  mutable Mutex m_mutex;
 		  
 		  std::map<Color, AgentSensor, ColorCompare> m_data;
 		  
@@ -104,28 +104,25 @@ namespace Robotics
 		  
 		  bool m_stream_videoFLAG;
 		  cv::Mat m_stream_video;
-		  cv::Mat m_processed;
+// 		  cv::Mat m_processed;
 		  cv::Mat m_circlesFounded;
 		  
 		  
-		  cv::Mat m_photo;
-		  cv::Mat m_photo_support;
-		  cv::Mat m_channel[3];
-		  cv::Mat m_channel2[3];
-		  cv::Mat m_channel3[3];
-		  int m_red_filter,m_blue_filter,m_green_filter;
-		  
-		  int m_dp, m_minDist, m_param1, m_param2, m_minR, m_maxR;
-		  int m_thr, m_maxval;
+		  //FILTERING
 		  int m_min_red,m_max_red, m_min_green,m_max_green,m_min_blue,m_max_blue;
 		  int m_erosion_size, m_median;
-		  
-		  //FILTERING
 		  cv::Mat m_only_blue;
 		  cv::Mat m_only_green;
 		  cv::Mat m_only_red;
 		  cv::Mat m_only_yellow;
 		  
+		  //COMPUTING ROBOT POSITION
+		  float m_blue_pos[2];
+		  float m_green_pos[2];
+		  float m_red_pos[2];
+		  float m_yellow_pos[2];
+		  float m_robot_rb[3];
+// 		  float m_robot_gy[3]; // TO DO  
 		  
 		public:
 			Collection();
@@ -139,8 +136,9 @@ namespace Robotics
 			void getForeground(const sensor_msgs::ImageConstPtr& msg);
 			void toPub(const sensor_msgs::ImageConstPtr& msg);
 			void search_test(const sensor_msgs::ImageConstPtr& msg);
-// 			void Erosion(int erosion_elem, int erosion_size, cv::Mat const& src, cv::Mat& erosion_dst);
 			void filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[]);
+			void robotPose(float first_ball_pos[2], float second_ball_pos[2], float robot_pose[3]);
+// 			void Erosion(int erosion_elem, int erosion_size, cv::Mat const& src, cv::Mat& erosion_dst);
 		  
 		};
 

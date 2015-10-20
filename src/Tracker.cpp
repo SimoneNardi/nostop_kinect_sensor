@@ -69,7 +69,6 @@ void Tracker::findCircles(cv::Mat thresholded_image, cv::Mat m_drawCircle)
       {
          m_kf.transitionMatrix.at<float>(2) = dT;
          m_kf.transitionMatrix.at<float>(9) = dT;
-
          m_state = m_kf.predict();
 	 cv::Rect predRect;          
 	 predRect.width = m_state.at<float>(4);          
@@ -97,7 +96,7 @@ void Tracker::findCircles(cv::Mat thresholded_image, cv::Mat m_drawCircle)
             ratio = 1.0f / ratio;
  
          // Searching for a bBox almost square
-         if (ratio > 0.75 && bBox.area() >=650 && bBox.area() <= 1200) //To do
+         if (ratio > 0.85 && bBox.area() >=200 && bBox.area() <= 1000) 
          {
             balls.push_back(l_contours[i]);
             ballsBox.push_back(bBox);
@@ -145,7 +144,7 @@ void Tracker::findCircles(cv::Mat thresholded_image, cv::Mat m_drawCircle)
             // >>>> Initialization
             m_kf.errorCovPre.at<float>(0) = 1; // px
             m_kf.errorCovPre.at<float>(7) = 1; // px
-            m_kf.errorCovPre.at<float>(14) = 1;
+            m_kf.errorCovPre.at<float>(14) = 1;m_kf.statePost = m_state;
             m_kf.errorCovPre.at<float>(21) = 1;
             m_kf.errorCovPre.at<float>(28) = 1; // px
             m_kf.errorCovPre.at<float>(35) = 1; // px
@@ -168,47 +167,35 @@ void Tracker::findCircles(cv::Mat thresholded_image, cv::Mat m_drawCircle)
  }
  
  
+// UNUSED
+// void Tracker::toPublish(std::string color)
+// {
+//   
+//   std_msgs::Float32 pos;
+//   float x,y;
+//   x = m_state.at<float>(0);
+//   y = m_state.at<float>(1);
+//   pos.data = (x,y);
+//   m_pub_position = tracker.advertise<std_msgs::Float32>("/position_"+color,1);// 640x480 upper-left corner == (0,0)
+//   m_pub_position.publish<std_msgs::Float32>(pos);
+// //   ROS_INFO("Publish x! %f",x);
+// //   ROS_INFO("Publish y! %f",y);
+//     
+// }
  
-void Tracker::toPublish(std::string color)
+ 
+ 
+void Tracker::toGetMessage(float pos_src[2])
 {
-  
-  std_msgs::Float32 pos;
-  float x,y;
-  x = m_state.at<float>(0);
-  y = m_state.at<float>(1);
-  pos.data = (x,y);
-  m_pub_position = tracker.advertise<std_msgs::Float32>("/position",1);// 640x480 upper-left corner == (0,0)
-  m_pub_position.publish<std_msgs::Float32>(pos);
-  ROS_INFO("Publish x! %f",x);
-  ROS_INFO("Publish y! %f",y);
-    
+  if (m_found)
+  {
+    pos_src[0]= m_meas.at<float>(0);
+    pos_src[1]= m_meas.at<float>(1);
+  }else {
+	pos_src[0]= -1;
+	pos_src[1]= -1;
+  }
 }
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
  
  
  

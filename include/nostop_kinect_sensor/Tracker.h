@@ -44,6 +44,7 @@ namespace Robotics
 // 			void write2bag(std::string color);
 // 			void bag2read(std::string color);
 			void toPublish(std::string color);
+			void toGetMessage(float pos_src[2]);
 			
 			~Tracker();
 		};

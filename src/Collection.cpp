@@ -13,6 +13,7 @@
 #include "opencv2/video/video.hpp"
 #include "highgui.h"
 #include "ros/ros.h"
+#include <tgmath.h>
 
 using namespace std;
 using namespace Robotics;
@@ -31,12 +32,6 @@ Collection::Collection()
 , m_data()
 , m_it(m_node)
 , m_stream_videoFLAG(false)
-, m_dp(1)
-, m_minDist(300)
-, m_param1(15)
-, m_param2(14)
-, m_minR(7)
-, m_maxR(18)
 , m_max_red(45)
 , m_min_red(0)
 , m_max_green(255)
@@ -45,8 +40,6 @@ Collection::Collection()
 , m_min_blue(0)
 , m_erosion_size(0)
 , m_median(19)
-, m_thr(40)
-, m_maxval(255)
 , m_tracker_ptr_blue(nullptr)
 , m_tracker_ptr_green(nullptr)
 , m_tracker_ptr_red(nullptr)
@@ -122,8 +115,7 @@ void Collection::searchCircles()
 
 void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 { 
-  vector<cv::Vec3f> l_circles;
-     cv::Mat withCircle_blue,withCircle_green,withCircle_red,withCircle_yellow,l_bg,l_ry;
+       cv::Mat withCircle_blue,withCircle_green,withCircle_red,withCircle_yellow,l_bg,l_ry;
 //      withCircle_blue=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type);
      withCircle_green=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
      withCircle_red=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
@@ -136,8 +128,6 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 //      m_stream_video.copyTo(withCircle_yellow);
      
      // Filtering
-     
-//      
      // Blue Ball HSV values (H had *0.5 scale factor)
      int64_t lb_b[3],ub_b[3]; 
      lb_b[0] = 200*0.5; 
@@ -189,8 +179,9 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
      ub_y[2] = 255;
      filtering(m_stream_video,m_only_yellow,lb_y,ub_y);  
      
+     
+     
      // Thresholding viewing       
-    
      cv::imshow("Threshold Blue", m_only_blue);
      cv::imshow("Threshold Green", m_only_green);
      cv::imshow("Threshold Red", m_only_red);
@@ -203,8 +194,25 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
      cv::addWeighted(withCircle_red,1.0,withCircle_yellow,1.0,0.0,l_ry);
      cv::addWeighted(l_bg,1.0,l_ry,1.0,0.0,m_circlesFounded);
      cv::imshow(FOUNDED_CIRCLES_WINDOW,m_circlesFounded);
-     m_tracker_ptr_blue->toPublish("blue");
+     
+     
+     // Position of marker
+     m_tracker_ptr_blue->toGetMessage(m_blue_pos);
+     m_tracker_ptr_green->toGetMessage(m_green_pos);
+     m_tracker_ptr_red->toGetMessage(m_red_pos);
+     m_tracker_ptr_yellow->toGetMessage(m_yellow_pos);
+     
+     
+       ROS_INFO("blue x ---- > %f", m_blue_pos[0]);
+          
+//        ROS_INFO("green x ---- > %f", m_green_pos[0]);
+  
+       ROS_INFO("red x ---- > %f", m_red_pos[0]);
+     
+//        ROS_INFO("yellow x ---- > %f", m_yellow_pos[0]);
        
+    // Marker Position ----> (x,y,heading) of Robot
+    robotPose(m_blue_pos,m_red_pos,m_robot_rb);
 }
 
 void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
@@ -225,6 +233,23 @@ void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
      cv::erode(rangeRes, dst, cv::Mat(), cv::Point(-1, -1), 2);
      cv::dilate(dst, dst, cv::Mat(), cv::Point(-1, -1), 2);    
   
+}
+
+void Collection::robotPose(float first_ball_pos[2], float second_ball_pos[2], float robot_pose[3]) // the first is the head
+{
+  // SR origin on upper left corner
+  // x axis from origin to upper right corner
+  // y axis from origin to lower left corner
+  // z axis from origin to DOWN ( center of the earth ) 
+  if (first_ball_pos[0] == -1.0 || first_ball_pos[1] == -1.0 || second_ball_pos[0] == -1.0 || second_ball_pos[1] == -1.0 )
+  {
+    ROS_INFO("Robot not found or out of frame");
+  }else{ 
+    robot_pose[0] = (first_ball_pos[0]+second_ball_pos[0])/2;
+    robot_pose[1] = (first_ball_pos[1]+second_ball_pos[1])/2;
+    robot_pose[2] = atan2((second_ball_pos[1]-first_ball_pos[1]),(second_ball_pos[0]-first_ball_pos[0]));
+    ROS_INFO("x--> %f, y ---> %f, heading ---> %f",robot_pose[0],robot_pose[1],robot_pose[2]*180/3.14);
+  }
 }
 
 /* @function Erosion */
