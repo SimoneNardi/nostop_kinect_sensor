@@ -13,8 +13,9 @@
 #include "opencv2/video/video.hpp"
 #include "highgui.h"
 #include "ros/ros.h"
-#include <tgmath.h>
-
+#include <math.h>
+#include <iostream>
+ 
 using namespace std;
 using namespace Robotics;
 using namespace Robotics::GameTheory;
@@ -24,7 +25,12 @@ using namespace cv;
 static const std::string SENSOR_CV_WINDOW = "Sensor view Window";
 static const std::string FILTERED_CV_WINDOW = "Filtered view Window";
 static const std::string FOUNDED_CIRCLES_WINDOW = "Founded circles Window";
-
+static const int L_view_cm = 195;
+static const int l_view_cm = 115;
+static const int MAX_pix_on_cm = 640/L_view_cm;
+static const int MIN_pix_on_cm = 640/l_view_cm;
+static const int y_camera_depth_cm = 132;
+// static const float pix_cm[480] = linspace(2.6,5.8,480);
  
 /////////////////////////////////////////////
 Collection::Collection()
@@ -182,11 +188,13 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
      
      
      // Thresholding viewing       
-     cv::imshow("Threshold Blue", m_only_blue);
-     cv::imshow("Threshold Green", m_only_green);
-     cv::imshow("Threshold Red", m_only_red);
-     cv::imshow("Threshold Yellow", m_only_yellow);
-     m_tracker_ptr_blue->findCircles(m_only_blue, withCircle_blue);
+//      cv::imshow("Threshold Blue", m_only_blue);
+//      cv::imshow("Threshold Green", m_only_green);
+//      cv::imshow("Threshold Red", m_only_red);
+//      cv::imshow("Threshold Yellow", m_only_yellow);
+     
+     // Circles finding
+     m_tracker_ptr_blue->findCircles(m_only_blue,withCircle_blue);
      m_tracker_ptr_green->findCircles(m_only_green, withCircle_green);
      m_tracker_ptr_red->findCircles(m_only_red, withCircle_red);
      m_tracker_ptr_yellow->findCircles(m_only_yellow, withCircle_yellow);
@@ -203,16 +211,55 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
      m_tracker_ptr_yellow->toGetMessage(m_yellow_pos);
      
      
-       ROS_INFO("blue x ---- > %f", m_blue_pos[0]);
+//        ROS_INFO("blue x ---- > %f", m_blue_pos[0]);
           
 //        ROS_INFO("green x ---- > %f", m_green_pos[0]);
   
-       ROS_INFO("red x ---- > %f", m_red_pos[0]);
+//        ROS_INFO("red x ---- > %f", m_red_pos[0]);
      
 //        ROS_INFO("yellow x ---- > %f", m_yellow_pos[0]);
        
     // Marker Position ----> (x,y,heading) of Robot
     robotPose(m_blue_pos,m_red_pos,m_robot_rb);
+ 
+//     Rectify
+    cv::Mat  white;
+    int64_t lb_w[3],ub_w[3]; 
+     lb_w[0] = 0; 
+     lb_w[1] = 0;
+     lb_w[2] = 245;
+     ub_w[0] = 180;
+     ub_w[1] = 10;
+     ub_w[2] = 255;
+     filtering(m_stream_video,white,lb_w,ub_w);  
+     
+    Mat canny_output;
+  vector<vector<Point> > contours;
+  vector<Vec4i> hierarchy;
+
+  /// Detect edges using canny
+  Canny( white, canny_output, 100, 200, 3 );
+  /// Find contours
+  findContours( canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
+
+  cv::Point2f src_vertices[4];
+    src_vertices[0] = contours[0];
+    src_vertices[1] = image[1];
+    src_vertices[2] = image[2];
+    src_vertices[3] = image[3];
+    RotatedRect box = minAreaRect(cv::Mat(image));
+    
+    Point2f dst_vertices[4];
+    dst_vertices[0] = Point(0, 0);
+    dst_vertices[1] = Point(box.boundingRect().width-1, 0); // Bug was: had mistakenly switched these 2 parameters
+    dst_vertices[2] = Point(0, box.boundingRect().height-1);
+    dst_vertices[3] = Point(box.boundingRect().width-1, box.boundingRect().height-1);
+    Mat warpMatrix = getPerspectiveTransform(src_vertices, dst_vertices);
+
+    cv::Mat rotated;
+    warpPerspective(m_stream_video, rotated, warpMatrix, rotated.size(), INTER_LINEAR, BORDER_CONSTANT);
+    
+    cv::imshow("test",rotated);
 }
 
 void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
@@ -232,7 +279,7 @@ void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
      // >>>>> Improving the result
      cv::erode(rangeRes, dst, cv::Mat(), cv::Point(-1, -1), 2);
      cv::dilate(dst, dst, cv::Mat(), cv::Point(-1, -1), 2);    
-  
+     
 }
 
 void Collection::robotPose(float first_ball_pos[2], float second_ball_pos[2], float robot_pose[3]) // the first is the head
@@ -248,11 +295,32 @@ void Collection::robotPose(float first_ball_pos[2], float second_ball_pos[2], fl
     robot_pose[0] = (first_ball_pos[0]+second_ball_pos[0])/2;
     robot_pose[1] = (first_ball_pos[1]+second_ball_pos[1])/2;
     robot_pose[2] = atan2((second_ball_pos[1]-first_ball_pos[1]),(second_ball_pos[0]-first_ball_pos[0]));
-    ROS_INFO("x--> %f, y ---> %f, heading ---> %f",robot_pose[0],robot_pose[1],robot_pose[2]*180/3.14);
+    ROS_INFO("x--> %f",robot_pose[0]);
+    ROS_INFO("y ---> %f",robot_pose[1]);
+    ROS_INFO("heading ---> %f",robot_pose[2]*180/M_PI);
   }
+  float cm_pos[2];
+  pixel2cm(robot_pose,cm_pos);
+  ROS_INFO("x cm ---> %f",cm_pos[0]);
+  ROS_INFO("y cm ---> %f",cm_pos[1]);
 }
 
-/* @function Erosion */
+
+void Collection:: pixel2cm(float pixel_pos[2], float cm_pos[2])
+{
+//   cm_pos[0] = pixel_pos[0]/pix_cm[pixel_pos[1]];
+  cm_pos[0] = pixel_pos[0]/(MIN_pix_on_cm+(MAX_pix_on_cm-MIN_pix_on_cm)*pixel_pos[1]/480);
+  cm_pos[1] = pixel_pos[1]*y_camera_depth_cm/480;
+}
+
+
+
+
+
+
+
+
+
 // void Collection::Erosion( int erosion_elem, int erosion_size, cv::Mat const& src, cv::Mat& erosion_dst)
 // {
 //   int erosion_type;

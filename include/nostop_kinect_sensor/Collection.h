@@ -138,8 +138,8 @@ namespace Robotics
 			void search_test(const sensor_msgs::ImageConstPtr& msg);
 			void filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[]);
 			void robotPose(float first_ball_pos[2], float second_ball_pos[2], float robot_pose[3]);
+			void pixel2cm(float pixel_pos[2], float cm_pos[2]);
 // 			void Erosion(int erosion_elem, int erosion_size, cv::Mat const& src, cv::Mat& erosion_dst);
-		  
 		};
 
 	}
