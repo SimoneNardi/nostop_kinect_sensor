@@ -8,6 +8,7 @@
 #pragma once
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/video/tracking.hpp>
 
 #include "ros/ros.h"
 #include "rosbag/bag.h"
@@ -34,6 +35,7 @@ namespace Robotics
 			bool m_close;
 			ros::NodeHandle tracker;
 			ros::Publisher m_pub_position;
+			std::string m_marker_color;
 
 		protected:
 			

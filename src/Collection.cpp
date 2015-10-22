@@ -1,6 +1,6 @@
 #include "Collection.h"
 
-#include "Tracker.h"
+#include "Robot_manager.h"
 
 
 #include <opencv2/core/core.hpp>
@@ -46,16 +46,19 @@ Collection::Collection()
 , m_min_blue(0)
 , m_erosion_size(0)
 , m_median(19)
-, m_tracker_ptr_blue(nullptr)
-, m_tracker_ptr_green(nullptr)
-, m_tracker_ptr_red(nullptr)
-, m_tracker_ptr_yellow(nullptr)
+// , m_tracker_ptr_blue(nullptr)
+// , m_tracker_ptr_green(nullptr)
+// , m_tracker_ptr_red(nullptr)
+// , m_tracker_ptr_yellow(nullptr)
+, m_robot_manager(nullptr)
 {
   // TRACKER
-  m_tracker_ptr_blue = std::make_shared<Tracker>();
-  m_tracker_ptr_green = std::make_shared<Tracker>();
-  m_tracker_ptr_red = std::make_shared<Tracker>();
-  m_tracker_ptr_yellow = std::make_shared<Tracker>();
+//   m_tracker_ptr_blue = std::make_shared<Tracker>();
+//   m_tracker_ptr_green = std::make_shared<Tracker>();
+//   m_tracker_ptr_red = std::make_shared<Tracker>();
+//   m_tracker_ptr_yellow = std::make_shared<Tracker>();
+  
+  m_robot_manager = std::make_shared<Robot_manager>();
   
 }
 
@@ -116,10 +119,10 @@ void Collection::getForeground(const sensor_msgs::ImageConstPtr& msg)
 void Collection::searchCircles()
 {	
 	ROS_INFO("Searching init.");
-	m_image_sub_circles = m_it.subscribe("/camera/rgb/image_rect_color", 1, &Collection::search_test, this, image_transport::TransportHints("raw"));
+	m_image_sub_circles = m_it.subscribe("/camera/rgb/image_rect_color", 1, &Collection::search_ball_pos, this, image_transport::TransportHints("raw"));
 }
 
-void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
+void Collection::search_ball_pos(const sensor_msgs::ImageConstPtr& msg)
 { 
        cv::Mat withCircle_blue,withCircle_green,withCircle_red,withCircle_yellow,l_bg,l_ry;
 //      withCircle_blue=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type);
@@ -192,7 +195,7 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 //      cv::imshow("Threshold Green", m_only_green);
 //      cv::imshow("Threshold Red", m_only_red);
 //      cv::imshow("Threshold Yellow", m_only_yellow);
-     
+/*     
      // Circles finding
      m_tracker_ptr_blue->findCircles(m_only_blue,withCircle_blue);
      m_tracker_ptr_green->findCircles(m_only_green, withCircle_green);
@@ -210,7 +213,7 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
      m_tracker_ptr_red->toGetMessage(m_red_pos);
      m_tracker_ptr_yellow->toGetMessage(m_yellow_pos);
      
-     
+ */    
 //        ROS_INFO("blue x ---- > %f", m_blue_pos[0]);
           
 //        ROS_INFO("green x ---- > %f", m_green_pos[0]);
@@ -220,47 +223,11 @@ void Collection::search_test(const sensor_msgs::ImageConstPtr& msg)
 //        ROS_INFO("yellow x ---- > %f", m_yellow_pos[0]);
        
     // Marker Position ----> (x,y,heading) of Robot
-    robotPose(m_blue_pos,m_red_pos,m_robot_rb);
- 
-//     Rectify
-    cv::Mat  white;
-    int64_t lb_w[3],ub_w[3]; 
-     lb_w[0] = 0; 
-     lb_w[1] = 0;
-     lb_w[2] = 245;
-     ub_w[0] = 180;
-     ub_w[1] = 10;
-     ub_w[2] = 255;
-     filtering(m_stream_video,white,lb_w,ub_w);  
-     
-    Mat canny_output;
-  vector<vector<Point> > contours;
-  vector<Vec4i> hierarchy;
-
-  /// Detect edges using canny
-  Canny( white, canny_output, 100, 200, 3 );
-  /// Find contours
-  findContours( canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
-
-  cv::Point2f src_vertices[4];
-    src_vertices[0] = contours[0];
-    src_vertices[1] = image[1];
-    src_vertices[2] = image[2];
-    src_vertices[3] = image[3];
-    RotatedRect box = minAreaRect(cv::Mat(image));
-    
-    Point2f dst_vertices[4];
-    dst_vertices[0] = Point(0, 0);
-    dst_vertices[1] = Point(box.boundingRect().width-1, 0); // Bug was: had mistakenly switched these 2 parameters
-    dst_vertices[2] = Point(0, box.boundingRect().height-1);
-    dst_vertices[3] = Point(box.boundingRect().width-1, box.boundingRect().height-1);
-    Mat warpMatrix = getPerspectiveTransform(src_vertices, dst_vertices);
-
-    cv::Mat rotated;
-    warpPerspective(m_stream_video, rotated, warpMatrix, rotated.size(), INTER_LINEAR, BORDER_CONSTANT);
-    
-    cv::imshow("test",rotated);
+//     robotPose(m_blue_pos,m_red_pos,m_robot_rb);
 }
+
+
+
 
 void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
 {
@@ -282,36 +249,36 @@ void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
      
 }
 
-void Collection::robotPose(float first_ball_pos[2], float second_ball_pos[2], float robot_pose[3]) // the first is the head
-{
-  // SR origin on upper left corner
-  // x axis from origin to upper right corner
-  // y axis from origin to lower left corner
-  // z axis from origin to DOWN ( center of the earth ) 
-  if (first_ball_pos[0] == -1.0 || first_ball_pos[1] == -1.0 || second_ball_pos[0] == -1.0 || second_ball_pos[1] == -1.0 )
-  {
-    ROS_INFO("Robot not found or out of frame");
-  }else{ 
-    robot_pose[0] = (first_ball_pos[0]+second_ball_pos[0])/2;
-    robot_pose[1] = (first_ball_pos[1]+second_ball_pos[1])/2;
-    robot_pose[2] = atan2((second_ball_pos[1]-first_ball_pos[1]),(second_ball_pos[0]-first_ball_pos[0]));
-    ROS_INFO("x--> %f",robot_pose[0]);
-    ROS_INFO("y ---> %f",robot_pose[1]);
-    ROS_INFO("heading ---> %f",robot_pose[2]*180/M_PI);
-  }
-  float cm_pos[2];
-  pixel2cm(robot_pose,cm_pos);
-  ROS_INFO("x cm ---> %f",cm_pos[0]);
-  ROS_INFO("y cm ---> %f",cm_pos[1]);
-}
-
-
-void Collection:: pixel2cm(float pixel_pos[2], float cm_pos[2])
-{
-//   cm_pos[0] = pixel_pos[0]/pix_cm[pixel_pos[1]];
-  cm_pos[0] = pixel_pos[0]/(MIN_pix_on_cm+(MAX_pix_on_cm-MIN_pix_on_cm)*pixel_pos[1]/480);
-  cm_pos[1] = pixel_pos[1]*y_camera_depth_cm/480;
-}
+// void Collection::robotPose(float first_ball_pos[2], float second_ball_pos[2], float robot_pose[3]) // the first is the head
+// {
+//   // SR origin on upper left corner
+//   // x axis from origin to upper right corner
+//   // y axis from origin to lower left corner
+//   // z axis from origin to DOWN ( center of the earth ) 
+//   if (first_ball_pos[0] == -1.0 || first_ball_pos[1] == -1.0 || second_ball_pos[0] == -1.0 || second_ball_pos[1] == -1.0 )
+//   {
+//     ROS_INFO("Robot not found or out of frame");
+//   }else{ 
+//     robot_pose[0] = (first_ball_pos[0]+second_ball_pos[0])/2;
+//     robot_pose[1] = (first_ball_pos[1]+second_ball_pos[1])/2;
+//     robot_pose[2] = atan2((second_ball_pos[1]-first_ball_pos[1]),(second_ball_pos[0]-first_ball_pos[0]));
+//     ROS_INFO("x--> %f",robot_pose[0]);
+//     ROS_INFO("y ---> %f",robot_pose[1]);
+//     ROS_INFO("heading ---> %f",robot_pose[2]*180/M_PI);
+//   }
+//   float cm_pos[2];
+//   pixel2cm(robot_pose,cm_pos);
+//   ROS_INFO("x cm ---> %f",cm_pos[0]);
+//   ROS_INFO("y cm ---> %f",cm_pos[1]);
+// }
+// 
+// 
+// void Collection:: pixel2cm(float pixel_pos[2], float cm_pos[2])
+// {
+// //   cm_pos[0] = pixel_pos[0]/pix_cm[pixel_pos[1]];
+//   cm_pos[0] = pixel_pos[0]/(MIN_pix_on_cm+(MAX_pix_on_cm-MIN_pix_on_cm)*pixel_pos[1]/480);
+//   cm_pos[1] = pixel_pos[1]*y_camera_depth_cm/480;
+// }
 
 
 
