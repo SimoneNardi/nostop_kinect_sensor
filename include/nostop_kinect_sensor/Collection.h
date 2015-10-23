@@ -9,8 +9,6 @@
 
 #include <map>
 
-#include "nostop_kinect_sensor/SensorData.h"
-
 #include "Threads.h"
 
 #include "ros/ros.h"
@@ -30,10 +28,9 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/video/video.hpp"
-#include "highgui.h"
 #include "ros/ros.h"
 
-
+#include "Robot_manager.h"
 namespace Robotics 
 {
 	namespace GameTheory
@@ -100,8 +97,6 @@ namespace Robotics
 		  image_transport::ImageTransport m_it;
 		  image_transport::Subscriber m_image_sub;
 		  image_transport::Subscriber m_image_sub_circles;
-		  
-		  ros::Subscriber m_cloud_sub;
 		  
 		  bool m_stream_videoFLAG;
 		  cv::Mat m_stream_video;

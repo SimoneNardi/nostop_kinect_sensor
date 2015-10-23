@@ -15,6 +15,8 @@
 
 #include "Threads.h"
 
+#include "Collection.h"
+
 namespace Robotics 
 {
 	namespace GameTheory

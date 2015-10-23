@@ -35,7 +35,7 @@ namespace Robotics
 			bool m_close;
 			ros::NodeHandle tracker;
 			ros::Publisher m_pub_position;
-			std::string m_marker_color;
+			
 
 		protected:
 			
@@ -45,8 +45,7 @@ namespace Robotics
 			void findCircles(cv::Mat thresholded_image, cv:: Mat drawCircle);
 // 			void write2bag(std::string color);
 // 			void bag2read(std::string color);
-			void toPublish(std::string color);
-			void toGetMessage(float pos_src[2]);
+			void toGetPos(float pos_src[2]);
 			
 			~Tracker();
 		};

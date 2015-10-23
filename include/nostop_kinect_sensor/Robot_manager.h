@@ -10,27 +10,42 @@
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
 #include "Robot.h"
+
+#include "nostop_kinect_sensor/Id_robot.h"
+
+
 namespace Robotics 
 {
 	namespace GameTheory
 	{	
 	  class Robot;
+	  struct ID{
+	    std::string name;
+	    std::string front_marker_color;
+	    std::string back_marker_color;
+	  };
+	  
 		class Robot_manager
 		{
-		  ros::NodeHandle m_manager_node;
+		  
 		  ros::Subscriber m_robot_in;
 // 		  image_transport::ImageTransport m_man_it;
-		  
 		  int m_robot_count;
-		  std::vector<Robot> m_robot_array;
+		  std::vector<ID> m_robot_id_array;
+		  std::vector<std::shared_ptr<Robot>> m_robot_ptr_array;
+		  std::shared_ptr<Robot> m_robot_single_ptr;
 		  
-			void new_robot();
-			void update();
-			void sub();
+		  ID robot_id;
+		  
+		private:
+			ros::NodeHandle m_manager_node;
 
 		public:
 			Robot_manager();
 			~Robot_manager();
+			void new_robot_id(const nostop_kinect_sensor::Id_robot::ConstPtr& msg);
+			void update();
+			void threshold_update(cv::Mat blue, cv::Mat green, cv::Mat red, cv::Mat yellow);
 		};
 
 	}
