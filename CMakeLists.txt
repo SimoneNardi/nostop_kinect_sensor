@@ -37,8 +37,9 @@ find_package( OpenCV REQUIRED )
 ## Generate messages in the 'msg' folder
  add_message_files(
    FILES
-   AgentSensorData.msg
-   SensorData.msg
+#    AgentSensorData.msg
+#    SensorData.msg
+     Id_robot.msg
  )
 
 ## Generate services in the 'srv' folder
