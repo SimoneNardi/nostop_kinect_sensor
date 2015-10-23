@@ -167,25 +167,9 @@ void Tracker::findCircles(cv::Mat thresholded_image, cv::Mat m_drawCircle)
  }
  
  
-// UNUSED
-// void Tracker::toPublish(std::string color)
-// {
-//   
-//   std_msgs::Float32 pos;
-//   float x,y;
-//   x = m_state.at<float>(0);
-//   y = m_state.at<float>(1);
-//   pos.data = (x,y);
-//   m_pub_position = tracker.advertise<std_msgs::Float32>("/position_"+color,1);// 640x480 upper-left corner == (0,0)
-//   m_pub_position.publish<std_msgs::Float32>(pos);
-// //   ROS_INFO("Publish x! %f",x);
-// //   ROS_INFO("Publish y! %f",y);
-//     
-// }
  
  
- 
-void Tracker::toGetMessage(float pos_src[2])
+void Tracker::toGetPos(float pos_src[2])
 {
   if (m_found)
   {
@@ -196,9 +180,6 @@ void Tracker::toGetMessage(float pos_src[2])
 	pos_src[1]= -1;
   }
 }
- 
- 
- 
  
  
  

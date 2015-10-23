@@ -188,7 +188,7 @@ void Collection::search_ball_pos(const sensor_msgs::ImageConstPtr& msg)
      ub_y[2] = 255;
      filtering(m_stream_video,m_only_yellow,lb_y,ub_y);  
      
-     
+     m_robot_manager->threshold_update(m_only_blue,m_only_green,m_only_red,m_only_yellow);
      
      // Thresholding viewing       
 //      cv::imshow("Threshold Blue", m_only_blue);

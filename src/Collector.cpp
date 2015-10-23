@@ -2,8 +2,6 @@
 #include "Collection.h"
 
 
-#include "nostop_kinect_sensor/SensorData.h"
-
 using namespace std;
 using namespace Robotics;
 using namespace Robotics::GameTheory;
@@ -15,7 +13,6 @@ Collector::Collector(): m_sensor(nullptr)
     
   // Publish Sensor Information: 
   // COLLECTION
-  m_pub = m_node.advertise<nostop_kinect_sensor::SensorData>("sensor", 5);
   m_sensor = std::make_shared<Collection>();
 
   m_sensor->subscribe();
