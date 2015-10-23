@@ -13,13 +13,17 @@ using namespace Robotics::GameTheory;
 
 Robot_manager::Robot_manager(): 
 m_robot_count(0)
-{
-  m_robot_in = m_manager_node.subscribe<nostop_kinect_sensor::Id_robot>(" ", 1, &Robot_manager::new_robot_id,this);
-}
+{}
 
 
 Robot_manager::~Robot_manager()	
 {}
+
+
+void Robot_manager::subscribe()
+{
+//    m_robot_in = m_manager_node.subscribe<nostop_kinect_sensor::Id_robot>("TO DO ", 1, &Robot_manager::new_robot_id,this);
+}
 
 void Robot_manager::new_robot_id(const nostop_kinect_sensor::Id_robot::ConstPtr& msg)// INPUT??
 {	
@@ -31,8 +35,11 @@ void Robot_manager::new_robot_id(const nostop_kinect_sensor::Id_robot::ConstPtr&
 
 void Robot_manager::threshold_update(cv::Mat blue, cv::Mat green, cv::Mat red, cv::Mat yellow)
 {
-  for(int i=0;i<m_robot_count+1;i++)
+  if (m_robot_count==0)
+  {}else
   {
+    for(int i=0;i<m_robot_count+1;i++)
+    {
     robot_id = m_robot_id_array.at(i);
     m_robot_single_ptr = m_robot_ptr_array.at(i);
     // FRONT
@@ -70,8 +77,6 @@ void Robot_manager::threshold_update(cv::Mat blue, cv::Mat green, cv::Mat red, c
     {
       m_robot_single_ptr->takeImgBack(yellow);
     }
-    
-    
-    
+    }
   }
 }

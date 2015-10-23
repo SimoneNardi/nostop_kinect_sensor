@@ -57,8 +57,9 @@ Collection::Collection()
 //   m_tracker_ptr_green = std::make_shared<Tracker>();
 //   m_tracker_ptr_red = std::make_shared<Tracker>();
 //   m_tracker_ptr_yellow = std::make_shared<Tracker>();
-  
-  m_robot_manager = std::make_shared<Robot_manager>();
+	m_robot_manager = std::make_shared<Robot_manager>();
+	m_robot_manager->subscribe();
+ 
   
 }
 
@@ -72,7 +73,8 @@ Collection::~Collection()
 
 /////////////////////////////////////////////
 void Collection::subscribe()
-{
+{	
+	
 	ROS_INFO("Sensor: Collection subscribe!");
 	cv::namedWindow(SENSOR_CV_WINDOW);
 	m_image_sub = m_it.subscribe("/camera/rgb/image_rect_color", 1, &Collection::getForeground, this, image_transport::TransportHints("raw"));
@@ -290,7 +292,43 @@ void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
 
 // void Collection::Erosion( int erosion_elem, int erosion_size, cv::Mat const& src, cv::Mat& erosion_dst)
 // {
-//   int erosion_type;
+//   int erosion_type//     robot_id = m_robot_id_array.at(i);
+//     m_robot_single_ptr = m_robot_ptr_array.at(i);
+//     // FRONT
+//     if(robot_id.front_marker_color == "blue")
+//     {
+//      m_robot_single_ptr->takeImgFront(blue);
+//     }
+//     if(robot_id.front_marker_color == "green")
+//     {
+//       m_robot_single_ptr->takeImgFront(green); 
+//     }
+//     if(robot_id.front_marker_color == "red")
+//     {
+//       m_robot_single_ptr->takeImgFront(red);
+//     }
+//     if(robot_id.front_marker_color == "yellow")
+//     {
+//       m_robot_single_ptr->takeImgFront(yellow);
+//     }
+//     
+//     // BACK
+//     if(robot_id.back_marker_color == "blue")
+//     {
+//      m_robot_single_ptr->takeImgBack(blue);
+//     }
+//     if(robot_id.back_marker_color == "green")
+//     {
+//       m_robot_single_ptr->takeImgBack(green); 
+//     }
+//     if(robot_id.back_marker_color == "red")
+//     {
+//       m_robot_single_ptr->takeImgBack(red);
+//     }
+//     if(robot_id.back_marker_color == "yellow")
+//     {
+//       m_robot_single_ptr->takeImgBack(yellow);
+//     };
 //   if( erosion_elem == 0 ){ erosion_type = MORPH_RECT; }
 //   else if( erosion_elem == 1 ){ erosion_type = MORPH_CROSS; }
 //   else if( erosion_elem == 2) { erosion_type = MORPH_ELLIPSE; }

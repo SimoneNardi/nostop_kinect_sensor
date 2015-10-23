@@ -29,7 +29,7 @@ namespace Robotics
 		{
 		  
 		  ros::Subscriber m_robot_in;
-// 		  image_transport::ImageTransport m_man_it;
+
 		  int m_robot_count;
 		  std::vector<ID> m_robot_id_array;
 		  std::vector<std::shared_ptr<Robot>> m_robot_ptr_array;
@@ -43,6 +43,7 @@ namespace Robotics
 		public:
 			Robot_manager();
 			~Robot_manager();
+			void subscribe();
 			void new_robot_id(const nostop_kinect_sensor::Id_robot::ConstPtr& msg);
 			void update();
 			void threshold_update(cv::Mat blue, cv::Mat green, cv::Mat red, cv::Mat yellow);

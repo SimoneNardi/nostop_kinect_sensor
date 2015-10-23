@@ -18,6 +18,7 @@ namespace Robotics
 	namespace GameTheory
 	{	
 	class Tracker;
+	  
 	  class Robot
 		{
 		  ros::NodeHandle m_robot;
