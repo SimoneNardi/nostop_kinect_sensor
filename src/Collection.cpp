@@ -59,8 +59,6 @@ Collection::Collection()
 //   m_tracker_ptr_yellow = std::make_shared<Tracker>();
 	m_robot_manager = std::make_shared<Robot_manager>();
 	m_robot_manager->subscribe();
- 
-  
 }
 
 
@@ -79,10 +77,10 @@ void Collection::subscribe()
 	cv::namedWindow(SENSOR_CV_WINDOW);
 	m_image_sub = m_it.subscribe("/camera/rgb/image_rect_color", 1, &Collection::getForeground, this, image_transport::TransportHints("raw"));
 	
-	while (!m_stream_videoFLAG)
-	{
-	  ros::spinOnce();
-	}
+// 	while (!m_stream_videoFLAG)
+// 	{
+// 	  ros::spinOnce();
+// 	}
 	
 	m_stream_videoFLAG = false;
 	std::cout << "Sensor: ForeGround Collected!"<< std::endl << std::flush;
@@ -131,6 +129,10 @@ void Collection::search_ball_pos(const sensor_msgs::ImageConstPtr& msg)
      withCircle_green=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
      withCircle_red=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
      withCircle_yellow=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+     m_only_blue=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+     m_only_green=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+     m_only_red=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+     m_only_yellow=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
      l_bg=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
      l_ry==Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
      m_stream_video.copyTo(withCircle_blue);
@@ -190,8 +192,25 @@ void Collection::search_ball_pos(const sensor_msgs::ImageConstPtr& msg)
      ub_y[2] = 255;
      filtering(m_stream_video,m_only_yellow,lb_y,ub_y);  
      
-     m_robot_manager->threshold_update(m_only_blue,m_only_green,m_only_red,m_only_yellow);
      
+     // FIND CIRCLES
+     cv::Mat m_blue_circles = Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+    cv::Mat m_green_circles = Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+    cv::Mat m_red_circles = Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+    cv::Mat m_yellow_circles = Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+    cv::Mat m_stream_circles = Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+     cv::Mat l_br_circles = Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+    cv::Mat l_gy_circles = Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+    cv::Mat l_brgy_circles = Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+    
+    m_robot_manager->threshold_update(m_only_blue,m_only_green,m_only_red,m_only_yellow,m_blue_circles,m_green_circles,m_red_circles,m_yellow_circles);
+   
+    cv::addWeighted(m_blue_circles,1.0,m_red_circles,1.0,0.0,l_br_circles);
+    cv::addWeighted(m_green_circles,1.0,m_yellow_circles,1.0,0.0,l_gy_circles);
+    cv::addWeighted(l_br_circles,1.0,l_gy_circles,1.0,0.0,l_brgy_circles);
+    cv::addWeighted(l_brgy_circles,1.0,m_stream_video,1.0,0.0,m_stream_circles);
+    
+    cv::imshow("test",m_stream_circles);
      // Thresholding viewing       
 //      cv::imshow("Threshold Blue", m_only_blue);
 //      cv::imshow("Threshold Green", m_only_green);

@@ -11,7 +11,7 @@ using namespace Robotics::GameTheory;
 
 Robot::Robot()
 { 
-  m_robot_pub = m_robot.advertise<nostop_kinect_sensor::Id_robot>("TO_DO",1);
+  m_robot_pub = m_robot.advertise<nostop_kinect_sensor::Id_robot>("/robot_id",1);
   Front_ptr = std::make_shared<Tracker>();
   Back_ptr = std::make_shared<Tracker>();
 }
@@ -29,18 +29,21 @@ void Robot::pubID()
   m_robot_pub.publish(l_msgs);
 }
 
-void Robot::takeImgFront(cv::Mat img)
-{
- m_Front = img;
-}
-
-void Robot::takeImgBack(cv::Mat img)
-{
- m_Back = img;
-}
 
 void Robot::pose_heading()
 {
    Front_ptr->toGetPos(m_front_pos);
    Back_ptr->toGetPos(m_back_pos);
 }
+
+void Robot::frontCircles(cv::Mat src, cv::Mat dst)
+{
+ Front_ptr->findCircles(src,dst);
+}
+
+void Robot::backCircles(cv::Mat src, cv::Mat dst)
+{
+ Back_ptr->findCircles(src,dst);
+}
+
+

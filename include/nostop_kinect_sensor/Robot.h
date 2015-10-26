@@ -9,6 +9,7 @@
 #include <string>
 #include <ros/ros.h>
 #include "Tracker.h"
+#include "Robot_manager.h"
 
 #include "nostop_kinect_sensor/Id_robot.h"
 
@@ -36,13 +37,13 @@ namespace Robotics
 		  std::shared_ptr<Tracker> Front_ptr;
 		  std::shared_ptr<Tracker> Back_ptr;
 		  
-		  cv::Mat m_Front,m_Back;
 		public:
 		      void pose_heading();
 		      void marker_selection();
 		      void pubID();
-		      void takeImgFront(cv::Mat img);
-		      void takeImgBack(cv::Mat img);
+		      void frontCircles(cv::Mat src,cv::Mat dst);
+		      void backCircles(cv::Mat src,cv::Mat dst);
+
 			Robot();
 			~Robot();
 		};

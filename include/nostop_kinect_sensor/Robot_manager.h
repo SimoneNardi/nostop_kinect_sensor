@@ -31,10 +31,12 @@ namespace Robotics
 		  ros::Subscriber m_robot_in;
 
 		  int m_robot_count;
-		  std::vector<ID> m_robot_id_array;
-		  std::vector<std::shared_ptr<Robot>> m_robot_ptr_array;
-		  std::shared_ptr<Robot> m_robot_single_ptr;
-		  
+// 		  std::vector<ID> m_robot_id_array;
+		  ID * m_robot_id_array = new ID[10];
+// 		  std::shared_ptr<Robot>  m_robot_ptr_array(new Robot[10]); 
+		  std::shared_ptr<Robot> m_robot_single_ptr =  std::make_shared<Robot>();
+		  Robot *m_robot_ptr_array[10];
+// 		  std::vector<std::shared_ptr<Robot>> m_robot_ptr_array;
 		  ID robot_id;
 		  
 		private:
@@ -46,7 +48,7 @@ namespace Robotics
 			void subscribe();
 			void new_robot_id(const nostop_kinect_sensor::Id_robot::ConstPtr& msg);
 			void update();
-			void threshold_update(cv::Mat blue, cv::Mat green, cv::Mat red, cv::Mat yellow);
+			void threshold_update(cv::Mat blue, cv::Mat green, cv::Mat red, cv::Mat yellow, cv::Mat blue_circles_out, cv::Mat green_circles_out, cv::Mat red_circles_out, cv::Mat yellow_circles_out);
 		};
 
 	}

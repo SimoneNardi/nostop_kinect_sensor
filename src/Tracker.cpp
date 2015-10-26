@@ -64,13 +64,13 @@ void Tracker::findCircles(cv::Mat thresholded_image, cv::Mat m_drawCircle)
   double precTick = m_ticks;
   m_ticks = (double) cv::getTickCount();
   double dT = (m_ticks-precTick) / cv::getTickFrequency(); //seconds
-  
+  cv::Rect predRect;
    if (m_found)
       {
          m_kf.transitionMatrix.at<float>(2) = dT;
          m_kf.transitionMatrix.at<float>(9) = dT;
          m_state = m_kf.predict();
-	 cv::Rect predRect;          
+	          
 	 predRect.width = m_state.at<float>(4);          
 	 predRect.height = m_state.at<float>(5);          
 	 predRect.x = m_state.at<float>(0) - predRect.width / 2;          
@@ -84,7 +84,15 @@ void Tracker::findCircles(cv::Mat thresholded_image, cv::Mat m_drawCircle)
       }         
      
       vector<vector<cv::Point> > l_contours;
-      cv::findContours(thresholded_image, l_contours, CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);      
+      if (m_found)
+      {
+        cv::Mat sub_thresholded;
+	sub_thresholded = thresholded_image(cv::Rect(predRect.x, predRect.y, 10*predRect.width,10*predRect.height));
+        cv::findContours(sub_thresholded, l_contours, CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);    
+      }
+      else{
+            cv::findContours(thresholded_image, l_contours, CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);    
+       }
       vector< vector<cv::Point> > balls;
       vector<cv::Rect> ballsBox;
       for (size_t i = 0; i < l_contours.size(); i++)       

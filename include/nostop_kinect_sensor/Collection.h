@@ -111,6 +111,11 @@ namespace Robotics
 		  cv::Mat m_only_green;
 		  cv::Mat m_only_red;
 		  cv::Mat m_only_yellow;
+		  cv::Mat m_blue_circles;
+		  cv::Mat m_green_circles;
+		  cv::Mat m_red_circles;
+		  cv::Mat m_yellow_circles;
+		  cv::Mat m_stream_circles;
 		  
 		  //COMPUTING ROBOT POSITION
 		  float m_blue_pos[2];
