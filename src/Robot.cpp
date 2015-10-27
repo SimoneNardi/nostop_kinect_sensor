@@ -52,7 +52,7 @@ void Robot::select_robot_pose(ball_position front_array[], ball_position back_ar
   Back_ptr->kalman_update(m_back_pos);
   cv::Mat dst;
   draw_circles(src);
-  m_heading = atan2((-m_back_pos.y+m_front_pos.y),(m_back_pos.x-m_front_pos.x));
+  m_heading = atan2((m_back_pos.y-m_front_pos.y),(m_back_pos.x-m_front_pos.x))-M_PI;
   ROS_INFO("%f",m_heading*180/M_PI);
 }
 
@@ -69,7 +69,7 @@ void Robot::draw_circles(cv::Mat src)
   Box_b.width = m_back_pos.width;
   Box_b.x = m_back_pos.x;
   Box_b.y = m_back_pos.y;
-  cv::rectangle(src, Box_f, CV_RGB(0,255,0), 2); // THE FRONT BALL IS RED
-  cv::rectangle(src,Box_b, CV_RGB(255,0,0),2); // THE BACK BALL IS GREEN
+  cv::rectangle(src, Box_f, CV_RGB(0,255,0), 2); // THE FRONT BALL IS GREEN
+  cv::rectangle(src,Box_b, CV_RGB(255,0,0),2); // THE BACK BALL IS RED
   imshow("test",src );
 }
