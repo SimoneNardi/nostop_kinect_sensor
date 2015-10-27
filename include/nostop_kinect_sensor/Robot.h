@@ -12,7 +12,7 @@
 #include "Tracker.h"
 #include "Robot_manager.h"
 #include "Collection.h"
-#include "nostop_kinect_sensor/Id_robot.h"
+#include "nostop_agent/Id_robot.h"
 
 
 namespace Robotics 
@@ -29,7 +29,7 @@ namespace Robotics
 		  std::string m_name;
 		  std::string m_front_marker_color;
 		  std::string m_back_marker_color;
-		  
+		 
 		  // MARKER POSITION
 		  ball_position m_front_pos;
 		  ball_position m_back_pos;
@@ -40,9 +40,9 @@ namespace Robotics
 		  
 		public:
 		      void pubID();
-		      void select_robot_pose(ball_position front_array[],ball_position back_array[],int front_count,int back_count,cv::Mat src);
+		      void select_robot_pose(std::vector<ball_position>& front_array,std::vector<ball_position>& back_array,cv::Mat src);
 		      void draw_circles(cv::Mat src);
-			Robot();
+			Robot(std::string & name,std::string & front_color,std::string & back_color);
 			~Robot();
 		};
 

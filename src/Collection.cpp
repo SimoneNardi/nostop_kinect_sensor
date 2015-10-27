@@ -232,7 +232,7 @@ void Collection::balls_array(Mat& blue, Mat& green, Mat& red, Mat& yellow, ball_
    charge_array(green,green_array,green_ball_count);
    charge_array(red,red_array,red_ball_count);
    charge_array(yellow,yellow_array,yellow_ball_count);
-   m_robot_manager->array_assignment(blue_array,green_array,red_array,yellow_array,blue_ball_count,green_ball_count,red_ball_count,yellow_ball_count,stream);
+//    m_robot_manager->array_assignment(blue_array,green_array,red_array,yellow_array,blue_ball_count,green_ball_count,red_ball_count,yellow_ball_count,stream);
 }
 
 void Collection::charge_array(cv::Mat img, ball_position array[],int ball_count)
