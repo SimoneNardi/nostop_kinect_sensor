@@ -12,8 +12,9 @@
 
 #include "ros/ros.h"
 #include "rosbag/bag.h"
-
+#include "some_struct.h"
 #include <memory>
+#include "Collection.h"
 
 namespace Robotics 
 {
@@ -36,16 +37,15 @@ namespace Robotics
 			ros::NodeHandle tracker;
 			ros::Publisher m_pub_position;
 			
-
 		protected:
 			
 		public:
 			Tracker();
 			void matrixSettings(cv::KalmanFilter m_kf);
-			void findCircles(cv::Mat thresholded_image, cv:: Mat drawCircle);
+			void kalman_update(ball_position position);
 // 			void write2bag(std::string color);
 // 			void bag2read(std::string color);
-			void toGetPos(float pos_src[2]);
+
 			
 			~Tracker();
 		};

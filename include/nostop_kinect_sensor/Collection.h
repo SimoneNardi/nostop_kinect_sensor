@@ -29,14 +29,15 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/video/video.hpp"
 #include "ros/ros.h"
-
+#include "some_struct.h"
 #include "Robot_manager.h"
+
 namespace Robotics 
 {
 	namespace GameTheory
 	{
 		class Guard;
-// 		class Tracker;
+		class Tracker;
 		class Robot_manager;
 		struct Color
 		{
@@ -78,6 +79,13 @@ namespace Robotics
 		  AgentSensor(double x_, double y_, double heading_) : x(x_), y(y_), heading(heading_) {}
 		};
 		 
+// 		struct ball_position
+// 		{
+// 		  double x;
+// 		  double y;
+// 		  double width;
+// 		  double height;
+// 		};
 		
 		class Collection
 		{
@@ -111,10 +119,12 @@ namespace Robotics
 		  cv::Mat m_only_green;
 		  cv::Mat m_only_red;
 		  cv::Mat m_only_yellow;
-		  cv::Mat m_blue_circles;
-		  cv::Mat m_green_circles;
-		  cv::Mat m_red_circles;
-		  cv::Mat m_yellow_circles;
+		  
+		  // BALLS ARRAY
+		  ball_position * m_blue_circles = new ball_position[ROBOT_NUMBER];
+		  ball_position * m_green_circles = new ball_position[ROBOT_NUMBER];
+		  ball_position * m_red_circles = new ball_position[ROBOT_NUMBER];
+		  ball_position * m_yellow_circles = new ball_position[ROBOT_NUMBER];
 		  cv::Mat m_stream_circles;
 		  
 		  //COMPUTING ROBOT POSITION
@@ -138,6 +148,8 @@ namespace Robotics
 			void toPub(const sensor_msgs::ImageConstPtr& msg);
 			void search_ball_pos(const sensor_msgs::ImageConstPtr& msg);
 			void filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[]);
+			void balls_array(cv::Mat &blue,cv::Mat &green,cv::Mat &red,cv::Mat &yellow,ball_position blue_array[],ball_position green_array[], ball_position red_array[], ball_position yellow_array[],cv::Mat stream);
+			void charge_array(cv::Mat img, ball_position array[],int ball_count);
 // 			void robotPose(float first_ball_pos[2], float second_ball_pos[2], float robot_pose[3]);
 // 			void pixel2cm(float pixel_pos[2], float cm_pos[2]);
 // 			void Erosion(int erosion_elem, int erosion_size, cv::Mat const& src, cv::Mat& erosion_dst);

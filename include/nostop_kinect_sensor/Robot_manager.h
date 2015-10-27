@@ -6,7 +6,7 @@
 #ifndef ROBOT_MANAGER_H
 #define ROBOT_MANAGER_H
 #pragma once
-
+#include "some_struct.h"
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
 #include "Robot.h"
@@ -19,11 +19,7 @@ namespace Robotics
 	namespace GameTheory
 	{	
 	  class Robot;
-	  struct ID{
-	    std::string name;
-	    std::string front_marker_color;
-	    std::string back_marker_color;
-	  };
+	  
 	  
 		class Robot_manager
 		{
@@ -31,12 +27,8 @@ namespace Robotics
 		  ros::Subscriber m_robot_in;
 
 		  int m_robot_count;
-// 		  std::vector<ID> m_robot_id_array;
 		  ID * m_robot_id_array = new ID[10];
-// 		  std::shared_ptr<Robot>  m_robot_ptr_array(new Robot[10]); 
 		  std::shared_ptr<Robot> m_robot_single_ptr =  std::make_shared<Robot>();
-		  Robot *m_robot_ptr_array[10];
-// 		  std::vector<std::shared_ptr<Robot>> m_robot_ptr_array;
 		  ID robot_id;
 		  
 		private:
@@ -48,7 +40,7 @@ namespace Robotics
 			void subscribe();
 			void new_robot_id(const nostop_kinect_sensor::Id_robot::ConstPtr& msg);
 			void update();
-			void threshold_update(cv::Mat blue, cv::Mat green, cv::Mat red, cv::Mat yellow, cv::Mat blue_circles_out, cv::Mat green_circles_out, cv::Mat red_circles_out, cv::Mat yellow_circles_out);
+			void array_assignment(ball_position blue_array[],ball_position green_array[],ball_position red_array[],ball_position yellow_array[],int blue_count,int green_count,int red_count,int yellow_count,cv::Mat stream);
 		};
 
 	}

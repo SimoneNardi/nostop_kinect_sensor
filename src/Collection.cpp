@@ -156,7 +156,7 @@ void Collection::search_ball_pos(const sensor_msgs::ImageConstPtr& msg)
      lb_g[0] = 30; 
      lb_g[1] = 100;
      lb_g[2] = 50;
-     ub_g[0] = 90;
+     ub_g[0] = 60;
      ub_g[1] = 255;
      ub_g[2] = 255;
      filtering(m_stream_video,m_only_green,lb_g,ub_g);  
@@ -185,66 +185,19 @@ void Collection::search_ball_pos(const sensor_msgs::ImageConstPtr& msg)
      // Yellow Ball HSV values (H had *0.5 scale factor)
      int64_t lb_y[3],ub_y[3]; 
      lb_y[0] = 15; 
-     lb_y[1] = 100;
+     lb_y[1] = 70;
      lb_y[2] = 100;
      ub_y[0] = 45;
      ub_y[1] = 255;
      ub_y[2] = 255;
      filtering(m_stream_video,m_only_yellow,lb_y,ub_y);  
+     imshow("green",m_only_green);
+     imshow("yellow",m_only_yellow);
      
+     // FIND BALLS ARRAY
+     balls_array(m_only_blue,m_only_green,m_only_red,m_only_yellow,m_blue_circles,m_green_circles,m_red_circles,m_yellow_circles,m_stream_video);
      
-     // FIND CIRCLES
-     cv::Mat m_blue_circles = Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
-    cv::Mat m_green_circles = Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
-    cv::Mat m_red_circles = Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
-    cv::Mat m_yellow_circles = Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
-    cv::Mat m_stream_circles = Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
-     cv::Mat l_br_circles = Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
-    cv::Mat l_gy_circles = Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
-    cv::Mat l_brgy_circles = Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
-    
-    m_robot_manager->threshold_update(m_only_blue,m_only_green,m_only_red,m_only_yellow,m_blue_circles,m_green_circles,m_red_circles,m_yellow_circles);
-   
-    cv::addWeighted(m_blue_circles,1.0,m_red_circles,1.0,0.0,l_br_circles);
-    cv::addWeighted(m_green_circles,1.0,m_yellow_circles,1.0,0.0,l_gy_circles);
-    cv::addWeighted(l_br_circles,1.0,l_gy_circles,1.0,0.0,l_brgy_circles);
-    cv::addWeighted(l_brgy_circles,1.0,m_stream_video,1.0,0.0,m_stream_circles);
-    
-    cv::imshow("test",m_stream_circles);
-     // Thresholding viewing       
-//      cv::imshow("Threshold Blue", m_only_blue);
-//      cv::imshow("Threshold Green", m_only_green);
-//      cv::imshow("Threshold Red", m_only_red);
-//      cv::imshow("Threshold Yellow", m_only_yellow);
-/*     
-     // Circles finding
-     m_tracker_ptr_blue->findCircles(m_only_blue,withCircle_blue);
-     m_tracker_ptr_green->findCircles(m_only_green, withCircle_green);
-     m_tracker_ptr_red->findCircles(m_only_red, withCircle_red);
-     m_tracker_ptr_yellow->findCircles(m_only_yellow, withCircle_yellow);
-     cv::addWeighted(withCircle_blue,1.0,withCircle_green,1.0,0.0,l_bg);
-     cv::addWeighted(withCircle_red,1.0,withCircle_yellow,1.0,0.0,l_ry);
-     cv::addWeighted(l_bg,1.0,l_ry,1.0,0.0,m_circlesFounded);
-     cv::imshow(FOUNDED_CIRCLES_WINDOW,m_circlesFounded);
-     
-     
-     // Position of marker
-     m_tracker_ptr_blue->toGetMessage(m_blue_pos);
-     m_tracker_ptr_green->toGetMessage(m_green_pos);
-     m_tracker_ptr_red->toGetMessage(m_red_pos);
-     m_tracker_ptr_yellow->toGetMessage(m_yellow_pos);
-     
- */    
-//        ROS_INFO("blue x ---- > %f", m_blue_pos[0]);
-          
-//        ROS_INFO("green x ---- > %f", m_green_pos[0]);
   
-//        ROS_INFO("red x ---- > %f", m_red_pos[0]);
-     
-//        ROS_INFO("yellow x ---- > %f", m_yellow_pos[0]);
-       
-    // Marker Position ----> (x,y,heading) of Robot
-//     robotPose(m_blue_pos,m_red_pos,m_robot_rb);
 }
 
 
@@ -270,6 +223,49 @@ void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
      
 }
 
+
+
+void Collection::balls_array(Mat& blue, Mat& green, Mat& red, Mat& yellow, ball_position blue_array[], ball_position green_array[], ball_position red_array[], ball_position yellow_array[],cv::Mat stream)
+{
+   int blue_ball_count = 0,green_ball_count = 0,red_ball_count = 0,yellow_ball_count = 0;
+   charge_array(blue,blue_array,blue_ball_count);
+   charge_array(green,green_array,green_ball_count);
+   charge_array(red,red_array,red_ball_count);
+   charge_array(yellow,yellow_array,yellow_ball_count);
+   m_robot_manager->array_assignment(blue_array,green_array,red_array,yellow_array,blue_ball_count,green_ball_count,red_ball_count,yellow_ball_count,stream);
+}
+
+void Collection::charge_array(cv::Mat img, ball_position array[],int ball_count)
+{
+      vector<vector<cv::Point> > l_contours; 
+      vector< vector<cv::Point> > balls;
+      vector<cv::Rect> ballsBox;
+      
+      // BLUE
+      cv::findContours(img, l_contours, CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);   
+      for (size_t i = 0; i < l_contours.size(); i++)       
+      {          
+	cv::Rect bBox;   
+	bBox = cv::boundingRect(l_contours[i]);            
+	float ratio = (float) bBox.width / (float) bBox.height;          
+	if (ratio > 1.0f)
+            ratio = 1.0f / ratio;
+         // Searching for a bBox almost square
+         if (ratio > 0.85 && bBox.area() >=200 && bBox.area() <= 1000) 
+         {
+            balls.push_back(l_contours[i]);
+            ballsBox.push_back(bBox);
+         }
+      }
+      for (size_t i = 0; i < balls.size(); i++)
+      {
+         array[i].x = ballsBox[i].x;
+         array[i].y = ballsBox[i].y;
+	 array[i].height = ballsBox[i].height;
+	 array[i].width = ballsBox[i].width;
+	 ball_count++; // ball_count = 0 --> no balls
+       }
+}
 // void Collection::robotPose(float first_ball_pos[2], float second_ball_pos[2], float robot_pose[3]) // the first is the head
 // {
 //   // SR origin on upper left corner

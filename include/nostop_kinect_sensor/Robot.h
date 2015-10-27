@@ -8,9 +8,10 @@
 #pragma once
 #include <string>
 #include <ros/ros.h>
+#include "some_struct.h"
 #include "Tracker.h"
 #include "Robot_manager.h"
-
+#include "Collection.h"
 #include "nostop_kinect_sensor/Id_robot.h"
 
 
@@ -30,20 +31,17 @@ namespace Robotics
 		  std::string m_back_marker_color;
 		  
 		  // MARKER POSITION
-		  float m_front_pos[2];
-		  float m_back_pos[2];
-		  Tracker front_marker;
-		  Tracker back_marker;
+		  ball_position m_front_pos;
+		  ball_position m_back_pos;
+		  float m_heading;
+		  
 		  std::shared_ptr<Tracker> Front_ptr;
 		  std::shared_ptr<Tracker> Back_ptr;
 		  
 		public:
-		      void pose_heading();
-		      void marker_selection();
 		      void pubID();
-		      void frontCircles(cv::Mat src,cv::Mat dst);
-		      void backCircles(cv::Mat src,cv::Mat dst);
-
+		      void select_robot_pose(ball_position front_array[],ball_position back_array[],int front_count,int back_count,cv::Mat src);
+		      void draw_circles(cv::Mat src);
 			Robot();
 			~Robot();
 		};

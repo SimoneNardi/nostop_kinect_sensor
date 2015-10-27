@@ -1,4 +1,5 @@
-#include <Collection.h>
+
+#include "Collection.h"
 #include <opencv2/core/core.hpp>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
@@ -59,13 +60,15 @@ void Tracker::matrixSettings(cv::KalmanFilter m_kf)
 }
 
 
-void Tracker::findCircles(cv::Mat thresholded_image, cv::Mat m_drawCircle)
+void Tracker::kalman_update(ball_position position)
 {
   double precTick = m_ticks;
   m_ticks = (double) cv::getTickCount();
   double dT = (m_ticks-precTick) / cv::getTickFrequency(); //seconds
+  
   cv::Rect predRect;
-   if (m_found)
+   
+  if (m_found) //TO DO 
       {
          m_kf.transitionMatrix.at<float>(2) = dT;
          m_kf.transitionMatrix.at<float>(9) = dT;
@@ -78,53 +81,9 @@ void Tracker::findCircles(cv::Mat thresholded_image, cv::Mat m_drawCircle)
 	 cv::Point center;          
 	 center.x = m_state.at<float>(0);          
 	 center.y = m_state.at<float>(1);          
-	 cv::circle(m_drawCircle, center, 2, CV_RGB(255,77,0), -1);            
-	 cv::rectangle(m_drawCircle, predRect, CV_RGB(255,77,0), 2);       
-	
-      }         
-     
-      vector<vector<cv::Point> > l_contours;
-      if (m_found)
-      {
-        cv::Mat sub_thresholded;
-	sub_thresholded = thresholded_image(cv::Rect(predRect.x, predRect.y, 10*predRect.width,10*predRect.height));
-        cv::findContours(sub_thresholded, l_contours, CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);    
-      }
-      else{
-            cv::findContours(thresholded_image, l_contours, CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);    
-       }
-      vector< vector<cv::Point> > balls;
-      vector<cv::Rect> ballsBox;
-      for (size_t i = 0; i < l_contours.size(); i++)       
-      {          
-	cv::Rect bBox;   
-	bBox = cv::boundingRect(l_contours[i]);            
-	float ratio = (float) bBox.width / (float) bBox.height;          
-	if (ratio > 1.0f)
-            ratio = 1.0f / ratio;
- 
-         // Searching for a bBox almost square
-         if (ratio > 0.85 && bBox.area() >=200 && bBox.area() <= 1000) 
-         {
-            balls.push_back(l_contours[i]);
-            ballsBox.push_back(bBox);
-         }
       }
       
-      cv::Point center;
-      // Drawing a rectangle on a circle
-      
-      for (size_t i = 0; i < balls.size(); i++)
-      {
-         cv::drawContours(m_drawCircle, balls, i, CV_RGB(20,150,20), 1);
-         cv::rectangle(m_drawCircle, ballsBox[i], CV_RGB(143,0,255), 2);
-         center.x = ballsBox[i].x + ballsBox[i].width / 2;
-         center.y = ballsBox[i].y + ballsBox[i].height / 2;
-         cv::circle(m_drawCircle, center, 2, CV_RGB(143,0,255), -1);
-
-      }
-      // <<<<< Detection result         // >>>>> Kalman Update
-      if (balls.size() == 0)
+      if (m_found== 0)// TO DO 
       {
          m_notFoundCount++;
 	 if( m_notFoundCount >= 10 )
@@ -138,15 +97,11 @@ void Tracker::findCircles(cv::Mat thresholded_image, cv::Mat m_drawCircle)
       {
          m_notFoundCount = 0;
  
-         m_meas.at<float>(0) = ballsBox[0].x + ballsBox[0].width / 2;
-         m_meas.at<float>(1) = ballsBox[0].y + ballsBox[0].height / 2;
-         m_meas.at<float>(2) = (float)ballsBox[0].width;
-         m_meas.at<float>(3) = (float)ballsBox[0].height;
-// 	    meas.at<int64>(0) = center.x;
-//          meas.at<int64>(1) = center.y;
-//          meas.at<int64>(2) = center.x*2;
-//          meas.at<int64>(3) = center.y*2;
-//  
+         m_meas.at<float>(0) = position.x + position.width / 2;
+         m_meas.at<float>(1) = position.y + position.height / 2;
+         m_meas.at<float>(2) = (float)position.width;
+         m_meas.at<float>(3) = (float)position.height;
+
          if (!m_found) // First detection!
          {
             // >>>> Initialization
@@ -174,22 +129,7 @@ void Tracker::findCircles(cv::Mat thresholded_image, cv::Mat m_drawCircle)
       }
  }
  
- 
- 
- 
-void Tracker::toGetPos(float pos_src[2])
-{
-  if (m_found)
-  {
-    pos_src[0]= m_meas.at<float>(0);
-    pos_src[1]= m_meas.at<float>(1);
-  }else {
-	pos_src[0]= -1;
-	pos_src[1]= -1;
-  }
-}
- 
- 
+
  
  
  
