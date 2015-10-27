@@ -52,7 +52,7 @@ void Robot::select_robot_pose(ball_position front_array[], ball_position back_ar
   Back_ptr->kalman_update(m_back_pos);
   cv::Mat dst;
   draw_circles(src);
-  m_heading = atan2((m_back_pos.y-m_front_pos.y),(m_back_pos.x-m_front_pos.x));
+  m_heading = atan2((-m_back_pos.y+m_front_pos.y),(m_back_pos.x-m_front_pos.x));
   ROS_INFO("%f",m_heading*180/M_PI);
 }
 
