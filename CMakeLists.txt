@@ -21,7 +21,9 @@ find_package(catkin REQUIRED COMPONENTS
   rosbag
   base_math
   image_transport
-  cv_bridge)
+  cv_bridge
+  nostop_agent
+  nostop_learning)
 
 find_package( OpenCV REQUIRED )
 # find_package( PCL 1.7.1 REQUIRED) # COMPONENT common io visualization)
@@ -39,7 +41,7 @@ find_package( OpenCV REQUIRED )
    FILES
 #    AgentSensorData.msg
 #    SensorData.msg
-     Id_robot.msg
+     #Id_robot.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -68,7 +70,7 @@ find_package( OpenCV REQUIRED )
 catkin_package(
   INCLUDE_DIRS include/${PROJECT_NAME}/
   LIBRARIES ${PROJECT_NAME}
-  DEPENDS base_math image_transport cv_bridge 
+  DEPENDS base_math nostop_agent image_transport cv_bridge nostop_learning
 )
 
 ###########
@@ -100,7 +102,7 @@ set(sensor_SOURCES
 
 
 add_executable(sensor_node ${sensor_SOURCES})
-target_link_libraries(sensor_node ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon )#${PCL_LIBRARIES})
+target_link_libraries(sensor_node ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning)#${PCL_LIBRARIES})
 add_dependencies(sensor_node nostop_kinect_sensor_gencpp)
 
 #############

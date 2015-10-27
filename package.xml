@@ -14,11 +14,14 @@
   <build_depend>roscpp</build_depend>
   <build_depend>cv_bridge</build_depend>
   <build_depend>image_transport</build_depend>
-
+  <build_depend>nostop_agent</build_depend>
+  <build_depend>nostop_learning</build_depend>
+  
   <run_depend>base_math</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>cv_bridge</run_depend>
   <run_depend>image_transport</run_depend>
-
+  <run_depend>nostop_agent</run_depend>
+  <run_depend>nostop_learning</run_depend>
 </package>
