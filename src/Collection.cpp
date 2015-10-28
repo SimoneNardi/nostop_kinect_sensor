@@ -25,12 +25,7 @@ using namespace cv;
 static const std::string SENSOR_CV_WINDOW = "Sensor view Window";
 static const std::string FILTERED_CV_WINDOW = "Filtered view Window";
 static const std::string FOUNDED_CIRCLES_WINDOW = "Founded circles Window";
-static const int L_view_cm = 195;
-static const int l_view_cm = 115;
-static const int MAX_pix_on_cm = 640/L_view_cm;
-static const int MIN_pix_on_cm = 640/l_view_cm;
-static const int y_camera_depth_cm = 132;
-// static const float pix_cm[480] = linspace(2.6,5.8,480);
+
  
 /////////////////////////////////////////////
 Collection::Collection()
@@ -191,8 +186,7 @@ void Collection::search_ball_pos(const sensor_msgs::ImageConstPtr& msg)
      ub_y[1] = 255;
      ub_y[2] = 255;
      filtering(m_stream_video,m_only_yellow,lb_y,ub_y);  
-     imshow("green",m_only_green);
-     imshow("yellow",m_only_yellow);
+          
      
      // FIND BALLS ARRAY
      balls_array(m_only_blue,m_only_green,m_only_red,m_only_yellow,m_blue_circles,m_green_circles,m_red_circles,m_yellow_circles,m_stream_video);
@@ -225,23 +219,23 @@ void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
 
 
 
-void Collection::balls_array(Mat& blue, Mat& green, Mat& red, Mat& yellow, ball_position blue_array[], ball_position green_array[], ball_position red_array[], ball_position yellow_array[],cv::Mat stream)
-{
-   int blue_ball_count = 0,green_ball_count = 0,red_ball_count = 0,yellow_ball_count = 0;
-   charge_array(blue,blue_array,blue_ball_count);
-   charge_array(green,green_array,green_ball_count);
-   charge_array(red,red_array,red_ball_count);
-   charge_array(yellow,yellow_array,yellow_ball_count);
-//    m_robot_manager->array_assignment(blue_array,green_array,red_array,yellow_array,blue_ball_count,green_ball_count,red_ball_count,yellow_ball_count,stream);
+void Collection::balls_array(cv::Mat& blue, cv::Mat& green, cv::Mat& red, cv::Mat& yellow,
+			     std::vector<ball_position>& blue_array, 
+			      std::vector<ball_position>& green_array,
+			      std::vector<ball_position>& red_array,
+			      std::vector<ball_position>& yellow_array,cv::Mat stream)
+{ 
+   charge_array(blue,blue_array);
+   charge_array(green,green_array);
+   charge_array(red,red_array);
+   charge_array(yellow,yellow_array);
+   m_robot_manager->array_assignment(blue_array,green_array,red_array,yellow_array,m_stream_video);
 }
 
-void Collection::charge_array(cv::Mat img, ball_position array[],int ball_count)
+void Collection::charge_array(cv::Mat img, std::vector<ball_position>& array)
 {
       vector<vector<cv::Point> > l_contours; 
-      vector< vector<cv::Point> > balls;
-      vector<cv::Rect> ballsBox;
-      
-      // BLUE
+      ball_position l_ball;//(0,0,0,0);
       cv::findContours(img, l_contours, CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);   
       for (size_t i = 0; i < l_contours.size(); i++)       
       {          
@@ -253,19 +247,21 @@ void Collection::charge_array(cv::Mat img, ball_position array[],int ball_count)
          // Searching for a bBox almost square
          if (ratio > 0.85 && bBox.area() >=200 && bBox.area() <= 1000) 
          {
-            balls.push_back(l_contours[i]);
-            ballsBox.push_back(bBox);
+	    l_ball.x = bBox.x;
+	    l_ball.y = bBox.y;
+	    l_ball.height = bBox.height;
+	    l_ball.width = bBox.width;
          }
+         array.push_back(l_ball);
       }
-      for (size_t i = 0; i < balls.size(); i++)
-      {
-         array[i].x = ballsBox[i].x;
-         array[i].y = ballsBox[i].y;
-	 array[i].height = ballsBox[i].height;
-	 array[i].width = ballsBox[i].width;
-	 ball_count++; // ball_count = 0 --> no balls
-       }
 }
+
+
+
+
+
+
+
 // void Collection::robotPose(float first_ball_pos[2], float second_ball_pos[2], float robot_pose[3]) // the first is the head
 // {
 //   // SR origin on upper left corner

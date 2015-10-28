@@ -7,9 +7,10 @@
 #define ROBOT_MANAGER_H
 #pragma once
 #include "some_struct.h"
+#include "Robot.h"
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
-#include "Robot.h"
+
 
 #include "nostop_agent/Id_robot.h"
 
@@ -28,9 +29,7 @@ namespace Robotics
 		  
 		  ros::Subscriber m_robot_in;
 
-/*		  std::vector<ID> m_robot_id_array*/;
 		  std::vector< std::shared_ptr<Robot> > m_robot_array;
-// 		  ID robot_id;
 		  
 		private:
 			ros::NodeHandle m_manager_node;

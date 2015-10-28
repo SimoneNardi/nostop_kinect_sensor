@@ -39,10 +39,13 @@ namespace Robotics
 		  std::shared_ptr<Tracker> Back_ptr;
 		  
 		public:
+
 		      void pubID();
 		      void select_robot_pose(std::vector<ball_position>& front_array,std::vector<ball_position>& back_array,cv::Mat src);
 		      void draw_circles(cv::Mat src);
-			Robot(std::string & name,std::string & front_color,std::string & back_color);
+		      std::string color_f();
+		      std::string color_b();
+		      Robot(std::string name_);
 			~Robot();
 		};
 

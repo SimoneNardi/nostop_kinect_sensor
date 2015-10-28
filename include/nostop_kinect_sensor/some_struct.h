@@ -13,6 +13,7 @@ struct ball_position
 		  float y;
 		  float width;
 		  float height;
+		  //ball_position(float x_, float y_, float width_,float height_) : x(x_), y(y_), width(width_), height(height_) {}
 		};
 struct ID{
 	    std::string name;
@@ -20,5 +21,5 @@ struct ID{
 	    std::string back_marker_color;
 	  };
 
-const int ROBOT_NUMBER = 10;
+
 #endif 

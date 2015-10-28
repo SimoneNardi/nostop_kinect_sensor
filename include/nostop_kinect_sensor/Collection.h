@@ -121,10 +121,10 @@ namespace Robotics
 		  cv::Mat m_only_yellow;
 		  
 		  // BALLS ARRAY
-		  ball_position * m_blue_circles = new ball_position[ROBOT_NUMBER];
-		  ball_position * m_green_circles = new ball_position[ROBOT_NUMBER];
-		  ball_position * m_red_circles = new ball_position[ROBOT_NUMBER];
-		  ball_position * m_yellow_circles = new ball_position[ROBOT_NUMBER];
+		  std::vector<ball_position> m_blue_circles;
+		  std::vector<ball_position> m_green_circles;
+		  std::vector<ball_position> m_red_circles;
+		  std::vector<ball_position>  m_yellow_circles;
 		  cv::Mat m_stream_circles;
 		  
 		  //COMPUTING ROBOT POSITION
@@ -148,8 +148,12 @@ namespace Robotics
 			void toPub(const sensor_msgs::ImageConstPtr& msg);
 			void search_ball_pos(const sensor_msgs::ImageConstPtr& msg);
 			void filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[]);
-			void balls_array(cv::Mat &blue,cv::Mat &green,cv::Mat &red,cv::Mat &yellow,ball_position blue_array[],ball_position green_array[], ball_position red_array[], ball_position yellow_array[],cv::Mat stream);
-			void charge_array(cv::Mat img, ball_position array[],int ball_count);
+			void balls_array(cv::Mat& blue, cv::Mat& green, cv::Mat& red, cv::Mat& yellow,
+			     std::vector<ball_position>& blue_array, 
+			      std::vector<ball_position>& green_array,
+			      std::vector<ball_position>& red_array,
+			      std::vector<ball_position>& yellow_array,cv::Mat stream);
+			void charge_array(cv::Mat img, std::vector<ball_position>& array);
 // 			void robotPose(float first_ball_pos[2], float second_ball_pos[2], float robot_pose[3]);
 // 			void pixel2cm(float pixel_pos[2], float cm_pos[2]);
 // 			void Erosion(int erosion_elem, int erosion_size, cv::Mat const& src, cv::Mat& erosion_dst);
