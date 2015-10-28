@@ -175,8 +175,7 @@ void Collection::search_ball_pos(const sensor_msgs::ImageConstPtr& msg)
      ub_r[2] = 255;
      filtering(m_stream_video,l_only_upper_red,lb_r,ub_r);  
      cv::addWeighted(l_only_lower_red,1.0,l_only_upper_red,1.0,0.0,m_only_red);
-     
-     
+          
      // Yellow Ball HSV values (H had *0.5 scale factor)
      int64_t lb_y[3],ub_y[3]; 
      lb_y[0] = 15; 
@@ -187,14 +186,17 @@ void Collection::search_ball_pos(const sensor_msgs::ImageConstPtr& msg)
      ub_y[2] = 255;
      filtering(m_stream_video,m_only_yellow,lb_y,ub_y);  
           
+     m_blue_circles.clear();
+     m_green_circles.clear();
+     m_red_circles.clear();
+     m_yellow_circles.clear();
      
      // FIND BALLS ARRAY
-     balls_array(m_only_blue,m_only_green,m_only_red,m_only_yellow,m_blue_circles,m_green_circles,m_red_circles,m_yellow_circles,m_stream_video);
-     
-  
+     balls_array(
+       m_only_blue,m_only_green,m_only_red,m_only_yellow,
+       m_blue_circles,m_green_circles,m_red_circles,m_yellow_circles,
+       m_stream_video);
 }
-
-
 
 
 void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
