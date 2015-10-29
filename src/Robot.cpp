@@ -55,7 +55,7 @@ void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vecto
   Front_ptr->kalman_update(m_front_pos);// USING PREDICTION?
   Back_ptr->kalman_update(m_back_pos);
   draw_circles(src);
-  m_heading = atan2((m_back_pos.y-m_front_pos.y),(m_back_pos.x-m_front_pos.x));
+  m_heading = -atan2((m_back_pos.y-m_front_pos.y),(m_back_pos.x-m_front_pos.x))+M_PI;
   ROS_INFO("%f",m_heading);
 }
 

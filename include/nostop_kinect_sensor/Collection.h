@@ -89,15 +89,8 @@ namespace Robotics
 		
 		class Collection
 		{
-// 		  std::shared_ptr<Tracker> m_tracker_ptr_blue;
-// 		  std::shared_ptr<Tracker> m_tracker_ptr_green;
-// 		  std::shared_ptr<Tracker> m_tracker_ptr_red;
-// 		  std::shared_ptr<Tracker> m_tracker_ptr_yellow;
 		  std::shared_ptr<Robot_manager> m_robot_manager;
-// 		  mutable Mutex m_mutex;
-		  
-		  std::map<Color, AgentSensor, ColorCompare> m_data;
-		  
+		  		  
 		  bool m_available;
 		  
 		  ros::NodeHandle m_node;
@@ -108,13 +101,12 @@ namespace Robotics
 		  
 		  bool m_stream_videoFLAG;
 		  cv::Mat m_stream_video;
-// 		  cv::Mat m_processed;
-		  cv::Mat m_circlesFounded;
+
 		  
+		  // RECTIFING
+		  cv::Mat m_transmtx;
 		  
 		  //FILTERING
-		  int m_min_red,m_max_red, m_min_green,m_max_green,m_min_blue,m_max_blue;
-		  int m_erosion_size, m_median;
 		  cv::Mat m_only_blue;
 		  cv::Mat m_only_green;
 		  cv::Mat m_only_red;
@@ -125,25 +117,20 @@ namespace Robotics
 		  std::vector<ball_position> m_green_circles;
 		  std::vector<ball_position> m_red_circles;
 		  std::vector<ball_position>  m_yellow_circles;
-		  cv::Mat m_stream_circles;
 		  
 		  //COMPUTING ROBOT POSITION
 		  float m_blue_pos[2];
 		  float m_green_pos[2];
 		  float m_red_pos[2];
 		  float m_yellow_pos[2];
-// 		  float m_robot_rb[3];
-// 		  float m_robot_gy[3]; // TO DO  
 		  
 		public:
 			Collection();
 			
 			~Collection();
 			
-// 			nostop_kinect_sensor::SensorData getMsgs();
 			void subscribe();
 			void searchCircles();
-			void ImageFromKinect(const sensor_msgs::ImageConstPtr& msg);
 			void getForeground(const sensor_msgs::ImageConstPtr& msg);
 			void toPub(const sensor_msgs::ImageConstPtr& msg);
 			void search_ball_pos(const sensor_msgs::ImageConstPtr& msg);
@@ -154,9 +141,6 @@ namespace Robotics
 			      std::vector<ball_position>& red_array,
 			      std::vector<ball_position>& yellow_array,cv::Mat stream);
 			void charge_array(cv::Mat img, std::vector<ball_position>& array);
-// 			void robotPose(float first_ball_pos[2], float second_ball_pos[2], float robot_pose[3]);
-// 			void pixel2cm(float pixel_pos[2], float cm_pos[2]);
-// 			void Erosion(int erosion_elem, int erosion_size, cv::Mat const& src, cv::Mat& erosion_dst);
 		};
 
 	}

@@ -13,6 +13,7 @@ int main(int argc, char **argv)
 {
 	ROS_INFO("Sensor: init!");
 	
+	
 	ros::init(argc, argv, "sensor"); 
 	
 	// Compute Robot Position:
