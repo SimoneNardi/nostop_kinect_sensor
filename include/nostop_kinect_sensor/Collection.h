@@ -15,6 +15,8 @@
 #include "sensor_msgs/Image.h"
 #include "sensor_msgs/PointCloud2.h"
 
+#include <opencv2/core/core.hpp>
+
 #include <opencv2/opencv.hpp>
 #include <image_transport/image_transport.h>
 #include <image_transport/subscriber_filter.h>
@@ -101,7 +103,15 @@ namespace Robotics
 		  
 		  bool m_stream_videoFLAG;
 		  cv::Mat m_stream_video;
-
+		  
+		  
+		  // FRAME 
+		  cv::Mat m_frame_marker;
+		  ros::Time m_begin;
+		  ros::Duration m_waiting; 
+		  std::vector<ball_position> m_white_marker;
+		  
+		  
 		  
 		  // RECTIFING
 		  cv::Mat m_transmtx;
@@ -123,6 +133,7 @@ namespace Robotics
 		  float m_green_pos[2];
 		  float m_red_pos[2];
 		  float m_yellow_pos[2];
+
 		  
 		public:
 			Collection();
@@ -131,7 +142,8 @@ namespace Robotics
 			
 			void subscribe();
 			void searchCircles();
-			void getForeground(const sensor_msgs::ImageConstPtr& msg);
+			void video_acquisition(const sensor_msgs::ImageConstPtr& msg);
+			void frame_acquisition(const ros::TimerEvent&);
 			void toPub(const sensor_msgs::ImageConstPtr& msg);
 			void search_ball_pos(const sensor_msgs::ImageConstPtr& msg);
 			void filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[]);

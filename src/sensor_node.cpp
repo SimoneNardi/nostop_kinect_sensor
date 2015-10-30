@@ -3,15 +3,9 @@
 #include "Collection.h"
 #include "Tracker.h"
 
-void ShutDown(const ros::TimerEvent&)
-{
- ros::shutdown();
-}
-
-
 int main(int argc, char **argv)
 {
-	ROS_INFO("Sensor: init!");
+	ROS_INFO("Sensor node : ON");
 	
 	
 	ros::init(argc, argv, "sensor"); 
@@ -23,10 +17,8 @@ int main(int argc, char **argv)
 	Robotics::GameTheory::Collector l_Collector;
 	
 	l_Collector.start();
-     
 	ros::NodeHandle n;
 
-// 	ros::Timer l_timer=n.createTimer(ros::Duration(100000), ShutDown);
 	ros::spin();
 	
 	l_Collector.stop();

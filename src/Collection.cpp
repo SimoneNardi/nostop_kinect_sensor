@@ -33,6 +33,8 @@ Collection::Collection()
 , m_it(m_node)
 , m_stream_videoFLAG(false)
 , m_robot_manager(nullptr)
+, m_begin(ros::Time::now())
+, m_waiting(ros::Duration(5,0))
 {
 	m_robot_manager = std::make_shared<Robot_manager>();
 	m_robot_manager->subscribe();
@@ -52,15 +54,15 @@ void Collection::subscribe()
 	
 	ROS_INFO("Sensor: Collection subscribe!");
 	cv::namedWindow(SENSOR_CV_WINDOW);
-	m_image_sub = m_it.subscribe("/camera/rgb/image_rect_color", 1, &Collection::getForeground, this, image_transport::TransportHints("raw"));
+	m_image_sub = m_it.subscribe("/camera/rgb/image_rect_color", 1, &Collection::video_acquisition, this, image_transport::TransportHints("raw"));
 	
 	m_stream_videoFLAG = false;
-	std::cout << "Sensor: ForeGround Collected!"<< std::endl << std::flush;
   
 }
 
+
 //////////////////////////////////////////
-void Collection::getForeground(const sensor_msgs::ImageConstPtr& msg)
+void Collection::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
 {
   cv_bridge::CvImageConstPtr cv_ptr;
   try
@@ -78,6 +80,7 @@ void Collection::getForeground(const sensor_msgs::ImageConstPtr& msg)
   
   
   m_stream_video = cv_ptr->image.clone();
+
   
   m_stream_videoFLAG = true;
     
@@ -118,7 +121,7 @@ void Collection::search_ball_pos(const sensor_msgs::ImageConstPtr& msg)
      int64_t lb_b[3],ub_b[3]; 
      lb_b[0] = 200*0.5; 
      lb_b[1] = 140;
-     lb_b[2] = 140;
+     lb_b[2] = 100;
      ub_b[0] = 320*0.5;
      ub_b[1] = 255;
      ub_b[2] = 255;
@@ -174,26 +177,37 @@ void Collection::search_ball_pos(const sensor_msgs::ImageConstPtr& msg)
        m_only_blue,m_only_green,m_only_red,m_only_yellow,
        m_blue_circles,m_green_circles,m_red_circles,m_yellow_circles,
        m_stream_video);
-    
-     
-     
-     
-     std::vector<cv::Point2f> quad_pts,corners;
-     	
+//      if(ros::Time::now()-m_begin<m_waiting)
+     {       
+       if(m_blue_circles.size() == 1)
+       {
+	 Point2f l;
+	 std::vector<cv::Point2f> corners;
+	 ball_position local= m_blue_circles.at(0);
+	 l.x = local.x;
+	 l.y = local.y;
+	 corners.push_back(cv::Point2f(0, 0));
+	 corners.push_back(cv::Point2f(l.x,0));
+	 corners.push_back(cv::Point2f(l.x,l.y));
+	 corners.push_back(cv::Point2f(0,l.y));
+	 cv::Mat quad = cv::Mat::zeros(m_stream_video.rows, m_stream_video.cols, CV_8UC3);
 
-	//TODO corners!!!!!!!
-	quad_pts.push_back(cv::Point2f(0, 0));
-	quad_pts.push_back(cv::Point2f(m_stream_video.cols, 0));
-	quad_pts.push_back(cv::Point2f(m_stream_video.cols, m_stream_video.rows));
-	quad_pts.push_back(cv::Point2f(0, m_stream_video.rows));
-	corners = quad_pts;
-	cv::Mat dst=Mat::zeros(m_stream_video.rows,m_stream_video.cols,CV_32F);
-	m_transmtx = cv::getPerspectiveTransform(corners, quad_pts);
-	
-	cv::warpPerspective(m_stream_video, dst, m_transmtx,dst.size());
-	imshow("TEST",dst);
-	
-     
+	  // Corners of the destination image
+	  std::vector<cv::Point2f> quad_pts;
+	  quad_pts.push_back(cv::Point2f(0, 0));
+	  quad_pts.push_back(cv::Point2f(quad.cols, 0));
+	  quad_pts.push_back(cv::Point2f(quad.cols, quad.rows));
+	  quad_pts.push_back(cv::Point2f(0, quad.rows));
+
+	  // Get transformation matrix
+	  cv::Mat m_transmtx = cv::getPerspectiveTransform(corners, quad_pts);
+
+	  // Apply perspective transformation
+	  cv::warpPerspective(m_stream_video, quad, m_transmtx, quad.size());
+	  cv::imshow("quadrilateral", quad);
+       }
+     }
+
 }
 
 
@@ -210,8 +224,8 @@ void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
      //  Color Thresholding
      cv::Mat rangeRes = cv::Mat::zeros(src.size(), CV_8UC1);
      cv::inRange(frmHsv, cv::Scalar(lb[0], lb[1], lb[2]),cv::Scalar(ub[0], ub[1], ub[2]), rangeRes);
-
-     // >>>>> Improving the result
+     
+//     >>>>> Improving the result
      cv::erode(rangeRes, dst, cv::Mat(), cv::Point(-1, -1), 2);
      cv::dilate(dst, dst, cv::Mat(), cv::Point(-1, -1), 2);    
      
