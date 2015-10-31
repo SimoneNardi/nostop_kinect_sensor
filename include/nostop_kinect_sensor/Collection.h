@@ -115,13 +115,16 @@ namespace Robotics
 		  
 		  // RECTIFING
 		  cv::Mat m_transmtx;
+		  cv::Mat m_rectified_img;
+
+		  
 		  
 		  //FILTERING
 		  cv::Mat m_only_blue;
 		  cv::Mat m_only_green;
 		  cv::Mat m_only_red;
 		  cv::Mat m_only_yellow;
-		  
+
 		  // BALLS ARRAY
 		  std::vector<ball_position> m_blue_circles;
 		  std::vector<ball_position> m_green_circles;
@@ -143,7 +146,7 @@ namespace Robotics
 			void subscribe();
 			void searchCircles();
 			void video_acquisition(const sensor_msgs::ImageConstPtr& msg);
-			void frame_acquisition(const ros::TimerEvent&);
+			void img_rectify();
 			void toPub(const sensor_msgs::ImageConstPtr& msg);
 			void search_ball_pos(const sensor_msgs::ImageConstPtr& msg);
 			void filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[]);

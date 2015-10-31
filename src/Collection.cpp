@@ -25,6 +25,9 @@ using namespace cv;
 static const std::string SENSOR_CV_WINDOW = "Sensor view Window";
 static const std::string FILTERED_CV_WINDOW = "Filtered view Window";
 static const std::string FOUNDED_CIRCLES_WINDOW = "Founded circles Window";
+static  cv::Point2f xy;
+static  int clicked=0;
+static  std::vector<cv::Point2f> corners;
 
  
 /////////////////////////////////////////////
@@ -34,8 +37,9 @@ Collection::Collection()
 , m_stream_videoFLAG(false)
 , m_robot_manager(nullptr)
 , m_begin(ros::Time::now())
-, m_waiting(ros::Duration(5,0))
+, m_waiting(ros::Duration(2,0))
 {
+	
 	m_robot_manager = std::make_shared<Robot_manager>();
 	m_robot_manager->subscribe();
 }
@@ -80,7 +84,17 @@ void Collection::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
   
   
   m_stream_video = cv_ptr->image.clone();
-
+     
+     //RECTIFY
+     if(!m_transmtx.empty() && corners.size()==4)
+    {
+    cv::warpPerspective(m_stream_video, m_rectified_img, m_transmtx, m_rectified_img.size());
+    imshow("OUT",m_rectified_img);
+    m_rectified_img.copyTo(m_stream_video);
+    }else{
+          img_rectify();
+      
+    }
   
   m_stream_videoFLAG = true;
     
@@ -92,6 +106,46 @@ void Collection::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
 }
 }
 
+//////////////////////////////////////////////////////
+void mouse_callback(int event, int x, int y, int flags, void* param)
+{
+	//This is called every time a mouse event occurs in the window
+	if (event == CV_EVENT_LBUTTONDBLCLK) { //This is executed when the left mouse button is clicked
+		//Co-ordinates of the left click are assigned to global variables and flag is set to 1
+		xy.x = x;
+		xy.y = y;
+		corners.push_back(xy);
+		clicked = clicked+1;
+	}
+}
+void Collection::img_rectify()
+{
+  if(ros::Time::now()-m_begin < m_waiting)
+     {
+       m_stream_video.copyTo(m_rectified_img);
+     }else{
+            if(m_transmtx.empty())
+	      {
+		cvNamedWindow("Frame",CV_WINDOW_AUTOSIZE); //Window is created for image of each frame
+		imshow("Frame",m_rectified_img);
+		cvSetMouseCallback("Frame",mouse_callback,NULL);
+		int i;
+		i = corners.size();
+		ROS_INFO("%d",i);
+		if(corners.size()==4)
+		{
+		  // Corners of the destination image
+		  std::vector<cv::Point2f> quad_pts;
+		  quad_pts.push_back(cv::Point2f(0, 0));
+		  quad_pts.push_back(cv::Point2f(m_rectified_img.cols, 0));
+		  quad_pts.push_back(cv::Point2f(m_rectified_img.cols, m_rectified_img.rows));
+		  quad_pts.push_back(cv::Point2f(0, m_rectified_img.rows));
+		  // Get transformation matrix
+		  m_transmtx = cv::getPerspectiveTransform(corners, quad_pts);
+		  }
+	    }
+	  }
+}
 
 /////////////////////////////////////////////////////
 void Collection::searchCircles()
@@ -102,6 +156,7 @@ void Collection::searchCircles()
 
 void Collection::search_ball_pos(const sensor_msgs::ImageConstPtr& msg)
 { 
+    
        cv::Mat withCircle_blue,withCircle_green,withCircle_red,withCircle_yellow,l_bg,l_ry;
 //      withCircle_blue=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type);
      withCircle_green=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
@@ -120,7 +175,7 @@ void Collection::search_ball_pos(const sensor_msgs::ImageConstPtr& msg)
      // Blue Ball HSV values (H had *0.5 scale factor)
      int64_t lb_b[3],ub_b[3]; 
      lb_b[0] = 200*0.5; 
-     lb_b[1] = 140;
+     lb_b[1] = 125;
      lb_b[2] = 100;
      ub_b[0] = 320*0.5;
      ub_b[1] = 255;
@@ -159,9 +214,9 @@ void Collection::search_ball_pos(const sensor_msgs::ImageConstPtr& msg)
           
      // Yellow Ball HSV values (H had *0.5 scale factor)
      int64_t lb_y[3],ub_y[3]; 
-     lb_y[0] = 15; 
-     lb_y[1] = 70;
-     lb_y[2] = 100;
+     lb_y[0] = 20; 
+     lb_y[1] = 115;
+     lb_y[2] = 135;
      ub_y[0] = 45;
      ub_y[1] = 255;
      ub_y[2] = 255;
@@ -171,44 +226,25 @@ void Collection::search_ball_pos(const sensor_msgs::ImageConstPtr& msg)
      m_green_circles.clear();
      m_red_circles.clear();
      m_yellow_circles.clear();
+    
+     // THRESHOLDED IMG
+     imshow("blue",m_only_blue);
+     imshow("green",m_only_green);
+     imshow("red",m_only_red);
+     imshow("yellow",m_only_yellow);
+//      
      
      // FIND BALLS ARRAY
      balls_array(
        m_only_blue,m_only_green,m_only_red,m_only_yellow,
        m_blue_circles,m_green_circles,m_red_circles,m_yellow_circles,
        m_stream_video);
-//      if(ros::Time::now()-m_begin<m_waiting)
-     {       
-       if(m_blue_circles.size() == 1)
-       {
-	 Point2f l;
-	 std::vector<cv::Point2f> corners;
-	 ball_position local= m_blue_circles.at(0);
-	 l.x = local.x;
-	 l.y = local.y;
-	 corners.push_back(cv::Point2f(0, 0));
-	 corners.push_back(cv::Point2f(l.x,0));
-	 corners.push_back(cv::Point2f(l.x,l.y));
-	 corners.push_back(cv::Point2f(0,l.y));
-	 cv::Mat quad = cv::Mat::zeros(m_stream_video.rows, m_stream_video.cols, CV_8UC3);
+     
 
-	  // Corners of the destination image
-	  std::vector<cv::Point2f> quad_pts;
-	  quad_pts.push_back(cv::Point2f(0, 0));
-	  quad_pts.push_back(cv::Point2f(quad.cols, 0));
-	  quad_pts.push_back(cv::Point2f(quad.cols, quad.rows));
-	  quad_pts.push_back(cv::Point2f(0, quad.rows));
-
-	  // Get transformation matrix
-	  cv::Mat m_transmtx = cv::getPerspectiveTransform(corners, quad_pts);
-
-	  // Apply perspective transformation
-	  cv::warpPerspective(m_stream_video, quad, m_transmtx, quad.size());
-	  cv::imshow("quadrilateral", quad);
-       }
+	    
+	    
      }
-
-}
+       
 
 
 void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
@@ -259,7 +295,7 @@ void Collection::charge_array(cv::Mat img, std::vector<ball_position>& array)
 	if (ratio > 1.0f)
             ratio = 1.0f / ratio;
          // Searching for a bBox almost square
-         if (ratio > 0.85 && bBox.area() >=200 && bBox.area() <= 1000) 
+         if (ratio > 0.90 && bBox.area() >=700 && bBox.area() <= 1000) // TODO (after rectified img how change settings?)
          {
 	    l_ball.x = bBox.x;
 	    l_ball.y = bBox.y;
