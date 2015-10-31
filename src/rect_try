@@ -1,0 +1,72 @@
+
+//     // RECTIFING TRY
+// 
+//       if(ros::Time::now()-m_begin<m_waiting)
+//      {     
+//        std::vector<cv::Point2f> corners;
+//        corners.clear();
+//        Point2f l;
+//        ball_position local;
+//        // TOP LEFT
+//        if(m_blue_circles.size() >= 1)
+//        {
+// 	 local= m_blue_circles.at(0);
+// 	 l.x = local.x;
+// 	 l.y = local.y;
+// 	 corners.push_back(l);
+//        }
+//        // TOP RIGHT
+//        if(m_green_circles.size() >= 1)
+//        {
+// 	 local= m_green_circles.at(0);
+// 	 l.x = local.x;
+// 	 l.y = local.y;
+// 	 corners.push_back(l);
+//        }
+//        // BOTTOM RIGHT
+//        if(m_red_circles.size() >= 1)
+//        {
+// 	 local= m_red_circles.at(0);
+// 	 l.x = local.x;
+// 	 l.y = local.y;
+// 	 corners.push_back(l);
+//        }
+//        //BOTTOM LEFT
+//        if(m_yellow_circles.size() >= 1)
+//        {
+// 	 local= m_yellow_circles.at(0);
+// 	 l.x = local.x;
+// 	 l.y = local.y;
+// 	 corners.push_back(l);
+//        }
+//        if (corners.size() == 4)
+//        {
+// 	  rectified = cv::Mat::zeros(480, 640, m_stream_video.type());
+// 	  // Corners of the destination image
+// 	  std::vector<cv::Point2f> quad_pts;
+// 	  quad_pts.push_back(cv::Point2f(0, 0));
+// 	  quad_pts.push_back(cv::Point2f(rectified.cols, 0));
+// 	  quad_pts.push_back(cv::Point2f(rectified.cols, rectified.rows));
+// 	  quad_pts.push_back(cv::Point2f(0, rectified.rows));
+// 	  
+// 	  std::vector<cv::Point2f> approx;
+// 	  cv::approxPolyDP(cv::Mat(corners), approx, 
+//                  cv::arcLength(cv::Mat(corners), true) * 0.02, true);
+// 
+// 	if (approx.size() != 4)
+// 	{
+// 	  std::cout << "The object is not quadrilateral!" << std::endl;
+// 	  }
+// 	  // Get transformation matrix
+// 	  m_transmtx = cv::getPerspectiveTransform(corners, quad_pts);
+// 
+//        }
+//        }else
+//        { 
+// 	 if(!m_transmtx.empty())
+// 	 {// Apply perspective transformation
+// 	  cv::warpPerspective(m_stream_video, rectified, m_transmtx, rectified.size());
+// 	  imshow("OUT",rectified);
+// 	 }
+//        }
+	 
