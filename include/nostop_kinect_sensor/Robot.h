@@ -34,6 +34,9 @@ namespace Robotics
 		  ball_position m_front_pos;
 		  ball_position m_back_pos;
 		  float m_heading;
+		  bool found;
+		  cv::Rect m_f_rect;
+		  cv::Rect m_b_rect;
 		  
 		  std::shared_ptr<Tracker> Front_ptr;
 		  std::shared_ptr<Tracker> Back_ptr;
@@ -41,8 +44,8 @@ namespace Robotics
 		public:
 
 		      void pubID();
-		      void select_robot_pose(std::vector<ball_position>& front_array,std::vector<ball_position>& back_array,cv::Mat src);
-		      void draw_circles(cv::Mat src);
+		      void select_robot_pose(std::vector<ball_position>& front_array,std::vector<ball_position>& back_array);
+		      void draw_circles(cv::Mat src);// NOT IN USE
 		      std::string color_f();
 		      std::string color_b();
 		      Robot(std::string name_);
