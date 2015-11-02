@@ -30,8 +30,7 @@ Tracker::Tracker() :
 m_kf(m_stateSize,m_measSize,m_contrSize,type)
 , m_state(m_stateSize,1,type)
 , m_meas(m_measSize,1,type)
-, m_found(false)
-, m_close(true)
+// , m_found(true)
 {
   matrixSettings(m_kf);
 }
@@ -60,74 +59,73 @@ void Tracker::matrixSettings(cv::KalmanFilter m_kf)
 }
 
 
-void Tracker::kalman_update(ball_position position)
+cv::Rect Tracker::kalman_update(ball_position position,bool found) 
 {
   double precTick = m_ticks;
   m_ticks = (double) cv::getTickCount();
   double dT = (m_ticks-precTick) / cv::getTickFrequency(); //seconds
-  
   cv::Rect predRect;
-   
-  if (m_found) //TO DO 
+  
+      
+      
+      if (!found)// TO DO 
+      {
+         m_notFoundCount++;
+	 if( m_notFoundCount >= 10 )
+	  {
+            found = false;
+	  }else{
+		  m_kf.statePost = m_state;
+		}
+      }else{
+	    m_notFoundCount = 0;
+ 
+	    m_meas.at<float>(0) = position.x + position.width / 2;
+	    m_meas.at<float>(1) = position.y + position.height / 2;
+	    m_meas.at<float>(2) = (float)position.width;
+	    m_meas.at<float>(3) = (float)position.height;
+
+	    if (!found) // First detection!
+	    {
+	      // >>>> Initialization
+	      m_kf.errorCovPre.at<float>(0) = 1; // px
+	      m_kf.errorCovPre.at<float>(7) = 1; // px
+	      m_kf.errorCovPre.at<float>(14) = 1;m_kf.statePost = m_state;
+	      m_kf.errorCovPre.at<float>(21) = 1;
+	      m_kf.errorCovPre.at<float>(28) = 1; // px
+	      m_kf.errorCovPre.at<float>(35) = 1; // px
+ 
+	      m_state.at<float>(0) = m_meas.at<float>(0);
+	      m_state.at<float>(1) = m_meas.at<float>(1);
+	      m_state.at<float>(2) = 0;
+	      m_state.at<float>(3) = 0;
+	      m_state.at<float>(4) = m_meas.at<float>(2);
+	      m_state.at<float>(5) = m_meas.at<float>(3);
+	      // <<<< Initialization
+ 
+	      found = true;   
+         }else{
+	       m_kf.correct(m_meas); // Kalman Correction
+	      }
+    if (found) //TO DO 
       {
          m_kf.transitionMatrix.at<float>(2) = dT;
          m_kf.transitionMatrix.at<float>(9) = dT;
-         m_state = m_kf.predict();
-	          
+         m_state = m_kf.predict();     
 	 predRect.width = m_state.at<float>(4);          
-	 predRect.height = m_state.at<float>(5);          
+	 predRect.height =  m_state.at<float>(5);          
 	 predRect.x = m_state.at<float>(0) - predRect.width / 2;          
 	 predRect.y = m_state.at<float>(1) - predRect.height / 2;            
 	 cv::Point center;          
 	 center.x = m_state.at<float>(0);          
-	 center.y = m_state.at<float>(1);          
+	 center.y = m_state.at<float>(1);
+	 return predRect;
+
       }
       
-      if (m_found== 0)// TO DO 
-      {
-         m_notFoundCount++;
-	 if( m_notFoundCount >= 10 )
-         {
-            m_found = false;
-         }
-         else
-            m_kf.statePost = m_state;
       }
-      else
-      {
-         m_notFoundCount = 0;
- 
-         m_meas.at<float>(0) = position.x + position.width / 2;
-         m_meas.at<float>(1) = position.y + position.height / 2;
-         m_meas.at<float>(2) = (float)position.width;
-         m_meas.at<float>(3) = (float)position.height;
+}
 
-         if (!m_found) // First detection!
-         {
-            // >>>> Initialization
-            m_kf.errorCovPre.at<float>(0) = 1; // px
-            m_kf.errorCovPre.at<float>(7) = 1; // px
-            m_kf.errorCovPre.at<float>(14) = 1;m_kf.statePost = m_state;
-            m_kf.errorCovPre.at<float>(21) = 1;
-            m_kf.errorCovPre.at<float>(28) = 1; // px
-            m_kf.errorCovPre.at<float>(35) = 1; // px
- 
-            m_state.at<float>(0) = m_meas.at<float>(0);
-            m_state.at<float>(1) = m_meas.at<float>(1);
-            m_state.at<float>(2) = 0;
-            m_state.at<float>(3) = 0;
-            m_state.at<float>(4) = m_meas.at<float>(2);
-            m_state.at<float>(5) = m_meas.at<float>(3);
-            // <<<< Initialization
- 
-            m_found = true;
-
-	    
-         }
-         else
-            m_kf.correct(m_meas); // Kalman Correction
-      }
- }
  
 
  

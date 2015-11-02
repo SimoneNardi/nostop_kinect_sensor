@@ -30,19 +30,16 @@ namespace Robotics
 			cv::Mat m_meas;
 			cv::Mat m_drawCircle;
 			double m_ticks;
-			bool m_found;
 			int m_notFoundCount = 0;
 // 			rosbag::Bag m_bag;
-			bool m_close;
 			ros::NodeHandle tracker;
 			ros::Publisher m_pub_position;
-			
 		protected:
 			
 		public:
 			Tracker();
 			void matrixSettings(cv::KalmanFilter m_kf);
-			void kalman_update(ball_position position);
+			cv::Rect kalman_update(ball_position position,bool found);
 // 			void write2bag(std::string color);
 // 			void bag2read(std::string color);
 
