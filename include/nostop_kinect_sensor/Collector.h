@@ -7,13 +7,14 @@
 #define COLLECTOR_H
 #pragma once
 
-#include "ThreadBase.h"
+// #include "ThreadBase.h"
 
 #include "ros/ros.h"
+#include <std_msgs/String.h>
 
 #include <memory>
 
-#include "Threads.h"
+// #include "Threads.h"
 
 #include "Collection.h"
 
@@ -23,21 +24,33 @@ namespace Robotics
 	{
 		class Collection;
 		
-		class Collector: public ThreadBase	  	
+		class Collector//: public ThreadBase	  	
 		{
+
 		  mutable Mutex m_mutex;
-		  
-		  std::shared_ptr<Collection> m_sensor;
-		  bool m_notify;
-		  ros::NodeHandle m_node;
+
 		  ros::Publisher m_pub;
+		  ros::Subscriber m_camera_in;
+		  int m_number_kinect;
+		  int m_number_another;
+		  std::vector< std::shared_ptr<Collection> > m_camera_array;
+		  std::shared_ptr<Robot_manager> m_manager;
 		  
+		  // PACKAGE
+		  std::vector<ball_position> m_blue_ball_W;
+		  std::vector<ball_position> m_green_ball_W;
+		  std::vector<ball_position> m_red_ball_W;
+		  std::vector<ball_position> m_yellow_ball_W;
+
+		  ros::NodeHandle m_node;
 		protected:
-			virtual void run();
+		  //virtual void run();
 		public:
 			Collector();
-
 			~Collector();
+			void new_camera(const nostop_agent::Id_robot::ConstPtr& msg);
+ 			void pack_passage();
+	
 		};
 
 	}
