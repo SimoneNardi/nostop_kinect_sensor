@@ -37,13 +37,11 @@ namespace Robotics
 		public:
 			Robot_manager();
 			~Robot_manager();
-			void subscribe();
 			void new_robot_id(const nostop_agent::Id_robot::ConstPtr& msg);
-			void update();
 			void array_assignment(std::vector<ball_position>& blue_array, 
 						std::vector<ball_position>& green_array,
 						std::vector<ball_position>& red_array,
-						std::vector<ball_position>& yellow_array,cv::Mat stream);
+						std::vector<ball_position>& yellow_array);
 		};
 
 	}
