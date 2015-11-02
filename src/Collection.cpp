@@ -22,44 +22,50 @@ using namespace Robotics::GameTheory;
 using namespace cv;
 
 
-static const std::string SENSOR_CV_WINDOW = "Sensor view Window";
-static const std::string FILTERED_CV_WINDOW = "Filtered view Window";
-static const std::string FOUNDED_CIRCLES_WINDOW = "Founded circles Window";
+static const std::string SENSOR_CV_WINDOW = "Sensor view Window ";
+static const std::string FILTERED_CV_WINDOW = "Filtered view Window ";
+static const std::string FOUNDED_CIRCLES_WINDOW = "Founded circles Window  ";
+static const std::string BLUE_THRESHOLD_WINDOWS = "Blue threshold ";
+static const std::string GREEN_THRESHOLD_WINDOWS = "Green threshold ";
+static const std::string RED_THRESHOLD_WINDOWS = "Red threshold ";
+static const std::string YELLOW_THRESHOLD_WINDOWS = "Yellow threshold ";
 static  cv::Point2f xy;
 static  int clicked=0;
 static  std::vector<cv::Point2f> corners;
 
  
 /////////////////////////////////////////////
-Collection::Collection()
+Collection::Collection(std::string name_)
 : m_available(false)
 , m_it(m_node)
 , m_stream_videoFLAG(false)
-, m_robot_manager(nullptr)
 , m_begin(ros::Time::now())
 , m_waiting(ros::Duration(2,0))
+, m_camera_name(name_)
 {
-	
-	m_robot_manager = std::make_shared<Robot_manager>();
-	m_robot_manager->subscribe();
+  subscribe(m_camera_name);
 }
 
 
 /////////////////////////////////////////////
 Collection::~Collection()
 {
-	cv::destroyWindow(SENSOR_CV_WINDOW);
-	cv::destroyWindow(FILTERED_CV_WINDOW);
+	cv::destroyWindow(SENSOR_CV_WINDOW+m_camera_name);
+	cv::destroyWindow(FILTERED_CV_WINDOW+m_camera_name);
 }
 
 /////////////////////////////////////////////
-void Collection::subscribe()
+void Collection::subscribe(std::string camera_name)
 {	
-	
-	ROS_INFO("Sensor: Collection subscribe!");
-	cv::namedWindow(SENSOR_CV_WINDOW);
-	m_image_sub = m_it.subscribe("/camera/rgb/image_rect_color", 1, &Collection::video_acquisition, this, image_transport::TransportHints("raw"));
-	
+	std::string l_camera_name;
+	cv::namedWindow(SENSOR_CV_WINDOW+m_camera_name);
+	l_camera_name = m_camera_name.substr(0,m_camera_name.find("_"));
+	if(l_camera_name == "kinect")
+	{	ROS_INFO("METTO KINECT");
+	  m_image_sub = m_it.subscribe("/camera/rgb/image_rect_color", 1, &Collection::video_acquisition, this, image_transport::TransportHints("raw"));
+	} else { ROS_INFO("ANOTHER CAMERA");
+	  m_image_sub = m_it.subscribe("/another_camera", 1, &Collection::video_acquisition, this, image_transport::TransportHints("raw"));
+	}
 	m_stream_videoFLAG = false;
   
 }
@@ -83,17 +89,16 @@ void Collection::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
   }
   
   
-  m_stream_video = cv_ptr->image.clone();
+    m_stream_video = cv_ptr->image.clone();
      
      //RECTIFY
      if(!m_transmtx.empty() && corners.size()==4)
     {
     cv::warpPerspective(m_stream_video, m_rectified_img, m_transmtx, m_rectified_img.size());
-    imshow("OUT",m_rectified_img);
     m_rectified_img.copyTo(m_stream_video);
+    cv::destroyWindow("Frame");
     }else{
-          img_rectify();
-      
+          img_rectify(); 
     }
   
   m_stream_videoFLAG = true;
@@ -101,9 +106,13 @@ void Collection::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
    if(m_stream_videoFLAG)
    {
       // Update GUI Window
-      cv::imshow(SENSOR_CV_WINDOW,m_stream_video);
+      cv::imshow(SENSOR_CV_WINDOW+m_camera_name,m_stream_video);
       cv::waitKey(3);     
 }
+
+// FUNCTION
+img_rectify();
+search_ball_pos();
 }
 
 //////////////////////////////////////////////////////
@@ -129,9 +138,6 @@ void Collection::img_rectify()
 		cvNamedWindow("Frame",CV_WINDOW_AUTOSIZE); //Window is created for image of each frame
 		imshow("Frame",m_rectified_img);
 		cvSetMouseCallback("Frame",mouse_callback,NULL);
-		int i;
-		i = corners.size();
-		ROS_INFO("%d",i);
 		if(corners.size()==4)
 		{
 		  // Corners of the destination image
@@ -148,13 +154,7 @@ void Collection::img_rectify()
 }
 
 /////////////////////////////////////////////////////
-void Collection::searchCircles()
-{	
-	ROS_INFO("Searching init.");
-	m_image_sub_circles = m_it.subscribe("/camera/rgb/image_rect_color", 1, &Collection::search_ball_pos, this, image_transport::TransportHints("raw"));
-}
-
-void Collection::search_ball_pos(const sensor_msgs::ImageConstPtr& msg)
+void Collection::search_ball_pos()
 { 
     
        cv::Mat withCircle_blue,withCircle_green,withCircle_red,withCircle_yellow,l_bg,l_ry;
@@ -185,11 +185,11 @@ void Collection::search_ball_pos(const sensor_msgs::ImageConstPtr& msg)
      // Green Ball HSV values (H had *0.5 scale factor)
      int64_t lb_g[3],ub_g[3]; 
      lb_g[0] = 30; 
-     lb_g[1] = 100;
+     lb_g[1] = 150;
      lb_g[2] = 50;
      ub_g[0] = 60;
      ub_g[1] = 255;
-     ub_g[2] = 255;
+     ub_g[2] = 180;
      filtering(m_stream_video,m_only_green,lb_g,ub_g);  
      
      // Red Ball HSV values (H had *0.5 scale factor)
@@ -228,22 +228,18 @@ void Collection::search_ball_pos(const sensor_msgs::ImageConstPtr& msg)
      m_yellow_circles.clear();
     
      // THRESHOLDED IMG
-     imshow("blue",m_only_blue);
-     imshow("green",m_only_green);
-     imshow("red",m_only_red);
-     imshow("yellow",m_only_yellow);
-//      
+     imshow(BLUE_THRESHOLD_WINDOWS+m_camera_name,m_only_blue);
+     imshow(GREEN_THRESHOLD_WINDOWS+m_camera_name,m_only_green);
+     imshow(RED_THRESHOLD_WINDOWS+m_camera_name,m_only_red);
+     imshow(YELLOW_THRESHOLD_WINDOWS+m_camera_name,m_only_yellow);  
      
      // FIND BALLS ARRAY
      balls_array(
        m_only_blue,m_only_green,m_only_red,m_only_yellow,
        m_blue_circles,m_green_circles,m_red_circles,m_yellow_circles,
        m_stream_video);
-     
 
-	    
-	    
-     }
+}
        
 
 
@@ -279,7 +275,7 @@ void Collection::balls_array(cv::Mat& blue, cv::Mat& green, cv::Mat& red, cv::Ma
    charge_array(green,green_array);
    charge_array(red,red_array);
    charge_array(yellow,yellow_array);
-   m_robot_manager->array_assignment(blue_array,green_array,red_array,yellow_array,m_stream_video);
+
 }
 
 void Collection::charge_array(cv::Mat img, std::vector<ball_position>& array)
@@ -295,7 +291,7 @@ void Collection::charge_array(cv::Mat img, std::vector<ball_position>& array)
 	if (ratio > 1.0f)
             ratio = 1.0f / ratio;
          // Searching for a bBox almost square
-         if (ratio > 0.90 && bBox.area() >=700 && bBox.area() <= 1000) // TODO (after rectified img how change settings?)
+         if (ratio > 0.65 && bBox.area() >= 500)// && bBox.area() <= 10000) 
          {
 	    l_ball.x = bBox.x;
 	    l_ball.y = bBox.y;
@@ -307,3 +303,22 @@ void Collection::charge_array(cv::Mat img, std::vector<ball_position>& array)
 }
 
 
+std::vector<ball_position> Collection::get_blue_array()
+{
+  return m_blue_circles;
+}
+
+std::vector<ball_position> Collection::get_green_array()
+{
+  return m_green_circles;
+}
+
+std::vector<ball_position> Collection::get_red_array()
+{
+  return m_red_circles;
+}
+
+std::vector<ball_position> Collection::get_yellow_array()
+{
+  return m_yellow_circles;
+}

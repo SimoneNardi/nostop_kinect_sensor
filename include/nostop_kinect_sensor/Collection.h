@@ -34,6 +34,7 @@
 #include "some_struct.h"
 #include "Robot_manager.h"
 
+
 namespace Robotics 
 {
 	namespace GameTheory
@@ -81,25 +82,19 @@ namespace Robotics
 		  AgentSensor(double x_, double y_, double heading_) : x(x_), y(y_), heading(heading_) {}
 		};
 		 
-// 		struct ball_position
-// 		{
-// 		  double x;
-// 		  double y;
-// 		  double width;
-// 		  double height;
-// 		};
 		
 		class Collection
 		{
-		  std::shared_ptr<Robot_manager> m_robot_manager;
-		  		  
+		 
+		  
+		  
+		  std::string m_camera_name;
 		  bool m_available;
 		  
 		  ros::NodeHandle m_node;
 		  
 		  image_transport::ImageTransport m_it;
 		  image_transport::Subscriber m_image_sub;
-		  image_transport::Subscriber m_image_sub_circles;
 		  
 		  bool m_stream_videoFLAG;
 		  cv::Mat m_stream_video;
@@ -139,16 +134,14 @@ namespace Robotics
 
 		  
 		public:
-			Collection();
+			Collection(std::string name_);
 			
 			~Collection();
 			
-			void subscribe();
-			void searchCircles();
+			void subscribe(std::string camera_name);
 			void video_acquisition(const sensor_msgs::ImageConstPtr& msg);
 			void img_rectify();
-			void toPub(const sensor_msgs::ImageConstPtr& msg);
-			void search_ball_pos(const sensor_msgs::ImageConstPtr& msg);
+			void search_ball_pos();
 			void filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[]);
 			void balls_array(cv::Mat& blue, cv::Mat& green, cv::Mat& red, cv::Mat& yellow,
 			     std::vector<ball_position>& blue_array, 
@@ -156,6 +149,10 @@ namespace Robotics
 			      std::vector<ball_position>& red_array,
 			      std::vector<ball_position>& yellow_array,cv::Mat stream);
 			void charge_array(cv::Mat img, std::vector<ball_position>& array);
+			std::vector<ball_position> get_blue_array();
+			std::vector<ball_position> get_green_array();
+			std::vector<ball_position> get_red_array();
+			std::vector<ball_position> get_yellow_array();
 		};
 
 	}
