@@ -26,6 +26,8 @@
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
+#include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -119,18 +121,19 @@ namespace Robotics
 		  cv::Mat m_only_green;
 		  cv::Mat m_only_red;
 		  cv::Mat m_only_yellow;
+		  
+		  //POINT TRASFORMATION
+		  tf::TransformBroadcaster m_broadcaster;
+		  tf::TransformListener m_listener;
+		  geometry_msgs::PointStamped m_camera_point;
+		  
 
 		  // BALLS ARRAY
 		  std::vector<ball_position> m_blue_circles;
 		  std::vector<ball_position> m_green_circles;
 		  std::vector<ball_position> m_red_circles;
 		  std::vector<ball_position>  m_yellow_circles;
-		  
-		  //COMPUTING ROBOT POSITION
-		  float m_blue_pos[2];
-		  float m_green_pos[2];
-		  float m_red_pos[2];
-		  float m_yellow_pos[2];
+
 
 		  
 		public:
@@ -149,6 +152,7 @@ namespace Robotics
 			      std::vector<ball_position>& red_array,
 			      std::vector<ball_position>& yellow_array,cv::Mat stream);
 			void charge_array(cv::Mat img, std::vector<ball_position>& array);
+			std::vector<ball_position> pos_transformation(std::vector<ball_position> & array);
 			std::vector<ball_position> get_blue_array();
 			std::vector<ball_position> get_green_array();
 			std::vector<ball_position> get_red_array();

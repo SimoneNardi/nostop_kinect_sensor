@@ -237,7 +237,12 @@ void Collection::search_ball_pos()
        m_only_blue,m_only_green,m_only_red,m_only_yellow,
        m_blue_circles,m_green_circles,m_red_circles,m_yellow_circles,
        m_stream_video);
-
+     
+     //FROM CAMERA TO WORLD
+     m_blue_circles=pos_transformation(m_blue_circles);
+     m_green_circles=pos_transformation(m_green_circles);
+     m_red_circles=pos_transformation(m_red_circles);
+     m_yellow_circles=pos_transformation(m_yellow_circles);
 }
        
 
@@ -271,9 +276,9 @@ void Collection::balls_array(cv::Mat& blue, cv::Mat& green, cv::Mat& red, cv::Ma
 			      std::vector<ball_position>& yellow_array,cv::Mat stream)
 { 
    charge_array(blue,blue_array);
-   charge_array(green,green_array);
-   charge_array(red,red_array);
-   charge_array(yellow,yellow_array);
+//    charge_array(green,green_array);
+//    charge_array(red,red_array);
+//    charge_array(yellow,yellow_array);
 
 }
 
@@ -290,17 +295,52 @@ void Collection::charge_array(cv::Mat img, std::vector<ball_position>& array)
 	if (ratio > 1.0f)
             ratio = 1.0f / ratio;
          // Searching for a bBox almost square
-         if (ratio > 0.65 && bBox.area() >= 500)// && bBox.area() <= 10000) 
+         if (ratio > 0.65) //&& bBox.area() >= 500)// && bBox.area() <= 10000) 
          {
 	    l_ball.x = bBox.x;
 	    l_ball.y = bBox.y;
 	    l_ball.height = bBox.height;
 	    l_ball.width = bBox.width;
+	    ROS_INFO("%d",bBox.area());
+	    ROS_INFO("%f", sqrt(bBox.area()/ratio));
          }
          array.push_back(l_ball);
       }
 }
 
+
+vector< ball_position > Collection::pos_transformation(vector< ball_position >& array)
+{
+    std::vector<ball_position> l_out_array;
+    ball_position l_pos;
+    geometry_msgs::PointStamped l_world_point;
+    l_world_point.header.frame_id="world_frame";
+    m_broadcaster.sendTransform(tf::StampedTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(0,0,0,1),
+											tf::Vector3(10,10,0)),ros::Time::now(),"world_frame","camera")));
+    m_camera_point.header.frame_id = "camera";
+
+   for (size_t i=0;i<array.size();i++)
+    {
+      m_camera_point.header.stamp = ros::Time(); //To use the most recent trasformation
+      m_camera_point.point.x= array[i].x;
+      m_camera_point.point.y= array[i].y;
+      m_camera_point.point.z= 0;
+      
+      
+  //    m_listener.transformPoint("world_frame", m_camera_point, l_world_point);
+//       l_pos.x=l_world_point.point.x;
+//       l_pos.y=l_world_point.point.y;
+//       l_pos.height=array[i].height;
+//       l_pos.width=array[i].width;
+//       l_out_array.push_back(l_pos);
+//       if (i==0)
+//       {
+//       ROS_INFO("camera ---> %f", array[i].x);
+//       ROS_INFO("world ---> %f", l_pos.x);
+//       }
+    }
+  return l_out_array;
+}
 
 std::vector<ball_position> Collection::get_blue_array()
 {
