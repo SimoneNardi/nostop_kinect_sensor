@@ -63,8 +63,8 @@ void Collection::subscribe(std::string camera_name)
 	if(l_camera_name == "kinect")
 	{	ROS_INFO("METTO KINECT");
 	  m_image_sub = m_it.subscribe("/camera/rgb/image_rect_color", 1, &Collection::video_acquisition, this, image_transport::TransportHints("raw"));
-	} else { ROS_INFO("ANOTHER CAMERA");
-	  m_image_sub = m_it.subscribe("/another_camera", 1, &Collection::video_acquisition, this, image_transport::TransportHints("raw"));
+	} else { ROS_INFO("USB CAM");
+	  m_image_sub = m_it.subscribe("/usb_cam/image_raw", 1, &Collection::video_acquisition, this, image_transport::TransportHints("raw"));
 	}
 	m_stream_videoFLAG = false;
   
@@ -90,13 +90,11 @@ void Collection::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
   
   
     m_stream_video = cv_ptr->image.clone();
-     
      //RECTIFY
-     if(!m_transmtx.empty() && corners.size()==4)
+     if(!m_transmtx.empty())// && corners.size() == 4)
     {
-    cv::warpPerspective(m_stream_video, m_rectified_img, m_transmtx, m_rectified_img.size());
-    m_rectified_img.copyTo(m_stream_video);
-    cv::destroyWindow("Frame");
+      cv::warpPerspective(m_stream_video, m_rectified_img, m_transmtx, m_rectified_img.size());
+      m_rectified_img.copyTo(m_stream_video);
     }else{
           img_rectify(); 
     }
@@ -111,7 +109,6 @@ void Collection::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
 }
 
 // FUNCTION
-img_rectify();
 search_ball_pos();
 }
 
@@ -129,6 +126,7 @@ void mouse_callback(int event, int x, int y, int flags, void* param)
 }
 void Collection::img_rectify()
 {
+  
   if(ros::Time::now()-m_begin < m_waiting)
      {
        m_stream_video.copyTo(m_rectified_img);
@@ -148,6 +146,7 @@ void Collection::img_rectify()
 		  quad_pts.push_back(cv::Point2f(0, m_rectified_img.rows));
 		  // Get transformation matrix
 		  m_transmtx = cv::getPerspectiveTransform(corners, quad_pts);
+		  corners.clear();
 		  }
 	    }
 	  }

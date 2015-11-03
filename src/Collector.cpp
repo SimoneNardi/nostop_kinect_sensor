@@ -45,7 +45,7 @@ void Collector::new_camera(const nostop_agent::Id_robot::ConstPtr& msg)// DA CAM
 void Collector::pack_passage()
 {
   
-  // CONVERSIONE IN SR W
+  // CONVERSIONE IN SR W (in Collection)
   
   // TUTTI INSIEME
     for(size_t i = 0; i<m_camera_array.size();i++)

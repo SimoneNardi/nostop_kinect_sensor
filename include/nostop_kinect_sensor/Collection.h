@@ -153,6 +153,8 @@ namespace Robotics
 			std::vector<ball_position> get_green_array();
 			std::vector<ball_position> get_red_array();
 			std::vector<ball_position> get_yellow_array();
+			
+			// CONVERSIONE IN SR W
 		};
 
 	}
