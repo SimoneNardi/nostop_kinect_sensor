@@ -29,6 +29,7 @@ static const std::string BLUE_THRESHOLD_WINDOWS = "Blue threshold ";
 static const std::string GREEN_THRESHOLD_WINDOWS = "Green threshold ";
 static const std::string RED_THRESHOLD_WINDOWS = "Red threshold ";
 static const std::string YELLOW_THRESHOLD_WINDOWS = "Yellow threshold ";
+static const float d_ball = 18.0;
 static  cv::Point2f xy;
 static  int clicked=0;
 static  std::vector<cv::Point2f> corners;
@@ -238,6 +239,12 @@ void Collection::search_ball_pos()
        m_blue_circles,m_green_circles,m_red_circles,m_yellow_circles,
        m_stream_video);
      
+     //FROM PIXEL TO CM
+      m_blue_circles=pixel_to_cm(m_blue_circles);
+     m_green_circles=pixel_to_cm(m_green_circles);
+     m_red_circles=pixel_to_cm(m_red_circles);
+     m_yellow_circles=pixel_to_cm(m_yellow_circles);
+
      //FROM CAMERA TO WORLD
      m_blue_circles=pos_transformation(m_blue_circles);
      m_green_circles=pos_transformation(m_green_circles);
@@ -275,9 +282,9 @@ void Collection::balls_array(cv::Mat& blue, cv::Mat& green, cv::Mat& red, cv::Ma
 			      std::vector<ball_position>& red_array,
 			      std::vector<ball_position>& yellow_array,cv::Mat stream)
 { 
-   charge_array(blue,blue_array);
+  // charge_array(blue,blue_array);
 //    charge_array(green,green_array);
-//    charge_array(red,red_array);
+   charge_array(red,red_array);
 //    charge_array(yellow,yellow_array);
 
 }
@@ -295,21 +302,47 @@ void Collection::charge_array(cv::Mat img, std::vector<ball_position>& array)
 	if (ratio > 1.0f)
             ratio = 1.0f / ratio;
          // Searching for a bBox almost square
-         if (ratio > 0.65) //&& bBox.area() >= 500)// && bBox.area() <= 10000) 
+         if (ratio > 0.3) //&& bBox.area() >= 500)// && bBox.area() <= 10000) 
          {
 	    l_ball.x = bBox.x;
 	    l_ball.y = bBox.y;
 	    l_ball.height = bBox.height;
 	    l_ball.width = bBox.width;
-	    ROS_INFO("%d",bBox.area());
-	    ROS_INFO("%f", sqrt(bBox.area()/ratio));
          }
          array.push_back(l_ball);
       }
 }
 
 
-vector< ball_position > Collection::pos_transformation(vector< ball_position >& array)
+vector< ball_position > Collection::pixel_to_cm(vector< ball_position >& array)
+{
+  std::vector<ball_position> l_out_array;
+  ball_position l_pos_pix,l_pos_cm;
+  float pixel;
+   for (size_t i=0;i<array.size();i++)
+   {
+      l_pos_pix=array[i];
+      pixel=d_ball/((l_pos_pix.width+l_pos_pix.height)/2);
+      l_pos_cm.x=pixel*l_pos_pix.x;
+      l_pos_cm.y=pixel*l_pos_pix.y;
+      l_pos_cm.height=pixel*l_pos_pix.height;
+      l_pos_cm.width=pixel*l_pos_pix.width;
+      l_out_array.push_back(l_pos_cm);
+       ROS_INFO("%f",l_pos_pix.x);
+       ROS_INFO("%f", l_pos_pix.y);
+       ROS_INFO("%f",l_pos_cm.x);
+       ROS_INFO("%f", l_pos_cm.y);
+       ROS_INFO("%f",l_pos_pix.height);
+       ROS_INFO("%f", l_pos_pix.width);
+       ROS_INFO("%f",l_pos_cm.height);
+       ROS_INFO("%f", l_pos_cm.width);
+       
+   }
+   return l_out_array;
+}
+
+
+vector< ball_position > Collection::pos_transformation(vector< ball_position >& array)  //TO COMPLETE
 {
     std::vector<ball_position> l_out_array;
     ball_position l_pos;

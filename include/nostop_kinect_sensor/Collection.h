@@ -152,11 +152,13 @@ namespace Robotics
 			      std::vector<ball_position>& red_array,
 			      std::vector<ball_position>& yellow_array,cv::Mat stream);
 			void charge_array(cv::Mat img, std::vector<ball_position>& array);
+			std::vector<ball_position> pixel_to_cm(std::vector<ball_position> & array);
 			std::vector<ball_position> pos_transformation(std::vector<ball_position> & array);
 			std::vector<ball_position> get_blue_array();
 			std::vector<ball_position> get_green_array();
 			std::vector<ball_position> get_red_array();
 			std::vector<ball_position> get_yellow_array();
+			
 			
 			// CONVERSIONE IN SR W
 		};
