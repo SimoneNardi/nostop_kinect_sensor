@@ -123,8 +123,10 @@ namespace Robotics
 		  cv::Mat m_only_yellow;
 		  
 		  //POINT TRASFORMATION
+		  std::vector<float> m_xySR;
+		  float m_xCamera,m_yCamera,m_zCamera,m_theta;
 		  tf::TransformBroadcaster m_broadcaster;
-		  tf::TransformListener m_listener;
+		  tf::Transform m_transform;
 		  geometry_msgs::PointStamped m_camera_point;
 		  
 
@@ -152,6 +154,7 @@ namespace Robotics
 			      std::vector<ball_position>& red_array,
 			      std::vector<ball_position>& yellow_array,cv::Mat stream);
 			void charge_array(cv::Mat img, std::vector<ball_position>& array);
+			std::vector<float> pos_cam2SRcam_pos(float xC, float yC, float zC, float theta);
 			std::vector<ball_position> pixel_to_cm(std::vector<ball_position> & array);
 			std::vector<ball_position> pos_transformation(std::vector<ball_position> & array);
 			std::vector<ball_position> get_blue_array();

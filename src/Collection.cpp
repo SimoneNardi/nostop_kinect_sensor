@@ -245,6 +245,12 @@ void Collection::search_ball_pos()
      m_red_circles=pixel_to_cm(m_red_circles);
      m_yellow_circles=pixel_to_cm(m_yellow_circles);
 
+     // CAMERA POSITION (SR WORLD) TO CAMERA SR
+     if(ros::Time::now() - m_begin < m_waiting)
+     {
+       m_xySR = pos_cam2SRcam_pos(m_xCamera,m_yCamera,m_zCamera,m_theta);
+     }
+     
      //FROM CAMERA TO WORLD
      m_blue_circles=pos_transformation(m_blue_circles);
      m_green_circles=pos_transformation(m_green_circles);
@@ -282,9 +288,9 @@ void Collection::balls_array(cv::Mat& blue, cv::Mat& green, cv::Mat& red, cv::Ma
 			      std::vector<ball_position>& red_array,
 			      std::vector<ball_position>& yellow_array,cv::Mat stream)
 { 
-  // charge_array(blue,blue_array);
+    charge_array(blue,blue_array);
 //    charge_array(green,green_array);
-   charge_array(red,red_array);
+//    charge_array(red,red_array);
 //    charge_array(yellow,yellow_array);
 
 }
@@ -328,29 +334,33 @@ vector< ball_position > Collection::pixel_to_cm(vector< ball_position >& array)
       l_pos_cm.height=pixel*l_pos_pix.height;
       l_pos_cm.width=pixel*l_pos_pix.width;
       l_out_array.push_back(l_pos_cm);
-       ROS_INFO("%f",l_pos_pix.x);
-       ROS_INFO("%f", l_pos_pix.y);
-       ROS_INFO("%f",l_pos_cm.x);
-       ROS_INFO("%f", l_pos_cm.y);
-       ROS_INFO("%f",l_pos_pix.height);
-       ROS_INFO("%f", l_pos_pix.width);
-       ROS_INFO("%f",l_pos_cm.height);
-       ROS_INFO("%f", l_pos_cm.width);
+//        ROS_INFO("%f",l_pos_pix.x);
+//        ROS_INFO("%f", l_pos_pix.y);
+//        ROS_INFO("%f",l_pos_cm.x);
+//        ROS_INFO("%f", l_pos_cm.y);
+//        ROS_INFO("%f",l_pos_pix.height);
+//        ROS_INFO("%f", l_pos_pix.width);
+//        ROS_INFO("%f",l_pos_cm.height);
+//        ROS_INFO("%f", l_pos_cm.width);
        
    }
    return l_out_array;
 }
 
 
+std::vector<float> Collection::pos_cam2SRcam_pos(float xC, float yC, float zC, float theta)
+{
+}
+
 vector< ball_position > Collection::pos_transformation(vector< ball_position >& array)  //TO COMPLETE
 {
     std::vector<ball_position> l_out_array;
     ball_position l_pos;
+    m_transform.setOrigin(tf::Vector3(m_xySR[0],m_xySR[1],0.0));
+    m_transform.setRotation(tf::createQuaternionFromRPY(0,0,0)); //??
+    m_broadcaster.sendTransform(tf::StampedTransform(m_transform,ros::Time::now(),"/world","/camera"));
+
     geometry_msgs::PointStamped l_world_point;
-    l_world_point.header.frame_id="world_frame";
-    m_broadcaster.sendTransform(tf::StampedTransform(tf::StampedTransform(tf::Transform(tf::Quaternion(0,0,0,1),
-											tf::Vector3(10,10,0)),ros::Time::now(),"world_frame","camera")));
-    m_camera_point.header.frame_id = "camera";
 
    for (size_t i=0;i<array.size();i++)
     {
@@ -358,19 +368,22 @@ vector< ball_position > Collection::pos_transformation(vector< ball_position >& 
       m_camera_point.point.x= array[i].x;
       m_camera_point.point.y= array[i].y;
       m_camera_point.point.z= 0;
-      
-      
-  //    m_listener.transformPoint("world_frame", m_camera_point, l_world_point);
-//       l_pos.x=l_world_point.point.x;
-//       l_pos.y=l_world_point.point.y;
-//       l_pos.height=array[i].height;
-//       l_pos.width=array[i].width;
-//       l_out_array.push_back(l_pos);
-//       if (i==0)
-//       {
-//       ROS_INFO("camera ---> %f", array[i].x);
-//       ROS_INFO("world ---> %f", l_pos.x);
-//       }
+     
+     l_world_point.point.x = m_transform.getOrigin().x()+m_transform.getRotation().x()+m_camera_point.point.x;//??
+     l_world_point.point.y = m_transform.getOrigin().y()+m_transform.getRotation().y()+m_camera_point.point.y;//??
+     l_world_point.point.z = m_transform.getOrigin().z()+m_transform.getRotation().z()+m_camera_point.point.z;//??
+      l_pos.x=l_world_point.point.x;
+      l_pos.y=l_world_point.point.y;
+      l_pos.height=array[i].height;
+      l_pos.width=array[i].width;
+      l_out_array.push_back(l_pos);
+      if (i==0)
+      {
+      ROS_INFO("camera x ---> %f", array[i].x);
+      ROS_INFO("world x ---> %f", l_pos.x);
+      ROS_INFO("camera y ---> %f", array[i].y);
+      ROS_INFO("world y ---> %f", l_pos.y);
+      }
     }
   return l_out_array;
 }
