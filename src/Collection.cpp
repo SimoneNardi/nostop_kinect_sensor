@@ -36,7 +36,7 @@ static  std::vector<cv::Point2f> corners;
 
  
 /////////////////////////////////////////////
-Collection::Collection(std::string name_,std::string topic_name,std::vector<float> pos_camera,float theta)
+Collection::Collection(std::string name_,std::string topic_name,std::vector<float> pos_camera,float roll,float pitch,float yaw)
 : m_available(false)
 , m_it(m_node)
 , m_stream_videoFLAG(false)
@@ -47,7 +47,9 @@ Collection::Collection(std::string name_,std::string topic_name,std::vector<floa
 , m_xCamera(pos_camera.at(0))
 , m_yCamera(pos_camera.at(1))
 , m_zCamera(pos_camera.at(2))
-, m_theta(theta)
+, m_Roll(roll)
+, m_Pitch(pitch)
+, m_Yaw(yaw)
 {
   subscribe();
 }
@@ -88,15 +90,15 @@ void Collection::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
   
   
     m_stream_video = cv_ptr->image.clone();
-     //RECTIFY
-     if(!m_transmtx.empty())// && corners.size() == 4)
-    {
-      cv::warpPerspective(m_stream_video, m_rectified_img, m_transmtx, m_rectified_img.size());
-      m_rectified_img.copyTo(m_stream_video);
-    }else{
-          img_rectify(); 
-    }
-  
+     //RECTIFY ( NOT USED )
+//      if(!m_transmtx.empty())// && corners.size() == 4)
+//     {
+//       cv::warpPerspective(m_stream_video, m_rectified_img, m_transmtx, m_rectified_img.size());
+//       m_rectified_img.copyTo(m_stream_video);
+//     }else{
+//           img_rectify(); 
+//     }
+//   
   m_stream_videoFLAG = true;
     
    if(m_stream_videoFLAG)
@@ -225,10 +227,10 @@ void Collection::search_ball_pos()
      m_yellow_circles.clear();
     
      // THRESHOLDED IMG
-     imshow(BLUE_THRESHOLD_WINDOWS+m_camera_name,m_only_blue);
-     imshow(GREEN_THRESHOLD_WINDOWS+m_camera_name,m_only_green);
-     imshow(RED_THRESHOLD_WINDOWS+m_camera_name,m_only_red);
-     imshow(YELLOW_THRESHOLD_WINDOWS+m_camera_name,m_only_yellow);  
+//      imshow(BLUE_THRESHOLD_WINDOWS+m_camera_name,m_only_blue);
+//      imshow(GREEN_THRESHOLD_WINDOWS+m_camera_name,m_only_green);
+//      imshow(RED_THRESHOLD_WINDOWS+m_camera_name,m_only_red);
+//      imshow(YELLOW_THRESHOLD_WINDOWS+m_camera_name,m_only_yellow);  
      
      // FIND BALLS ARRAY
      balls_array(
@@ -245,7 +247,7 @@ void Collection::search_ball_pos()
      // CAMERA POSITION (SR WORLD) TO CAMERA SR
      if(ros::Time::now() - m_begin < m_waiting)
      {
-       m_xySR = SRcam2SRworld(m_xCamera,m_yCamera,m_zCamera,m_theta); //TO INITIALIZE VALUES IN COSTRUCTOR
+       m_xySR = SRcam2SRworld(m_xCamera,m_yCamera,m_zCamera,m_Roll,m_Pitch,m_Yaw); 
      }
      
      //FROM CAMERA TO WORLD
@@ -345,12 +347,13 @@ vector< ball_position > Collection::pixel_to_cm(vector< ball_position >& array)
 }
 
 
-std::vector<float> Collection::SRcam2SRworld(float xC, float yC, float zC, float theta)
+std::vector<float> Collection::SRcam2SRworld(float xC, float yC, float zC, float roll,float pitch, float yaw)
 {
+  //TO COMPLETE
   float x,y,l1,l2,beta,alpha;
   alpha=25;
   beta=30;
-  l1=zC*sin((theta+alpha)*M_PI/180);
+  l1=zC*sin((roll+alpha)*M_PI/180);
   l2=l1*sin(beta*M_PI/180);
   std::vector<float> Oc;
   Oc.push_back(xC+l2);
