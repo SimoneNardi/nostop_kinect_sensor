@@ -4,6 +4,7 @@
 #include "Tracker.h"
 #include "Robot_manager.h"
 
+
 int main(int argc, char **argv)
 {
 	ROS_INFO("Sensor node : ON");

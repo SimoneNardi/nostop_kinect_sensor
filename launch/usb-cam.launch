@@ -1,7 +1,20 @@
 <launch>
-  <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
+  <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen">
+   <remap from="/usb_cam/image_raw" to="/usb/cam_img"/>
     <param name="video_device" value="/dev/video1" />
     <param name="image_width" value="640" />
     <param name="image_height" value="480" />
+    <param name="camera_name" value="list" />
+  </node>
+ 
+<arg name="camera_name" default="usb" />
+<arg name="topic_name" default="/usb/cam_img" />
+<arg name="xC" default="10" />
+<arg name="yC" default="10" />
+<arg name="zC" default="10" />
+<arg name="theta" default="3.14" />
+  <node pkg="nostop_kinect_sensor" type="script.sh" 
+    args="$(arg camera_name) $(arg topic_name) $(arg xC) $(arg yC) $(arg zC) $(arg theta)" 
+    name="pub" output="screen">
   </node>
 </launch>

@@ -36,15 +36,20 @@ static  std::vector<cv::Point2f> corners;
 
  
 /////////////////////////////////////////////
-Collection::Collection(std::string name_)
+Collection::Collection(std::string name_,std::string topic_name,std::vector<float> pos_camera,float theta)
 : m_available(false)
 , m_it(m_node)
 , m_stream_videoFLAG(false)
 , m_begin(ros::Time::now())
 , m_waiting(ros::Duration(2,0))
 , m_camera_name(name_)
+, m_topic_name(topic_name)
+, m_xCamera(pos_camera.at(0))
+, m_yCamera(pos_camera.at(1))
+, m_zCamera(pos_camera.at(2))
+, m_theta(theta)
 {
-  subscribe(m_camera_name);
+  subscribe();
 }
 
 
@@ -56,19 +61,11 @@ Collection::~Collection()
 }
 
 /////////////////////////////////////////////
-void Collection::subscribe(std::string camera_name)
-{	
-	std::string l_camera_name;
+void Collection::subscribe()
+{
 	cv::namedWindow(SENSOR_CV_WINDOW+m_camera_name);
-	l_camera_name = m_camera_name.substr(0,m_camera_name.find("_"));
-	if(l_camera_name == "kinect")
-	{	ROS_INFO("METTO KINECT");
-	  m_image_sub = m_it.subscribe("/camera/rgb/image_rect_color", 1, &Collection::video_acquisition, this, image_transport::TransportHints("raw"));
-	} else { ROS_INFO("USB CAM");
-	  m_image_sub = m_it.subscribe("/usb_cam/image_raw", 1, &Collection::video_acquisition, this, image_transport::TransportHints("raw"));
-	}
+	m_image_sub = m_it.subscribe(m_topic_name, 1, &Collection::video_acquisition, this, image_transport::TransportHints("raw"));
 	m_stream_videoFLAG = false;
-  
 }
 
 
@@ -248,14 +245,14 @@ void Collection::search_ball_pos()
      // CAMERA POSITION (SR WORLD) TO CAMERA SR
      if(ros::Time::now() - m_begin < m_waiting)
      {
-       m_xySR = pos_cam2SRcam_pos(m_xCamera,m_yCamera,m_zCamera,m_theta);
+       m_xySR = SRcam2SRworld(m_xCamera,m_yCamera,m_zCamera,m_theta); //TO INITIALIZE VALUES IN COSTRUCTOR
      }
      
      //FROM CAMERA TO WORLD
-     m_blue_circles=pos_transformation(m_blue_circles);
-     m_green_circles=pos_transformation(m_green_circles);
-     m_red_circles=pos_transformation(m_red_circles);
-     m_yellow_circles=pos_transformation(m_yellow_circles);
+     m_blue_circles=cam_coordinate2world_coordinate(m_blue_circles);
+     m_green_circles=cam_coordinate2world_coordinate(m_green_circles);
+     m_red_circles=cam_coordinate2world_coordinate(m_red_circles);
+     m_yellow_circles=cam_coordinate2world_coordinate(m_yellow_circles);
 }
        
 
@@ -348,16 +345,27 @@ vector< ball_position > Collection::pixel_to_cm(vector< ball_position >& array)
 }
 
 
-std::vector<float> Collection::pos_cam2SRcam_pos(float xC, float yC, float zC, float theta)
+std::vector<float> Collection::SRcam2SRworld(float xC, float yC, float zC, float theta)
 {
+  float x,y,l1,l2,beta,alpha;
+  alpha=25;
+  beta=30;
+  l1=zC*sin((theta+alpha)*M_PI/180);
+  l2=l1*sin(beta*M_PI/180);
+  std::vector<float> Oc;
+  Oc.push_back(xC+l2);
+  Oc.push_back(yC-l1);
+  return Oc;
 }
 
-vector< ball_position > Collection::pos_transformation(vector< ball_position >& array)  //TO COMPLETE
+
+
+vector< ball_position > Collection::cam_coordinate2world_coordinate(vector< ball_position >& array)  //TO COMPLETE
 {
     std::vector<ball_position> l_out_array;
     ball_position l_pos;
     m_transform.setOrigin(tf::Vector3(m_xySR[0],m_xySR[1],0.0));
-    m_transform.setRotation(tf::createQuaternionFromRPY(0,0,0)); //??
+    m_transform.setRotation(tf::createQuaternionFromRPY(M_PI,0,0)); //??
     m_broadcaster.sendTransform(tf::StampedTransform(m_transform,ros::Time::now(),"/world","/camera"));
 
     geometry_msgs::PointStamped l_world_point;

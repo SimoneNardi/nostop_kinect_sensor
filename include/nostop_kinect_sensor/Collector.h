@@ -15,7 +15,7 @@
 #include <memory>
 
 // #include "Threads.h"
-
+#include "nostop_kinect_sensor/Camera_data.h"
 #include "Collection.h"
 
 namespace Robotics 
@@ -31,8 +31,6 @@ namespace Robotics
 
 		  ros::Publisher m_pub;
 		  ros::Subscriber m_camera_in;
-		  int m_number_kinect;
-		  int m_number_another;
 		  std::vector< std::shared_ptr<Collection> > m_camera_array;
 		  std::shared_ptr<Robot_manager> m_manager;
 		  
@@ -48,7 +46,7 @@ namespace Robotics
 		public:
 			Collector();
 			~Collector();
-			void new_camera(const nostop_agent::Id_robot::ConstPtr& msg);
+			void new_camera(const nostop_kinect_sensor::Camera_data::ConstPtr& msg);
  			void pack_passage();
 	
 		};

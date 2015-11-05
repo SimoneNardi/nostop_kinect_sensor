@@ -91,6 +91,7 @@ namespace Robotics
 		  
 		  
 		  std::string m_camera_name;
+		  std::string m_topic_name;
 		  bool m_available;
 		  
 		  ros::NodeHandle m_node;
@@ -139,11 +140,11 @@ namespace Robotics
 
 		  
 		public:
-			Collection(std::string name_);
+			Collection(std::string name_,std::string topic_name,std::vector<float> pos_camera,float theta);
 			
 			~Collection();
 			
-			void subscribe(std::string camera_name);
+			void subscribe();
 			void video_acquisition(const sensor_msgs::ImageConstPtr& msg);
 			void img_rectify();
 			void search_ball_pos();
@@ -154,9 +155,9 @@ namespace Robotics
 			      std::vector<ball_position>& red_array,
 			      std::vector<ball_position>& yellow_array,cv::Mat stream);
 			void charge_array(cv::Mat img, std::vector<ball_position>& array);
-			std::vector<float> pos_cam2SRcam_pos(float xC, float yC, float zC, float theta);
+			std::vector<float> SRcam2SRworld(float xC, float yC, float zC, float theta);
 			std::vector<ball_position> pixel_to_cm(std::vector<ball_position> & array);
-			std::vector<ball_position> pos_transformation(std::vector<ball_position> & array);
+			std::vector<ball_position> cam_coordinate2world_coordinate(std::vector<ball_position> & array);
 			std::vector<ball_position> get_blue_array();
 			std::vector<ball_position> get_green_array();
 			std::vector<ball_position> get_red_array();

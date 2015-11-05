@@ -4,20 +4,17 @@
 #include "some_struct.h"
 #include <Robot_manager.h>
 
-// TEST
-#include "nostop_agent/Id_robot.h"
+#include "nostop_kinect_sensor/Camera_data.h"
+
 using namespace std;
 using namespace Robotics;
 using namespace Robotics::GameTheory;
 
 /////////////////////////////////////////////
-Collector::Collector():
-m_number_kinect(0)
-, m_number_another(0)
+Collector::Collector()
 {
   ROS_INFO("Sensor: Collector init.");
-  
- m_camera_in = m_node.subscribe<nostop_agent::Id_robot>("/test_camera", 1000, &Collector::new_camera,this);
+ m_camera_in = m_node.subscribe<nostop_kinect_sensor::Camera_data>("/test_camera", 1000, &Collector::new_camera,this);
  m_manager = std::make_shared<Robot_manager>();
 }
 
@@ -26,20 +23,19 @@ Collector::~Collector()
 {}
 
 
-void Collector::new_camera(const nostop_agent::Id_robot::ConstPtr& msg)// DA CAMBIARE
+void Collector::new_camera(const nostop_kinect_sensor::Camera_data::ConstPtr& msg)// DA CAMBIARE
 {	
-    std::string name_number;
+    std::string name_number,name_topic;
+    std::vector<float> pos_camera;
+    float theta;
     name_number.assign( msg->name);
-    if(msg->name == "kinect")
-    {
-      m_number_kinect = m_number_kinect+1;
-      name_number = name_number+"_"+std::to_string(m_number_kinect);
-    }else{
-      m_number_another = m_number_another+1;
-      name_number = name_number+"_"+std::to_string(m_number_another);
-    }
-    m_camera_array.push_back( std::make_shared<Collection>(name_number) );
-    ROS_INFO("New CAMERA!");
+    name_topic.assign(msg->topic_name);
+    pos_camera.push_back(msg->xC);
+    pos_camera.push_back(msg->yC);
+    pos_camera.push_back(msg->zC);
+    theta=msg->theta;
+    m_camera_array.push_back( std::make_shared<Collection>(name_number,name_topic,pos_camera,theta) );
+    
 }
 
 void Collector::pack_passage()
