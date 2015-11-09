@@ -140,7 +140,7 @@ namespace Robotics
 
 		  
 		public:
-			Collection(std::string name_,std::string topic_name,std::vector<float> pos_camera,float theta);
+			Collection(std::string name_,std::string topic_name,std::vector<float> pos_camera,float roll,float pitch,float yaw);
 			
 			~Collection();
 			
