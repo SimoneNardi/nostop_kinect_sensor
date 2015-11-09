@@ -27,16 +27,15 @@ void Collector::new_camera(const nostop_kinect_sensor::Camera_data::ConstPtr& ms
 {	
     std::string name_number,name_topic;
     std::vector<float> pos_camera;
-    float roll, pitch, yaw;
+    float pitch, omega;
     name_number.assign( msg->name);
     name_topic.assign(msg->topic_name);
     pos_camera.push_back(msg->xC);
     pos_camera.push_back(msg->yC);
     pos_camera.push_back(msg->zC);
-    roll=msg->Roll;
     pitch=msg->Pitch;
-    yaw=msg->Yaw;
-    m_camera_array.push_back( std::make_shared<Collection>(name_number,name_topic,pos_camera,roll, pitch, yaw) );
+    omega=msg->omega;
+    m_camera_array.push_back( std::make_shared<Collection>(name_number,name_topic,pos_camera, pitch, omega) );
     
 }
 

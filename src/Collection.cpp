@@ -36,7 +36,7 @@ static  std::vector<cv::Point2f> corners;
 
  
 /////////////////////////////////////////////
-Collection::Collection(std::string name_,std::string topic_name,std::vector<float> pos_camera,float roll,float pitch,float yaw)
+Collection::Collection(std::string name_,std::string topic_name,std::vector<float> pos_camera,float pitch,float omega)
 : m_available(false)
 , m_it(m_node)
 , m_stream_videoFLAG(false)
@@ -47,9 +47,8 @@ Collection::Collection(std::string name_,std::string topic_name,std::vector<floa
 , m_xCamera(pos_camera.at(0))
 , m_yCamera(pos_camera.at(1))
 , m_zCamera(pos_camera.at(2))
-, m_Roll(roll)
 , m_Pitch(pitch)
-, m_Yaw(yaw)
+, m_omega(omega)
 {
   subscribe();
 }
@@ -113,44 +112,44 @@ search_ball_pos();
 }
 
 //////////////////////////////////////////////////////
-void mouse_callback(int event, int x, int y, int flags, void* param)
-{
-	//This is called every time a mouse event occurs in the window
-	if (event == CV_EVENT_LBUTTONDBLCLK) { //This is executed when the left mouse button is clicked
-		//Co-ordinates of the left click are assigned to global variables and flag is set to 1
-		xy.x = x;
-		xy.y = y;
-		corners.push_back(xy);
-		clicked = clicked+1;
-	}
-}
-void Collection::img_rectify()
-{
-  
-  if(ros::Time::now()-m_begin < m_waiting)
-     {
-       m_stream_video.copyTo(m_rectified_img);
-     }else{
-            if(m_transmtx.empty())
-	      {
-		cvNamedWindow("Frame",CV_WINDOW_AUTOSIZE); //Window is created for image of each frame
-		imshow("Frame",m_rectified_img);
-		cvSetMouseCallback("Frame",mouse_callback,NULL);
-		if(corners.size()==4)
-		{
-		  // Corners of the destination image
-		  std::vector<cv::Point2f> quad_pts;
-		  quad_pts.push_back(cv::Point2f(0, 0));
-		  quad_pts.push_back(cv::Point2f(m_rectified_img.cols, 0));
-		  quad_pts.push_back(cv::Point2f(m_rectified_img.cols, m_rectified_img.rows));
-		  quad_pts.push_back(cv::Point2f(0, m_rectified_img.rows));
-		  // Get transformation matrix
-		  m_transmtx = cv::getPerspectiveTransform(corners, quad_pts);
-		  corners.clear();
-		  }
-	    }
-	  }
-}
+// void mouse_callback(int event, int x, int y, int flags, void* param)
+// {
+// 	//This is called every time a mouse event occurs in the window
+// 	if (event == CV_EVENT_LBUTTONDBLCLK) { //This is executed when the left mouse button is clicked
+// 		//Co-ordinates of the left click are assigned to global variables and flag is set to 1
+// 		xy.x = x;
+// 		xy.y = y;
+// 		corners.push_back(xy);
+// 		clicked = clicked+1;
+// 	}
+// }
+// void Collection::img_rectify()
+// {
+//   
+//   if(ros::Time::now()-m_begin < m_waiting)
+//      {
+//        m_stream_video.copyTo(m_rectified_img);
+//      }else{
+//             if(m_transmtx.empty())
+// 	      {
+// 		cvNamedWindow("Frame",CV_WINDOW_AUTOSIZE); //Window is created for image of each frame
+// 		imshow("Frame",m_rectified_img);
+// 		cvSetMouseCallback("Frame",mouse_callback,NULL);
+// 		if(corners.size()==4)
+// 		{
+// 		  // Corners of the destination image
+// 		  std::vector<cv::Point2f> quad_pts;
+// 		  quad_pts.push_back(cv::Point2f(0, 0));
+// 		  quad_pts.push_back(cv::Point2f(m_rectified_img.cols, 0));
+// 		  quad_pts.push_back(cv::Point2f(m_rectified_img.cols, m_rectified_img.rows));
+// 		  quad_pts.push_back(cv::Point2f(0, m_rectified_img.rows));
+// 		  // Get transformation matrix
+// 		  m_transmtx = cv::getPerspectiveTransform(corners, quad_pts);
+// 		  corners.clear();
+// 		  }
+// 	    }
+// 	  }
+// }
 
 /////////////////////////////////////////////////////
 void Collection::search_ball_pos()
@@ -239,17 +238,12 @@ void Collection::search_ball_pos()
        m_stream_video);
      
      //FROM PIXEL TO CM
-      m_blue_circles=pixel_to_cm(m_blue_circles);
+     m_blue_circles=pixel_to_cm(m_blue_circles);
      m_green_circles=pixel_to_cm(m_green_circles);
      m_red_circles=pixel_to_cm(m_red_circles);
      m_yellow_circles=pixel_to_cm(m_yellow_circles);
 
-     // CAMERA POSITION (SR WORLD) TO CAMERA SR
-     if(ros::Time::now() - m_begin < m_waiting)
-     {
-       m_xySR = SRcam2SRworld(m_xCamera,m_yCamera,m_zCamera,m_Roll,m_Pitch,m_Yaw); 
-     }
-     
+         
      //FROM CAMERA TO WORLD
      m_blue_circles=cam_coordinate2world_coordinate(m_blue_circles);
      m_green_circles=cam_coordinate2world_coordinate(m_green_circles);
@@ -319,19 +313,26 @@ void Collection::charge_array(cv::Mat img, std::vector<ball_position>& array)
 }
 
 
-vector< ball_position > Collection::pixel_to_cm(vector< ball_position >& array)
+std::vector< ball_position > Collection::pixel_to_cm(std::vector< ball_position >& array)
 {
   std::vector<ball_position> l_out_array;
   ball_position l_pos_pix,l_pos_cm;
-  float pixel;
+  float iFOV_x = 60*M_PI/(180*640);
+  float iFOV_y = 50*M_PI/(180*480);
+  float azimuth,elevation;
+  float d,e;
+  float R = m_zCamera*tan(M_PI/2-(m_Pitch*M_PI/180));
    for (size_t i=0;i<array.size();i++)
    {
       l_pos_pix=array[i];
-      pixel=d_ball/((l_pos_pix.width+l_pos_pix.height)/2);
-      l_pos_cm.x=pixel*l_pos_pix.x;
-      l_pos_cm.y=pixel*l_pos_pix.y;
-      l_pos_cm.height=pixel*l_pos_pix.height;
-      l_pos_cm.width=pixel*l_pos_pix.width;
+      azimuth = (l_pos_pix.x-320.5)*iFOV_x;
+      elevation = (l_pos_pix.y-240.5)*iFOV_y;
+      d = tan(azimuth)*R;
+      e = tan(M_PI/2-m_Pitch+elevation)*m_zCamera;
+      l_pos_cm.x = -d;
+      l_pos_cm.y = -e;
+      l_pos_cm.height=l_pos_pix.height;
+      l_pos_cm.width=l_pos_pix.width;
       l_out_array.push_back(l_pos_cm);
 //        ROS_INFO("%f",l_pos_pix.x);
 //        ROS_INFO("%f", l_pos_pix.y);
@@ -347,57 +348,77 @@ vector< ball_position > Collection::pixel_to_cm(vector< ball_position >& array)
 }
 
 
-std::vector<float> Collection::SRcam2SRworld(float xC, float yC, float zC, float roll,float pitch, float yaw)
+std::vector<ball_position> Collection::cam_coordinate2world_coordinate(vector< ball_position >& array)
 {
-  //TO COMPLETE
-  float x,y,l1,l2,beta,alpha;
-  alpha=25;
-  beta=30;
-  l1=zC*sin((roll+alpha)*M_PI/180);
-  l2=l1*sin(beta*M_PI/180);
-  std::vector<float> Oc;
-  Oc.push_back(xC+l2);
-  Oc.push_back(yC-l1);
-  return Oc;
-}
-
-
-
-vector< ball_position > Collection::cam_coordinate2world_coordinate(vector< ball_position >& array)  //TO COMPLETE
-{
-    std::vector<ball_position> l_out_array;
-    ball_position l_pos;
-    m_transform.setOrigin(tf::Vector3(m_xySR[0],m_xySR[1],0.0));
-    m_transform.setRotation(tf::createQuaternionFromRPY(M_PI,0,0)); //??
-    m_broadcaster.sendTransform(tf::StampedTransform(m_transform,ros::Time::now(),"/world","/camera"));
-
-    geometry_msgs::PointStamped l_world_point;
-
-   for (size_t i=0;i<array.size();i++)
-    {
-      m_camera_point.header.stamp = ros::Time(); //To use the most recent trasformation
-      m_camera_point.point.x= array[i].x;
-      m_camera_point.point.y= array[i].y;
-      m_camera_point.point.z= 0;
-     
-     l_world_point.point.x = m_transform.getOrigin().x()+m_transform.getRotation().x()+m_camera_point.point.x;//??
-     l_world_point.point.y = m_transform.getOrigin().y()+m_transform.getRotation().y()+m_camera_point.point.y;//??
-     l_world_point.point.z = m_transform.getOrigin().z()+m_transform.getRotation().z()+m_camera_point.point.z;//??
-      l_pos.x=l_world_point.point.x;
-      l_pos.y=l_world_point.point.y;
-      l_pos.height=array[i].height;
-      l_pos.width=array[i].width;
-      l_out_array.push_back(l_pos);
-      if (i==0)
-      {
-      ROS_INFO("camera x ---> %f", array[i].x);
-      ROS_INFO("world x ---> %f", l_pos.x);
-      ROS_INFO("camera y ---> %f", array[i].y);
-      ROS_INFO("world y ---> %f", l_pos.y);
-      }
-    }
+  std::vector<ball_position> l_out_array;
+  ball_position l_pos_cam,l_pos_w;
+  float cam[3],world[3],o01[3];
+  float R_omega[3][3];
+  for(size_t i = 0;i<array.size();i++)
+  {
+    l_pos_cam = array[i];
+    cam[0] = l_pos_cam.x;
+    cam[1] = l_pos_cam.y;
+    cam[2] = 0;
+    o01[0] = m_xCamera;
+    o01[1] = m_yCamera;
+    o01[2] = 0;
+    R_omega[1][1] = cos(m_omega);
+    R_omega[1][2] = -sin(m_omega);
+    R_omega[2][1] = sin(m_omega);
+    R_omega[2][2] = cos(m_omega);
+    R_omega[1][3] = 0;
+    R_omega[2][3] = 0;
+    R_omega[3][1] = 0;
+    R_omega[3][2] = 0;
+    R_omega[3][3] = 1;
+    world[0] = R_omega[1][1]*cam[0]+R_omega[1][2]*cam[1]+o01[0];
+    world[1] = R_omega[2][1]*cam[0]+R_omega[2][2]*cam[1]+o01[1];
+    world[0] = R_omega[3][1]*cam[0]+R_omega[3][2]*cam[1]+o01[2];
+    l_pos_w.x = world[0];
+    l_pos_w.y = world[1];
+    l_pos_w.height = l_pos_cam.height;
+    l_pos_w.width = l_pos_cam.width;
+    l_out_array.push_back(l_pos_w);
+  }
   return l_out_array;
 }
+
+// vector< ball_position > Collection::cam_coordinate2world_coordinate(vector< ball_position >& array)  //TO COMPLETE
+// {
+//     std::vector<ball_position> l_out_array;
+//     ball_position l_pos;
+//     m_transform.setOrigin(tf::Vector3(m_xySR[0],m_xySR[1],0.0));
+//     m_transform.setRotation(tf::createQuaternionFromRPY(M_PI,0,0)); //??
+//     m_broadcaster.sendTransform(tf::StampedTransform(m_transform,ros::Time::now(),"/world","/camera"));
+// 
+//     geometry_msgs::PointStamped l_world_point;
+// 
+//    for (size_t i=0;i<array.size();i++)
+//     {
+//       m_camera_point.header.stamp = ros::Time(); //To use the most recent trasformation
+//       m_camera_point.point.x= array[i].x;
+//       m_camera_point.point.y= array[i].y;
+//       m_camera_point.point.z= 0;
+//      
+//      l_world_point.point.x = m_transform.getOrigin().x()+m_transform.getRotation().x()+m_camera_point.point.x;//??
+//      l_world_point.point.y = m_transform.getOrigin().y()+m_transform.getRotation().y()+m_camera_point.point.y;//??
+//      l_world_point.point.z = m_transform.getOrigin().z()+m_transform.getRotation().z()+m_camera_point.point.z;//??
+//       l_pos.x=l_world_point.point.x;
+//       l_pos.y=l_world_point.point.y;
+//       l_pos.height=array[i].height;
+//       l_pos.width=array[i].width;
+//       l_out_array.push_back(l_pos);
+//       if (i==0)
+//       {
+//       ROS_INFO("camera x ---> %f", array[i].x);
+//       ROS_INFO("world x ---> %f", l_pos.x);
+//       ROS_INFO("camera y ---> %f", array[i].y);
+//       ROS_INFO("world y ---> %f", l_pos.y);
+//       }
+//     }
+//   return l_out_array;
+// }
 
 std::vector<ball_position> Collection::get_blue_array()
 {

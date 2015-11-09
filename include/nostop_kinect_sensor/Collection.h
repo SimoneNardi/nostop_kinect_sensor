@@ -125,7 +125,7 @@ namespace Robotics
 		  
 		  //POINT TRASFORMATION
 		  std::vector<float> m_xySR;
-		  float m_xCamera,m_yCamera,m_zCamera,m_Roll,m_Pitch,m_Yaw;
+		  float m_xCamera,m_yCamera,m_zCamera,m_Pitch,m_omega;
 		  tf::TransformBroadcaster m_broadcaster;
 		  tf::Transform m_transform;
 		  geometry_msgs::PointStamped m_camera_point;
@@ -140,7 +140,7 @@ namespace Robotics
 
 		  
 		public:
-			Collection(std::string name_,std::string topic_name,std::vector<float> pos_camera,float roll,float pitch,float yaw);
+			Collection(std::string name_,std::string topic_name,std::vector<float> pos_camera,float pitch,float omega);
 			
 			~Collection();
 			
@@ -155,7 +155,6 @@ namespace Robotics
 			      std::vector<ball_position>& red_array,
 			      std::vector<ball_position>& yellow_array,cv::Mat stream);
 			void charge_array(cv::Mat img, std::vector<ball_position>& array);
-			std::vector<float> SRcam2SRworld(float xC, float yC, float zC, float roll,float pitch,float yaw);
 			std::vector<ball_position> pixel_to_cm(std::vector<ball_position> & array);
 			std::vector<ball_position> cam_coordinate2world_coordinate(std::vector<ball_position> & array);
 			std::vector<ball_position> get_blue_array();

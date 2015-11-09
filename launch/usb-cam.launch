@@ -12,11 +12,10 @@
 <arg name="xC" default="10" />
 <arg name="yC" default="10" />
 <arg name="zC" default="10" />
-<arg name="Roll" default="0"/>
-<arg name="Pitch" default="0" />
-<arg name="Yaw" default="0" />
+<arg name="Pitch" default="45" />
+<arg name="omega" default="0" />
   <node pkg="nostop_kinect_sensor" type="script.sh" 
-    args="$(arg camera_name) $(arg topic_name) $(arg xC) $(arg yC) $(arg zC) $(arg Roll) $(arg Pitch) $(arg Yaw)" 
+    args="$(arg camera_name) $(arg topic_name) $(arg xC) $(arg yC) $(arg zC) $(arg Pitch) $(arg omega)" 
     name="pub" output="screen">
   </node>
 </launch>
