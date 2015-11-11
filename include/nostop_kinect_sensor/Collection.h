@@ -47,7 +47,7 @@ namespace Robotics
 		class Collection
 		{
 		 
-		  
+		  Mutex m_mutex;
 		  
 		  std::string m_camera_name;
 		  std::string m_topic_name;

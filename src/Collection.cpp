@@ -92,7 +92,7 @@ void Collection::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
       // Update GUI Window
      
      // Update GUI Window
-     cv::imshow(SENSOR_CV_WINDOW+m_camera_name,m_stream_video);
+//      cv::imshow(SENSOR_CV_WINDOW+m_camera_name,m_stream_video);
      cv::waitKey(3);
      // FUNCTION
      search_ball_pos();
@@ -164,12 +164,15 @@ void Collection::search_ball_pos()
      ub_y[1] = 255;
      ub_y[2] = 255;
      filtering(m_stream_video,m_only_yellow,lb_y,ub_y);  
-          
+     
+
+     Lock l_lock(m_mutex);
+     
      m_blue_circles.clear();
      m_green_circles.clear();
      m_red_circles.clear();
      m_yellow_circles.clear();
-    
+
      // THRESHOLDED IMG
      imshow(BLUE_THRESHOLD_WINDOWS+m_camera_name,m_only_blue);
 //      imshow(GREEN_THRESHOLD_WINDOWS+m_camera_name,m_only_green);
@@ -188,6 +191,12 @@ void Collection::search_ball_pos()
 //      m_green_circles=pixel_to_cm(m_green_circles);
 //      m_red_circles=pixel_to_cm(m_red_circles);
 //      m_yellow_circles=pixel_to_cm(m_yellow_circles);
+     Point center;
+     center.x=320;
+     center.y=240;
+     cv::circle(m_stream_video,center,2,cv::Scalar(0, 0, 255),-1,8,0);
+     cv::circle(m_stream_video,center,10,cv::Scalar(0, 0, 0),1,8,0);
+     cv::imshow(SENSOR_CV_WINDOW+m_camera_name,m_stream_video);
 
 }
        
@@ -247,20 +256,24 @@ std::vector< ball_position > Collection::cam_to_W(std::vector< ball_position >& 
   float pos_cam[3],pos_world[3],o01[3];
   ball_position l_pos_pix,l_pos_cm,l_cam,l_w;
   float iFOV_x = 60*M_PI/(180*640);
-  float iFOV_y = 50*M_PI/(180*480);
+  float iFOV_y = 31.5*M_PI/(180*480);
   float azimuth,elevation;
   float d,e;
   float R = m_zCamera*tan(M_PI/2-m_Pitch);
+  R=200;
    for (size_t i=0;i<array.size();i++)
    {
       l_pos_pix=array[i];
       float R_z[3][3],R_x[3][3],Rtot[3][3];
       azimuth = (l_pos_pix.x-320.5)*iFOV_x;
       elevation = (l_pos_pix.y-240.5)*iFOV_y;
-      d = tan(azimuth)*R;
-      e = tan(M_PI/2-m_Pitch+elevation)*m_zCamera;
+      e = tan(M_PI/2-m_Pitch-elevation)*m_zCamera-R;
+      d = tan(azimuth)*(R+e);
       l_pos_cm.x = d;
-      l_pos_cm.y = -e;
+      l_pos_cm.y = -(R+e);
+      ROS_INFO("R--->%f",R);
+      ROS_INFO("d--->%f",d);
+      ROS_INFO("e-->%f",e);
       l_pos_cm.height=l_pos_pix.height;
       l_pos_cm.width=l_pos_pix.width;
       l_cam = l_pos_cm;
@@ -316,20 +329,24 @@ std::vector< ball_position > Collection::cam_to_W(std::vector< ball_position >& 
 
 std::vector<ball_position> Collection::get_blue_array()
 {
+  Lock l_lock(m_mutex);
   return m_blue_circles;
 }
 
 std::vector<ball_position> Collection::get_green_array()
 {
+  Lock l_lock(m_mutex);
   return m_green_circles;
 }
 
 std::vector<ball_position> Collection::get_red_array()
 {
+  Lock l_lock(m_mutex);
   return m_red_circles;
 }
 
 std::vector<ball_position> Collection::get_yellow_array()
 {
+  Lock l_lock(m_mutex);
   return m_yellow_circles;
 }

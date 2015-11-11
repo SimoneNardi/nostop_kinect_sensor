@@ -30,8 +30,21 @@ void Collector::new_camera(const nostop_kinect_sensor::Camera_data::ConstPtr& ms
     float pitch, omega,gamma;
     name_number.assign( msg->name);
     name_topic.assign(msg->topic_name);
-    pos_camera.push_back(msg->xC);
-    pos_camera.push_back(msg->yC);
+     ROS_INFO("SI");
+    if(msg->minus_xy == "minore")
+    {
+     pos_camera.push_back(-1*(msg->xC));
+    }else
+    {
+      pos_camera.push_back(msg->xC);
+    }
+    if(msg->minus_xy == "maggiore_minore")
+    {     
+      pos_camera.push_back(-1*(msg->yC));
+    }else
+    {
+      pos_camera.push_back(msg->yC);
+    }
     pos_camera.push_back(msg->zC);
     pitch=msg->Pitch*M_PI/180;
     omega=msg->omega*M_PI/180;
