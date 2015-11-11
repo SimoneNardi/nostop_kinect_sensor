@@ -98,6 +98,11 @@ set(sensor_SOURCES
 
 )
 
+set(calibration_SOURCES
+        src/Calibration.cpp
+
+)
+
 # add_executable(Sensor ${sensor_SOURCES})
 # target_link_libraries(Sensor ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon )#${PCL_LIBRARIES})
 # add_dependencies(Sensor nostop_kinect_sensor_gencpp)
@@ -107,6 +112,9 @@ add_executable(sensor_node ${sensor_SOURCES})
 target_link_libraries(sensor_node ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning)#${PCL_LIBRARIES})
 add_dependencies(sensor_node nostop_kinect_sensor_gencpp)
 
+add_executable(calibration ${calibration_SOURCES})
+target_link_libraries(calibration ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning)#${PCL_LIBRARIES})
+add_dependencies(calibration nostop_kinect_sensor_gencpp)
 
 #############
 ## Install ##
