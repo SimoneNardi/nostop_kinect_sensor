@@ -1,10 +1,10 @@
 ////////////////////////////////////////////////////////////
-//	Tracker.h
+//	Ball_tracker.h
 //	Created on:	15-oct-15
 //	Original author: Niko Giovannini Alessandro Faralli
 ////////////////////////////////////////////////////////////
-#ifndef TRACKER_H
-#define TRACKER_H
+#ifndef BALLTRACKER_H
+#define BALLTRACKER_H
 #pragma once
 
 #include <opencv2/core/core.hpp>
@@ -14,14 +14,14 @@
 #include "rosbag/bag.h"
 #include "some_struct.h"
 #include <memory>
-#include "Collection.h"
+#include "Camera.h"
 
 namespace Robotics 
 {
 	namespace GameTheory
 	{
 		
-		class Tracker
+		class Ball_tracker
 		{
 			int m_stateSize = 6, m_measSize = 4, m_contrSize = 0;
 			unsigned int type = CV_32F;
@@ -32,16 +32,16 @@ namespace Robotics
 			ros::NodeHandle tracker;
 
 		public:
-			Tracker();
+			Ball_tracker();
 			void matrixSettings(cv::KalmanFilter m_kf);
 			cv::Rect kalman_update(ball_position& position);
 
 			
-			~Tracker();
+			~Ball_tracker();
 		};
 
 	}
 }
 
 
-#endif // TRACKER_H
+#endif // BALLTRACKER_H

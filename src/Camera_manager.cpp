@@ -1,5 +1,5 @@
-#include "Collector.h"
-#include "Collection.h"
+#include "Camera_manager.h"
+#include "Camera.h"
 #include "std_msgs/String.h"
 #include "some_struct.h"
 #include <Robot_manager.h>
@@ -11,34 +11,34 @@ using namespace Robotics;
 using namespace Robotics::GameTheory;
 
 /////////////////////////////////////////////
-Collector::Collector()
+Camera_manager::Camera_manager()
 {
   ROS_INFO("COLLECTOR ON!");
- m_camera_in = m_node.subscribe<nostop_kinect_sensor::Camera_data>("/camera_in", 1000, &Collector::new_camera,this);
+ m_camera_in = m_node.subscribe<nostop_kinect_sensor::Camera_data>("/camera_in", 1000, &Camera_manager::new_camera,this);
  m_manager = std::make_shared<Robot_manager>();
 }
 
 /////////////////////////////////////////////
-Collector::~Collector()
+Camera_manager::~Camera_manager()
 {}
 
 
-void Collector::new_camera(const nostop_kinect_sensor::Camera_data::ConstPtr& msg)
+void Camera_manager::new_camera(const nostop_kinect_sensor::Camera_data::ConstPtr& msg)
 {	
-    std::string name_number,name_topic;
+    std::string name_number,name_topic,name_roll_topic;
     std::vector<float> pos_camera;
-    float pitch, omega,gamma;
+    float pitch, omega,gamma,R;
     name_number.assign( msg->name);
     name_topic.assign(msg->topic_name);
-     ROS_INFO("SI");
-    if(msg->minus_xy == "minore")
+    name_roll_topic.assign(msg->roll_correction_topic);
+    if(msg->x_sign == "negative")
     {
      pos_camera.push_back(-1*(msg->xC));
     }else
     {
       pos_camera.push_back(msg->xC);
     }
-    if(msg->minus_xy == "maggiore_minore")
+    if(msg->y_sign == "negative")
     {     
       pos_camera.push_back(-1*(msg->yC));
     }else
@@ -46,14 +46,14 @@ void Collector::new_camera(const nostop_kinect_sensor::Camera_data::ConstPtr& ms
       pos_camera.push_back(msg->yC);
     }
     pos_camera.push_back(msg->zC);
-    pitch=msg->Pitch*M_PI/180;
+    R=msg->R;
     omega=msg->omega*M_PI/180;
     gamma=msg->gamma*M_PI/180;
-    m_camera_array.push_back( std::make_shared<Collection>(name_number,name_topic,pos_camera, pitch, omega,gamma) );
+    m_camera_array.push_back( std::make_shared<Camera>(name_number,name_topic,name_roll_topic,pos_camera, R, omega,gamma) );
     
 }
 
-void Collector::pack_passage()
+void Camera_manager::pack_passage()
 {
     for(size_t i = 0; i<m_camera_array.size();i++)
     {
@@ -81,6 +81,7 @@ void Collector::pack_passage()
     }
     
     // TO ROBOT MANAGER
+    Lock l_lock(m_mutex);
     m_manager->array_assignment(m_blue_ball_W,m_green_ball_W,m_red_ball_W,m_yellow_ball_W);
     
     // CLEARING

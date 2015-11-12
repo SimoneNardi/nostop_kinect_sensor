@@ -1,6 +1,7 @@
-#include "Collection.h"
+#include "Camera.h"
 
 #include "Robot_manager.h"
+#include <nostop_kinect_sensor/Camera_data.h>
 
 
 #include <opencv2/core/core.hpp>
@@ -13,6 +14,7 @@
 #include "opencv2/video/video.hpp"
 #include "highgui.h"
 #include "ros/ros.h"
+#include <std_msgs/Float64.h>
 #include <math.h>
 #include <iostream>
  
@@ -32,7 +34,7 @@ static const std::string YELLOW_THRESHOLD_WINDOWS = "Yellow threshold ";
 
  
 /////////////////////////////////////////////
-Collection::Collection(std::string name_,std::string topic_name,std::vector<float> pos_camera,float pitch,float omega,float gamma)
+Camera::Camera(std::string name_,std::string topic_name,std::string roll_topic,std::vector<float> pos_camera,float R_,float omega,float gamma)
 : m_available(false)
 , m_it(m_node)
 , m_camera_name(name_)
@@ -40,17 +42,19 @@ Collection::Collection(std::string name_,std::string topic_name,std::vector<floa
 , m_xCamera(pos_camera.at(0))
 , m_yCamera(pos_camera.at(1))
 , m_zCamera(pos_camera.at(2))
-, m_Pitch(pitch)
+, m_R(R_)
 , m_omegaz(omega)
 , m_gammax(gamma)
+, m_roll(0)
 {
   ROS_INFO("CAMERA %s ON!",m_camera_name.c_str());
+  m_roll_read = m_node.subscribe(roll_topic,1,&Camera::roll_correction,this);
   subscribe();
 }
 
 
 /////////////////////////////////////////////
-Collection::~Collection()
+Camera::~Camera()
 {
 	cv::destroyWindow(SENSOR_CV_WINDOW+m_camera_name);
 	cv::destroyWindow(FILTERED_CV_WINDOW+m_camera_name);
@@ -61,16 +65,22 @@ Collection::~Collection()
 }
 
 
+void Camera::roll_correction(const std_msgs::Float64::ConstPtr& msg)
+{
+  Lock l_lock(m_mutex);
+  m_roll = msg->data;
+  m_roll = m_roll*M_PI/180;
+}
 /////////////////////////////////////////////
-void Collection::subscribe()
+void Camera::subscribe()
 {
 	cv::namedWindow(SENSOR_CV_WINDOW+m_camera_name);
-	m_image_sub = m_it.subscribe(m_topic_name, 1, &Collection::video_acquisition, this, image_transport::TransportHints("raw"));
+	m_image_sub = m_it.subscribe(m_topic_name, 1, &Camera::video_acquisition, this, image_transport::TransportHints("raw"));	
 }
 
 
 //////////////////////////////////////////
-void Collection::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
+void Camera::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
 {
   cv_bridge::CvImageConstPtr cv_ptr;
   try
@@ -99,7 +109,7 @@ void Collection::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
 }
 
 /////////////////////////////////////////////////////
-void Collection::search_ball_pos()
+void Camera::search_ball_pos()
 { 
     
      cv::Mat withCircle_blue,withCircle_green,withCircle_red,withCircle_yellow,l_bg,l_ry;
@@ -202,7 +212,7 @@ void Collection::search_ball_pos()
        
 
 
-void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
+void Camera::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
 {
      // Noise smoothing
      cv::Mat blur;
@@ -223,7 +233,7 @@ void Collection::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
 }
 
 
-std::vector<ball_position> Collection::charge_array(cv::Mat img)
+std::vector<ball_position> Camera::charge_array(cv::Mat img)
 {
       vector<vector<cv::Point> > l_contours; 
       ball_position l_ball;
@@ -250,7 +260,7 @@ std::vector<ball_position> Collection::charge_array(cv::Mat img)
 }
 
 
-std::vector< ball_position > Collection::cam_to_W(std::vector< ball_position >& array)
+std::vector< ball_position > Camera::cam_to_W(std::vector< ball_position >& array)
 {
   std::vector<ball_position> l_out_array;
   float pos_cam[3],pos_world[3],o01[3];
@@ -259,19 +269,29 @@ std::vector< ball_position > Collection::cam_to_W(std::vector< ball_position >& 
   float iFOV_y = 31.5*M_PI/(180*480);
   float azimuth,elevation;
   float d,e;
-  float R = m_zCamera*tan(M_PI/2-m_Pitch);
-  R=200;
+  float pitch = atan(m_R/m_zCamera)-M_PI/2;
    for (size_t i=0;i<array.size();i++)
    {
       l_pos_pix=array[i];
       float R_z[3][3],R_x[3][3],Rtot[3][3];
-      azimuth = (l_pos_pix.x-320.5)*iFOV_x;
-      elevation = (l_pos_pix.y-240.5)*iFOV_y;
-      e = tan(M_PI/2-m_Pitch-elevation)*m_zCamera-R;
-      d = tan(azimuth)*(R+e);
+      float x,y,x2,y2;
+      x =l_pos_pix.x-320.5;
+      y = l_pos_pix.y-240.5;
+      x2 = x*cos(m_roll)-y*sin(m_roll);
+      y2 = x*sin(m_roll)+y*cos(m_roll);
+      azimuth = x2*iFOV_x;
+      elevation = y2*iFOV_y;
+      
+//       azimuth = (l_pos_pix.x-320.5)*iFOV_x;
+//       elevation = (l_pos_pix.y-240.5)*iFOV_y;
+      e = tan(M_PI/2-pitch-elevation)*m_zCamera-m_R;
+      d = tan(azimuth)*(m_R+e);
+//        ROS_INFO("d pre--->%f",d);
+//       ROS_INFO("e pre-->%f",e);
+//       d = d*cos(m_roll)-e*sin(m_roll);
+//       e = d*sin(m_roll)+e*cos(m_roll);
       l_pos_cm.x = d;
-      l_pos_cm.y = -(R+e);
-      ROS_INFO("R--->%f",R);
+      l_pos_cm.y = -(m_R+e);
       ROS_INFO("d--->%f",d);
       ROS_INFO("e-->%f",e);
       l_pos_cm.height=l_pos_pix.height;
@@ -327,25 +347,25 @@ std::vector< ball_position > Collection::cam_to_W(std::vector< ball_position >& 
 }
 
 
-std::vector<ball_position> Collection::get_blue_array()
+std::vector<ball_position> Camera::get_blue_array()
 {
   Lock l_lock(m_mutex);
   return m_blue_circles;
 }
 
-std::vector<ball_position> Collection::get_green_array()
+std::vector<ball_position> Camera::get_green_array()
 {
   Lock l_lock(m_mutex);
   return m_green_circles;
 }
 
-std::vector<ball_position> Collection::get_red_array()
+std::vector<ball_position> Camera::get_red_array()
 {
   Lock l_lock(m_mutex);
   return m_red_circles;
 }
 
-std::vector<ball_position> Collection::get_yellow_array()
+std::vector<ball_position> Camera::get_yellow_array()
 {
   Lock l_lock(m_mutex);
   return m_yellow_circles;

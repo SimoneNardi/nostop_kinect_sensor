@@ -89,10 +89,10 @@ set(sensor_SOURCES
 #         src/Sensor.cpp
 #         src/SensorCollection.cpp
 #         src/SensorCollector.cpp
-        src/Collection.cpp
-        src/Collector.cpp
+        src/Camera.cpp
+        src/Camera_manager.cpp
         src/sensor_node.cpp
-        src/Tracker.cpp
+        src/Ball_tracker.cpp
         src/Robot_manager.cpp
         src/Robot.cpp
 

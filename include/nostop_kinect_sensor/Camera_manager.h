@@ -1,10 +1,10 @@
 ////////////////////////////////////////////////////////////
-//	Collector.h
+//	Camera_manager.h
 //	Created on:	07-oct-15
 //	Original author: Niko Giovannini Alessandro Faralli
 ////////////////////////////////////////////////////////////
-#ifndef COLLECTOR_H
-#define COLLECTOR_H
+#ifndef CAMERA_MANAGER_H
+#define CAMERA_MANAGER_H
 #pragma once
 
 // #include "ThreadBase.h"
@@ -16,22 +16,22 @@
 
 // #include "Threads.h"
 #include "nostop_kinect_sensor/Camera_data.h"
-#include "Collection.h"
+#include "Camera.h"
 
 namespace Robotics 
 {
 	namespace GameTheory
 	{
-		class Collection;
+		class Camera;
 		
-		class Collector
+		class Camera_manager
 		{
 
-		  mutable Mutex m_mutex;
+		  Mutex m_mutex;
 
 		  ros::Publisher m_pub;
 		  ros::Subscriber m_camera_in;
-		  std::vector< std::shared_ptr<Collection> > m_camera_array;
+		  std::vector< std::shared_ptr<Camera> > m_camera_array;
 		  std::shared_ptr<Robot_manager> m_manager;
 		  
 		  // PACKAGE
@@ -43,8 +43,8 @@ namespace Robotics
 		  ros::NodeHandle m_node;
 		
 		public:
-			Collector();
-			~Collector();
+			Camera_manager();
+			~Camera_manager();
 			void new_camera(const nostop_kinect_sensor::Camera_data::ConstPtr& msg);
  			void pack_passage();
 	
@@ -54,4 +54,4 @@ namespace Robotics
 }
 
 
-#endif // COLLECTOR_H
+#endif // CAMERA_MANAGER_H

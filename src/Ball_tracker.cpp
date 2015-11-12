@@ -1,5 +1,5 @@
 
-#include "Collection.h"
+#include "Camera.h"
 #include <opencv2/core/core.hpp>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
@@ -11,7 +11,7 @@
 #include "highgui.h"
 #include "ros/ros.h"
 #include <iostream>
-#include "Tracker.h"
+#include "Ball_tracker.h"
 #include <std_msgs/Float32.h>
 #include <rosbag/query.h>
 #include <rosbag/view.h>
@@ -26,7 +26,7 @@ using namespace Robotics::GameTheory;
 using namespace cv;
 
 
-Tracker::Tracker() : 
+Ball_tracker::Ball_tracker() : 
 m_kf(m_stateSize,m_measSize,m_contrSize,type)
 , m_state(m_stateSize,1,type)
 , m_meas(m_measSize,1,type)
@@ -34,9 +34,9 @@ m_kf(m_stateSize,m_measSize,m_contrSize,type)
   matrixSettings(m_kf);
 }
 
-Tracker::~Tracker() {}
+Ball_tracker::~Ball_tracker() {}
 
-void Tracker::matrixSettings(cv::KalmanFilter m_kf)
+void Ball_tracker::matrixSettings(cv::KalmanFilter m_kf)
 { 
   cv::setIdentity(m_kf.transitionMatrix);
   m_kf.measurementMatrix = cv::Mat::zeros(m_measSize, m_stateSize, type);
@@ -74,7 +74,7 @@ void Tracker::matrixSettings(cv::KalmanFilter m_kf)
 }
 
 
-cv::Rect Tracker::kalman_update(ball_position& position) 
+cv::Rect Ball_tracker::kalman_update(ball_position& position) 
 {
   double precTick = m_ticks;
   m_ticks = (double) cv::getTickCount();

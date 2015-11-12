@@ -1,8 +1,5 @@
 #include "ros/ros.h"
-#include "Collector.h"
-#include "Collection.h"
-#include "Tracker.h"
-#include "Robot_manager.h"
+#include "Camera_manager.h"
 
 
 int main(int argc, char **argv)
@@ -16,13 +13,13 @@ int main(int argc, char **argv)
 	// From Kinect?ROS_INFO
 	// From Simulator?
 	
-	Robotics::GameTheory::Collector l_Collector;
+	Robotics::GameTheory::Camera_manager l_Camera_manager;
 	//Robotics::GameTheory::Robot_manager Manager;
 	ros::NodeHandle n;
 	while(ros::ok())
 	{
 	  ros::spinOnce();
-	  l_Collector.pack_passage();
+	  l_Camera_manager.pack_passage();
 	}
 	
      

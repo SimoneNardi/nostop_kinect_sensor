@@ -1,10 +1,10 @@
 ////////////////////////////////////////////////////////////
-//	Collection.h
+//	Camera.h
 //	Created on:	07-oct-15
 //	Original author: Niko Giovannini Alessandro Faralli
 ////////////////////////////////////////////////////////////
-#ifndef COLLECTION_H
-#define COLLECTION_H
+#ifndef CAMERA_H
+#define CAMERA_H
 #pragma once
 
 #include <map>
@@ -20,14 +20,12 @@
 #include <opencv2/opencv.hpp>
 #include <image_transport/image_transport.h>
 #include <image_transport/subscriber_filter.h>
-
-// KALMAN 
 #include <opencv2/core/core.hpp>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
-#include <tf/transform_broadcaster.h>
-#include <tf/transform_listener.h>
+#include <geometry_msgs/PointStamped.h>
+#include <std_msgs/Float64.h>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -37,14 +35,15 @@
 #include "Robot_manager.h"
 
 
+
 namespace Robotics 
 {
 	namespace GameTheory
 	{
 		class Guard;
-		class Tracker;
+		class Ball_tracker;
 		class Robot_manager;
-		class Collection
+		class Camera
 		{
 		 
 		  Mutex m_mutex;
@@ -54,7 +53,7 @@ namespace Robotics
 		  bool m_available;
 		  
 		  ros::NodeHandle m_node;
-		  
+		  ros::Subscriber m_roll_read;
 		  image_transport::ImageTransport m_it;
 		  image_transport::Subscriber m_image_sub;
 		  
@@ -67,7 +66,7 @@ namespace Robotics
 		  cv::Mat m_only_yellow;
 		  
 		  //POINT TRASFORMATION
-		  float m_xCamera,m_yCamera,m_zCamera,m_Pitch,m_omegaz,m_gammax;
+		  float m_xCamera,m_yCamera,m_zCamera,m_R,m_omegaz,m_gammax,m_roll;
 		  geometry_msgs::PointStamped m_camera_point;
 
 		  // BALLS ARRAY
@@ -79,11 +78,12 @@ namespace Robotics
 
 		  
 		public:
-			Collection(std::string name_,std::string topic_name,std::vector<float> pos_camera,float pitch,float omega,float gamma);
+			Camera(std::string name_,std::string topic_name,std::string roll_topic,std::vector<float> pos_camera,float R,float omega,float gamma);
 			
-			~Collection();
+			~Camera();
 			
 			void subscribe();
+			void roll_correction(const std_msgs::Float64::ConstPtr& msg);
 			void video_acquisition(const sensor_msgs::ImageConstPtr& msg);
 			void search_ball_pos();
 			void filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[]);
@@ -99,4 +99,4 @@ namespace Robotics
 }
 
 
-#endif // COLLECTOR_H
+#endif // CAMERA_H

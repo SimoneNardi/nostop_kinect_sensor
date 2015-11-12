@@ -1,5 +1,5 @@
 #include "Robot.h"
-#include "Collection.h"
+#include "Camera.h"
 #include "ros/ros.h"
 #include <string.h>
 #include <boost/signals2/shared_connection_block.hpp>

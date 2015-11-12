@@ -4,7 +4,6 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <opencv2/highgui/highgui.hpp>
-#include <std_msgs/Float32.h>
 #include <std_msgs/Float64.h>
 
 cv::Point2f xy;
@@ -43,6 +42,23 @@ void subscriber_callback(const sensor_msgs::ImageConstPtr &msg)
     cv::Mat video_image = cv_ptr->image.clone();
     cvNamedWindow("Frame",CV_WINDOW_AUTOSIZE); //Window is created for image of each frame
     cv::waitKey(3);
+    cv::Point center,up,right,down,left;
+    center.x=320.5;
+    center.y=240.5;
+    up.x = 320.5;
+    up.y = 2;
+    right.x = 637;
+    right.y = 240.5;
+    down.x = 320.5;
+    down.y = 477;
+    left.x = 3;
+    left.y = 240.5;
+    cv::circle(video_image,down,2,cv::Scalar(0, 0, 255),-1,8,0);
+    cv::circle(video_image,left,2,cv::Scalar(0, 0, 255),-1,8,0);
+    cv::circle(video_image,up,2,cv::Scalar(0, 0, 255),-1,8,0);
+    cv::circle(video_image,right,2,cv::Scalar(0, 0, 255),-1,8,0);
+    cv::circle(video_image,center,2,cv::Scalar(0, 0, 255),-1,8,0);
+    cv::circle(video_image,center,10,cv::Scalar(0, 0, 0),1,8,0);
     cv::imshow("Frame",video_image);
     cvSetMouseCallback("Frame",mouse_callback,NULL);	
       if (vertex.size()==2)
@@ -74,8 +90,8 @@ int main(int argc, char *argv[])
 	ros::Publisher Roll_pub;
 	image_transport::ImageTransport it(calibrator);
 	image_transport::Subscriber subscriber;
-	subscriber = it.subscribe(argv[argc-1], 1, &subscriber_callback,image_transport::TransportHints("raw"));
-	Roll_pub = calibrator.advertise<std_msgs::Float64>("/test",1000);
+	subscriber = it.subscribe(argv[1], 1, &subscriber_callback,image_transport::TransportHints("raw"));
+	Roll_pub = calibrator.advertise<std_msgs::Float64>(argv[2],1000);
 	while (ros::ok())
 	{
 	    ros::spinOnce();
