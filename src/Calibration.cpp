@@ -4,7 +4,25 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <opencv2/highgui/highgui.hpp>
+#include <std_msgs/Float32.h>
 #include <std_msgs/Float64.h>
+
+cv::Point2f xy;
+std::vector<cv::Point2f> vertex;
+std_msgs::Float64 message;
+bool to_publish;
+ 
+void mouse_callback(int event, int x, int y, int flags, void* param)
+{
+	//This is called every time a mouse event occurs in the window
+	if (event == CV_EVENT_LBUTTONDBLCLK) { //This is executed when the left mouse button is clicked
+		//Co-ordinates of the left click are assigned to global variables and flag is set to 1
+		xy.x = x;
+		xy.y = y;
+		vertex.push_back(xy);
+	}
+}
+
 
 void subscriber_callback(const sensor_msgs::ImageConstPtr &msg)
 {
@@ -22,31 +40,51 @@ void subscriber_callback(const sensor_msgs::ImageConstPtr &msg)
     return;
   }
 
-    cv::Mat m_stream_video = cv_ptr->image.clone();
-    cv::imshow("test",m_stream_video);
+    cv::Mat video_image = cv_ptr->image.clone();
+    cvNamedWindow("Frame",CV_WINDOW_AUTOSIZE); //Window is created for image of each frame
     cv::waitKey(3);
+    cv::imshow("Frame",video_image);
+    cvSetMouseCallback("Frame",mouse_callback,NULL);	
+      if (vertex.size()==2)
+	    { 
+	         to_publish = true;
+	         cv::Point2f A,B;
+                 if (vertex[0].x > vertex[1].x)
+                   {
+                      A = vertex[1];
+                      B = vertex[0];
+                   }else{
+                           A = vertex[0];
+                           B = vertex[1];
+                        }
+                 float iFOVy= 31.5/480;
+                 float roll_angle = (A.y-B.y)*iFOVy;
+                 std_msgs::Float64 roll;
+                 message.data=roll_angle;
+		 vertex.clear();
+	    }
+    
 }
 
-
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
 	ROS_INFO("Calibration : ON");
-	
-	ros::init(argc, argv, "calibrator"); 
-      
+	ros::init(argc, argv, "calibrator");
 	ros::NodeHandle calibrator;
 	ros::Publisher Roll_pub;
 	image_transport::ImageTransport it(calibrator);
 	image_transport::Subscriber subscriber;
-	cv::namedWindow("test");
-	subscriber = it.subscribe("TODO", 1, &subscriber_callback,image_transport::TransportHints("raw"));
-	Roll_pub = calibrator.advertise<std_msgs::Float64>("TODO",1000);
-	if (vertex.size()==2)
+	subscriber = it.subscribe(argv[argc-1], 1, &subscriber_callback,image_transport::TransportHints("raw"));
+	Roll_pub = calibrator.advertise<std_msgs::Float64>("/test",1000);
+	while (ros::ok())
 	{
-	  vertex.clear();
-          Roll_pub.publish<std_msgs::Float64>(roll_value);
+	    ros::spinOnce();
+	    if(to_publish)
+	      {	  
+                 Roll_pub.publish(message);
+	         ROS_INFO("Value published");
+	         to_publish=false;
+	      }
 	}
-	ros::spin();
-     
 	return 0;
 }

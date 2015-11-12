@@ -16,8 +16,14 @@
 <arg name="Pitch" default="31.5" />
 <arg name="omega" default="0" />
 <arg name="gamma" default="180" />
-  <node pkg="nostop_kinect_sensor" type="script.sh" 
+  <node pkg="nostop_kinect_sensor" type="script_cam.sh" 
     args="$(arg camera_name) $(arg topic_name) $(arg xC) $(arg yC) $(arg minus_xy) $(arg zC) $(arg Pitch) $(arg omega) $(arg gamma)" 
+    name="pub" output="screen">
+  </node>
+  
+  <arg name="image_topic" default="/usb/cam_img" />
+  <node pkg="nostop_kinect_sensor" type="script_calibration.sh" 
+    args="$(arg image_topic)"
     name="pub" output="screen">
   </node>
 </launch>
