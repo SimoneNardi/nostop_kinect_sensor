@@ -25,7 +25,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <geometry_msgs/PointStamped.h>
-#include <std_msgs/Float64.h>
+#include <std_msgs/Float64MultiArray.h>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -33,6 +33,8 @@
 #include "ros/ros.h"
 #include "some_struct.h"
 #include "Robot_manager.h"
+#include <nostop_kinect_sensor/Camera_data.h>
+#include <nostop_kinect_sensor/R_valueConfig.h>
 
 
 
@@ -53,7 +55,7 @@ namespace Robotics
 		  bool m_available;
 		  
 		  ros::NodeHandle m_node;
-		  ros::Subscriber m_roll_read;
+		  ros::Subscriber m_roll_R_read;
 		  image_transport::ImageTransport m_it;
 		  image_transport::Subscriber m_image_sub;
 		  
@@ -78,12 +80,13 @@ namespace Robotics
 
 		  
 		public:
-			Camera(std::string name_,std::string topic_name,std::string roll_topic,std::vector<float> pos_camera,float R,float omega,float gamma);
+			Camera(std::string name_,std::string topic_name,std::string roll_R_topic,std::vector<float> pos_camera,float omega,float gamma);
 			
 			~Camera();
 			
 			void subscribe();
-			void roll_correction(const std_msgs::Float64::ConstPtr& msg);
+			void R_reconfigure(nostop_kinect_sensor::R_valueConfig  &config, uint32_t level);
+			void roll_R_correction(const std_msgs::Float64MultiArray::ConstPtr& msg);
 			void video_acquisition(const sensor_msgs::ImageConstPtr& msg);
 			void search_ball_pos();
 			void filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[]);

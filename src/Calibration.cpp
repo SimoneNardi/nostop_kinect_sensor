@@ -4,12 +4,16 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <opencv2/highgui/highgui.hpp>
-#include <std_msgs/Float64.h>
+
+#include <std_msgs/Float64MultiArray.h>
+#include <dynamic_reconfigure/server.h>
+#include <nostop_kinect_sensor/R_valueConfig.h>
 
 cv::Point2f xy;
 std::vector<cv::Point2f> vertex;
-std_msgs::Float64 message;
+std_msgs::Float64MultiArray message;
 bool to_publish;
+float R=1;
  
 void mouse_callback(int event, int x, int y, int flags, void* param)
 {
@@ -61,46 +65,52 @@ void subscriber_callback(const sensor_msgs::ImageConstPtr &msg)
     cv::circle(video_image,center,10,cv::Scalar(0, 0, 0),1,8,0);
     cv::imshow("Frame",video_image);
     cvSetMouseCallback("Frame",mouse_callback,NULL);	
-      if (vertex.size()==2)
+      if (vertex.size()==1)
 	    { 
 	         to_publish = true;
-	         cv::Point2f A,B;
-                 if (vertex[0].x > vertex[1].x)
-                   {
-                      A = vertex[1];
-                      B = vertex[0];
-                   }else{
-                           A = vertex[0];
-                           B = vertex[1];
-                        }
-                 float iFOVy= 31.5/480;
-                 float roll_angle = (A.y-B.y)*iFOVy;
-                 std_msgs::Float64 roll;
-                 message.data=roll_angle;
+	         cv::Point2f A;
+		 A = vertex[0];
+		 A.y = A.y-240;
+		 A.x = A.x-320;
+                 float roll_angle = atan(A.y/A.x)*180/M_PI;// POINT ON THE RIGHT!!
+                 message.data[0] = roll_angle;
 		 vertex.clear();
 	    }
-    
+
 }
 
+void R_reconfigure(nostop_kinect_sensor::R_valueConfig  &config, uint32_t level) 
+ {
+  R = config.R_distance;
+  to_publish = true;
+}
 int main(int argc, char *argv[])
 {
 	ROS_INFO("Calibration : ON");
 	ros::init(argc, argv, "calibrator");
+	message.data.resize(2);
 	ros::NodeHandle calibrator;
-	ros::Publisher Roll_pub;
+	ros::Publisher Roll_R_pub;
 	image_transport::ImageTransport it(calibrator);
 	image_transport::Subscriber subscriber;
 	subscriber = it.subscribe(argv[1], 1, &subscriber_callback,image_transport::TransportHints("raw"));
-	Roll_pub = calibrator.advertise<std_msgs::Float64>(argv[2],1000);
+	Roll_R_pub = calibrator.advertise<std_msgs::Float64MultiArray>(argv[2],1000);
+	
+	dynamic_reconfigure::Server<nostop_kinect_sensor::R_valueConfig> R_camera;
+	dynamic_reconfigure::Server<nostop_kinect_sensor::R_valueConfig>::CallbackType f;
+	f = boost::bind(&R_reconfigure,_1,_2);
+	R_camera.setCallback(f);
+	
 	while (ros::ok())
 	{
-	    ros::spinOnce();
 	    if(to_publish)
 	      {	  
-                 Roll_pub.publish(message);
+		 message.data[1] = R;
+                 Roll_R_pub.publish(message);
 	         ROS_INFO("Value published");
 	         to_publish=false;
 	      }
+	      ros::spinOnce();
 	}
 	return 0;
 }

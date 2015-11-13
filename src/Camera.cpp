@@ -14,7 +14,9 @@
 #include "opencv2/video/video.hpp"
 #include "highgui.h"
 #include "ros/ros.h"
-#include <std_msgs/Float64.h>
+#include <std_msgs/Float64MultiArray.h>
+#include <dynamic_reconfigure/server.h>
+#include "nostop_kinect_sensor/R_valueConfig.h"
 #include <math.h>
 #include <iostream>
  
@@ -34,7 +36,7 @@ static const std::string YELLOW_THRESHOLD_WINDOWS = "Yellow threshold ";
 
  
 /////////////////////////////////////////////
-Camera::Camera(std::string name_,std::string topic_name,std::string roll_topic,std::vector<float> pos_camera,float R_,float omega,float gamma)
+Camera::Camera(std::string name_,std::string topic_name,std::string roll_R_topic,std::vector<float> pos_camera,float omega,float gamma)
 : m_available(false)
 , m_it(m_node)
 , m_camera_name(name_)
@@ -42,16 +44,15 @@ Camera::Camera(std::string name_,std::string topic_name,std::string roll_topic,s
 , m_xCamera(pos_camera.at(0))
 , m_yCamera(pos_camera.at(1))
 , m_zCamera(pos_camera.at(2))
-, m_R(R_)
+, m_R(1)
 , m_omegaz(omega)
 , m_gammax(gamma)
 , m_roll(0)
 {
   ROS_INFO("CAMERA %s ON!",m_camera_name.c_str());
-  m_roll_read = m_node.subscribe(roll_topic,1,&Camera::roll_correction,this);
-  subscribe();
+  m_roll_R_read = m_node.subscribe(roll_R_topic,1,&Camera::roll_R_correction,this);
+  subscribe();  
 }
-
 
 /////////////////////////////////////////////
 Camera::~Camera()
@@ -65,11 +66,12 @@ Camera::~Camera()
 }
 
 
-void Camera::roll_correction(const std_msgs::Float64::ConstPtr& msg)
+void Camera::roll_R_correction(const std_msgs::Float64MultiArray::ConstPtr& msg)
 {
   Lock l_lock(m_mutex);
-  m_roll = msg->data;
-  m_roll = m_roll*M_PI/180;
+  m_roll = msg->data[0];
+  m_roll = -m_roll*M_PI/180;
+  m_R = msg->data[1];
 }
 /////////////////////////////////////////////
 void Camera::subscribe()
@@ -102,7 +104,6 @@ void Camera::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
       // Update GUI Window
      
      // Update GUI Window
-//      cv::imshow(SENSOR_CV_WINDOW+m_camera_name,m_stream_video);
      cv::waitKey(3);
      // FUNCTION
      search_ball_pos();
@@ -265,11 +266,11 @@ std::vector< ball_position > Camera::cam_to_W(std::vector< ball_position >& arra
   std::vector<ball_position> l_out_array;
   float pos_cam[3],pos_world[3],o01[3];
   ball_position l_pos_pix,l_pos_cm,l_cam,l_w;
-  float iFOV_x = 60*M_PI/(180*640);
-  float iFOV_y = 31.5*M_PI/(180*480);
+  float iFOV_x = (48*M_PI/180)/640;
+  float iFOV_y = (32*M_PI/180)/480;
   float azimuth,elevation;
   float d,e;
-  float pitch = atan(m_R/m_zCamera)-M_PI/2;
+  float pitch = -atan(m_R/m_zCamera)+M_PI/2;
    for (size_t i=0;i<array.size();i++)
    {
       l_pos_pix=array[i];
@@ -278,23 +279,16 @@ std::vector< ball_position > Camera::cam_to_W(std::vector< ball_position >& arra
       x =l_pos_pix.x-320.5;
       y = l_pos_pix.y-240.5;
       x2 = x*cos(m_roll)-y*sin(m_roll);
-      y2 = x*sin(m_roll)+y*cos(m_roll);
+      y2 = +x*sin(m_roll)+y*cos(m_roll);
       azimuth = x2*iFOV_x;
-      elevation = y2*iFOV_y;
-      
-//       azimuth = (l_pos_pix.x-320.5)*iFOV_x;
-//       elevation = (l_pos_pix.y-240.5)*iFOV_y;
-      e = tan(M_PI/2-pitch-elevation)*m_zCamera-m_R;
+      elevation = -y2*iFOV_y;
+      e = tan(M_PI/2-pitch+elevation)*m_zCamera-m_R;
       d = tan(azimuth)*(m_R+e);
-//        ROS_INFO("d pre--->%f",d);
-//       ROS_INFO("e pre-->%f",e);
-//       d = d*cos(m_roll)-e*sin(m_roll);
-//       e = d*sin(m_roll)+e*cos(m_roll);
+      ROS_INFO("d --->%f",d);
+      ROS_INFO("e -->%f",e);
       l_pos_cm.x = d;
       l_pos_cm.y = -(m_R+e);
-      ROS_INFO("d--->%f",d);
-      ROS_INFO("e-->%f",e);
-      l_pos_cm.height=l_pos_pix.height;
+      l_pos_cm.height=l_pos_pix.height;//TODO
       l_pos_cm.width=l_pos_pix.width;
       l_cam = l_pos_cm;
       pos_cam[0] = l_cam.x;

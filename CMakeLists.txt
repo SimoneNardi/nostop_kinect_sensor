@@ -16,7 +16,9 @@ endif()
 
 find_package(catkin REQUIRED COMPONENTS 
   roscpp 
+  rospy
   std_msgs 
+  dynamic_reconfigure
   message_generation 
   rosbag
   base_math
@@ -25,12 +27,19 @@ find_package(catkin REQUIRED COMPONENTS
   nostop_agent
   nostop_learning)
 
+generate_dynamic_reconfigure_options(
+   cfg/R_value.cfg
+   )
+   
 find_package( OpenCV REQUIRED )
 # find_package( PCL 1.7.1 REQUIRED) # COMPONENT common io visualization)
 # 
 # include_directories(BEFORE ${PCL_INCLUDE_DIRS})
 # link_directories(${PCL_LIBRARY_DIRS})
 # add_definitions(${PCL_DEFINITIONS})
+
+
+
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -71,14 +80,18 @@ find_package( OpenCV REQUIRED )
 catkin_package(
   INCLUDE_DIRS include/${PROJECT_NAME}/
   LIBRARIES ${PROJECT_NAME}
-  DEPENDS base_math nostop_agent image_transport cv_bridge nostop_learning
+  DEPENDS roscpp rospy base_math nostop_agent image_transport cv_bridge nostop_learning dynamic_reconfigure
 )
+
+
 
 ###########
 ## Build ##
 ###########
 
-include_directories(include/${PROJECT_NAME}/ ${catkin_INCLUDE_DIRS})
+include_directories(include/${PROJECT_NAME}/ ${catkin_INCLUDE_DIRS}
+${dynamic_reconfigure_PACKAGE_PATH}/cmake/cfgbuild.cmake)
+
 link_directories(${catkin_LIBRARY_DIRS})
 include_directories(src/)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/src)
@@ -109,12 +122,14 @@ set(calibration_SOURCES
 
 
 add_executable(sensor_node ${sensor_SOURCES})
-target_link_libraries(sensor_node ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning)#${PCL_LIBRARIES})
 add_dependencies(sensor_node nostop_kinect_sensor_gencpp)
+target_link_libraries(sensor_node ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning )#${PCL_LIBRARIES})
+
 
 add_executable(calibration ${calibration_SOURCES})
+add_dependencies(calibration nostop_kinect_sensor_gencpp  nostop_kinect_sensor_gencfg )
 target_link_libraries(calibration ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning)#${PCL_LIBRARIES})
-add_dependencies(calibration nostop_kinect_sensor_gencpp)
+
 
 #############
 ## Install ##

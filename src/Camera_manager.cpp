@@ -25,12 +25,12 @@ Camera_manager::~Camera_manager()
 
 void Camera_manager::new_camera(const nostop_kinect_sensor::Camera_data::ConstPtr& msg)
 {	
-    std::string name_number,name_topic,name_roll_topic;
+    std::string name_number,name_topic,name_roll_R_topic;
     std::vector<float> pos_camera;
     float pitch, omega,gamma,R;
     name_number.assign( msg->name);
     name_topic.assign(msg->topic_name);
-    name_roll_topic.assign(msg->roll_correction_topic);
+    name_roll_R_topic.assign(msg->roll_R_correction_topic);
     if(msg->x_sign == "negative")
     {
      pos_camera.push_back(-1*(msg->xC));
@@ -46,10 +46,9 @@ void Camera_manager::new_camera(const nostop_kinect_sensor::Camera_data::ConstPt
       pos_camera.push_back(msg->yC);
     }
     pos_camera.push_back(msg->zC);
-    R=msg->R;
     omega=msg->omega*M_PI/180;
     gamma=msg->gamma*M_PI/180;
-    m_camera_array.push_back( std::make_shared<Camera>(name_number,name_topic,name_roll_topic,pos_camera, R, omega,gamma) );
+    m_camera_array.push_back( std::make_shared<Camera>(name_number,name_topic,name_roll_R_topic,pos_camera, omega,gamma) );
     
 }
 
