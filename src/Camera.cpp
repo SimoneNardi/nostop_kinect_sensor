@@ -33,6 +33,8 @@ static const std::string BLUE_THRESHOLD_WINDOWS = "Blue threshold ";
 static const std::string GREEN_THRESHOLD_WINDOWS = "Green threshold ";
 static const std::string RED_THRESHOLD_WINDOWS = "Red threshold ";
 static const std::string YELLOW_THRESHOLD_WINDOWS = "Yellow threshold ";
+static const float ball_radius = 7.0;
+static const float h_robot = 0;
 
  
 /////////////////////////////////////////////
@@ -265,34 +267,34 @@ std::vector< ball_position > Camera::cam_to_W(std::vector< ball_position >& arra
 {
   std::vector<ball_position> l_out_array;
   float pos_cam[3],pos_world[3],o01[3];
-  ball_position l_pos_pix,l_pos_cm,l_cam,l_w;
+  ball_position l_pos_pix,l_pos_cm,l_world_cm;
   float iFOV_x = (48*M_PI/180)/640;
   float iFOV_y = (32*M_PI/180)/480;
   float azimuth,elevation;
-  float d,e;
+  float psi;
+  float distance_from_center_x,distance_from_center_y;
   float pitch = -atan(m_R/m_zCamera)+M_PI/2;
    for (size_t i=0;i<array.size();i++)
    {
       l_pos_pix=array[i];
       float R_z[3][3],R_x[3][3],Rtot[3][3];
-      float x,y,x2,y2;
-      x =l_pos_pix.x-320.5;
-      y = l_pos_pix.y-240.5;
-      x2 = x*cos(m_roll)-y*sin(m_roll);
-      y2 = +x*sin(m_roll)+y*cos(m_roll);
-      azimuth = x2*iFOV_x;
-      elevation = -y2*iFOV_y;
-      e = tan(M_PI/2-pitch+elevation)*m_zCamera-m_R;
-      d = tan(azimuth)*(m_R+e);
-      ROS_INFO("d --->%f",d);
-      ROS_INFO("e -->%f",e);
-      l_pos_cm.x = d;
-      l_pos_cm.y = -(m_R+e);
-      l_pos_cm.height=l_pos_pix.height;//TODO
-      l_pos_cm.width=l_pos_pix.width;
-      l_cam = l_pos_cm;
-      pos_cam[0] = l_cam.x;
-      pos_cam[1] = l_cam.y;
+      float x_SR_centered,y_SR_centered,x_roll_corrected,y_roll_corrected;
+      x_SR_centered =l_pos_pix.x-320.5;
+      y_SR_centered = l_pos_pix.y-240.5;
+      x_roll_corrected = x_SR_centered*cos(m_roll)-y_SR_centered*sin(m_roll);
+      y_roll_corrected = x_SR_centered*sin(m_roll)+y_SR_centered*cos(m_roll);
+      azimuth = x_roll_corrected*iFOV_x;
+      elevation = -y_roll_corrected*iFOV_y;
+      distance_from_center_x = tan(M_PI/2-pitch+elevation)*m_zCamera-m_R;
+      distance_from_center_y = tan(azimuth)*(m_R+distance_from_center_x);
+      l_pos_cm.x = distance_from_center_y;
+      l_pos_cm.y = -(m_R+distance_from_center_x);
+      l_pos_cm.height=2*ball_radius;
+      l_pos_cm.width=2*ball_radius;
+      psi = atan(m_zCamera/l_pos_cm.y);
+      l_pos_cm.y= l_pos_cm.y-h_robot/tan(psi);
+      pos_cam[0] = l_pos_cm.x;
+      pos_cam[1] = l_pos_cm.y;
       pos_cam[2] = 0;
       o01[0] = m_xCamera;
       o01[1] = m_yCamera;
@@ -327,11 +329,11 @@ std::vector< ball_position > Camera::cam_to_W(std::vector< ball_position >& arra
       pos_world[0] = Rtot[1][1]*pos_cam[0]+Rtot[1][2]*pos_cam[1]+Rtot[1][3]*pos_cam[2]+o01[0];
       pos_world[1] = Rtot[2][1]*pos_cam[0]+Rtot[2][2]*pos_cam[1]+Rtot[2][3]*pos_cam[2]+o01[1];
       pos_world[2] = Rtot[3][1]*pos_cam[0]+Rtot[3][2]*pos_cam[1]+Rtot[3][3]*pos_cam[2]+o01[2];
-      l_w.x = pos_world[0];
-      l_w.y = pos_world[1];
-      l_w.height = l_cam.height;
-      l_w.width = l_cam.width;
-      l_out_array.push_back(l_w);
+      l_world_cm.x = pos_world[0];
+      l_world_cm.y = pos_world[1];
+      l_world_cm.height = l_pos_cm.height;
+      l_world_cm.width = l_pos_cm.width;
+      l_out_array.push_back(l_world_cm);
       ROS_INFO("x cam %f",pos_cam[0]);
       ROS_INFO("y cam %f", pos_cam[1]);
       ROS_INFO("x world %f",pos_world[0]);

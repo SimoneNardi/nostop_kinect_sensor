@@ -72,7 +72,7 @@ void subscriber_callback(const sensor_msgs::ImageConstPtr &msg)
 		 A = vertex[0];
 		 A.y = A.y-240;
 		 A.x = A.x-320;
-                 float roll_angle = atan(A.y/A.x)*180/M_PI;// POINT ON THE RIGHT!!
+                 float roll_angle = atan(A.y/A.x)*180/M_PI;
                  message.data[0] = roll_angle;
 		 vertex.clear();
 	    }
