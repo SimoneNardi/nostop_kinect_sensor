@@ -11,7 +11,7 @@
   
 <arg name="image_topic" default="/usb/philips/cam_img" />
 <arg name="roll_R_correction_topic_name" default="/philips/calibration_topic"/>
-<arg name="node_name" default = "philips"/>
+<arg name="node_name" default = "philips_calibration"/>
 <node pkg="nostop_kinect_sensor" type="script_calibration.sh" 
     args="$(arg node_name) $(arg image_topic) $(arg roll_R_correction_topic_name)"
     name="calibration_node" output="screen">

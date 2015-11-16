@@ -11,7 +11,7 @@
   
 <arg name="image_topic" default="/usb/logitech/cam_img" />
 <arg name="roll_R_correction_topic_name" default="/logitech/calibration_topic"/>
-<arg name="node_name" default = "logitech" />
+<arg name="node_name" default = "logitech_calibration" />
 <node name="calibration" pkg="nostop_kinect_sensor" type="script_calibration.sh" 
     args="$(arg node_name) $(arg image_topic) $(arg roll_R_correction_topic_name)"
      output="screen">
