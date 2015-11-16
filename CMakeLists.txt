@@ -104,7 +104,7 @@ set(sensor_SOURCES
 #         src/SensorCollector.cpp
         src/Camera.cpp
         src/Camera_manager.cpp
-        src/sensor_node.cpp
+        src/acquisition_node.cpp
         src/Ball_tracker.cpp
         src/Robot_manager.cpp
         src/Robot.cpp
@@ -112,7 +112,7 @@ set(sensor_SOURCES
 )
 
 set(calibration_SOURCES
-        src/Calibration.cpp
+        src/calibration.cpp
 
 )
 
@@ -121,9 +121,9 @@ set(calibration_SOURCES
 # add_dependencies(Sensor nostop_kinect_sensor_gencpp)
 
 
-add_executable(sensor_node ${sensor_SOURCES})
-add_dependencies(sensor_node nostop_kinect_sensor_gencpp)
-target_link_libraries(sensor_node ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning )#${PCL_LIBRARIES})
+add_executable(acquisition_node ${sensor_SOURCES})
+add_dependencies(acquisition_node nostop_kinect_sensor_gencpp)
+target_link_libraries(acquisition_node ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning )#${PCL_LIBRARIES})
 
 
 add_executable(calibration ${calibration_SOURCES})
@@ -142,7 +142,7 @@ target_link_libraries(calibration ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math l
 #  )
  
 
- install(TARGETS sensor_node
+ install(TARGETS acquisition_node
  EXPORT nostop_kinect_sensor
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )

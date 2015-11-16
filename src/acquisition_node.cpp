@@ -4,17 +4,11 @@
 
 int main(int argc, char **argv)
 {
-	ROS_INFO("Sensor node : ON");
+	ROS_INFO("Acquisition node : ON");
 	
-	ros::init(argc, argv, "sensor"); 
-	
-	
-	// Compute Robot Position:
-	// From Kinect?ROS_INFO
-	// From Simulator?
+	ros::init(argc, argv, "acquisition_node"); 
 	
 	Robotics::GameTheory::Camera_manager l_Camera_manager;
-	//Robotics::GameTheory::Robot_manager Manager;
 	ros::NodeHandle n;
 	while(ros::ok())
 	{

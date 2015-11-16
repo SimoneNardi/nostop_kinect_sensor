@@ -18,9 +18,7 @@ float R=1;
  
 void mouse_callback(int event, int x, int y, int flags, void* param)
 {
-	//This is called every time a mouse event occurs in the window
-	if (event == CV_EVENT_LBUTTONDBLCLK) { //This is executed when the left mouse button is clicked
-		//Co-ordinates of the left click are assigned to global variables and flag is set to 1
+	if (event == CV_EVENT_LBUTTONDBLCLK) { 
 		xy.x = x;
 		xy.y = y;
 		vertex.push_back(xy);
@@ -45,7 +43,7 @@ void subscriber_callback(const sensor_msgs::ImageConstPtr &msg)
   }
 
     cv::Mat video_image = cv_ptr->image.clone();
-    cvNamedWindow("Calibration Frame",CV_WINDOW_AUTOSIZE); //Window is created for image of each frame
+    cvNamedWindow("Calibration Frame",CV_WINDOW_AUTOSIZE);
     cv::waitKey(3);
     cv::Point center,up,right,down,left;
     center.x=320.5;
