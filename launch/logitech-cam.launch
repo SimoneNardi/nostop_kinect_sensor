@@ -16,7 +16,7 @@
     name="calibration_node" output="screen">
 </node>
 
-<arg name="camera_name" default="usb" />
+<arg name="camera_name" default="logitech" />
 <arg name="xC" default="0" />
 <arg name="x_sign" default="positive" />
 <arg name="yC" default="0" />
