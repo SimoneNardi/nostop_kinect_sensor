@@ -35,7 +35,7 @@ namespace Robotics
 		  ball_position m_back_pos;
 		  float m_heading;
 		  bool found;
-		  bool m_notFoundCount;
+		  int m_notFoundCount;
 		  cv::Rect m_f_rect;
 		  cv::Rect m_b_rect;
 		  
@@ -47,7 +47,6 @@ namespace Robotics
 		      void pubID();
 		      void publish_pose(ball_position front_pos,ball_position back_pos,float yaw);
 		      void select_robot_pose(std::vector<ball_position>& front_array,std::vector<ball_position>& back_array);
-		      void draw_circles(cv::Mat src);// NOT IN USE
 		      std::string color_f();
 		      std::string color_b();
 		      Robot(std::string name_);

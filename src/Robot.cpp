@@ -86,8 +86,10 @@ void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vecto
 		    if(m_notFoundCount >= 10 )
 		    {
 		      m_notFoundCount = 0;
+		      ROS_INFO("L'ho persa!!");
 		      found = false;
 		    }else{
+		      ROS_INFO("SONO QUI");
 		      m_f_rect = Front_ptr->kalman_update(m_front_pos);
 		      m_b_rect = Back_ptr->kalman_update(m_back_pos);
 		      m_front_pos.x = m_f_rect.x;
@@ -100,12 +102,7 @@ void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vecto
 	  }
 	}
     }
-//      ROS_INFO("x-->%f",m_front_pos.x);
-//        ROS_INFO("y-->%f",m_front_pos.y);
-//   draw_circles(src);
-  m_heading = atan2((m_back_pos.y-m_front_pos.y),(m_back_pos.x-m_front_pos.x));
-//   ROS_INFO("%f",m_heading);
-
+  m_heading = atan2((m_back_pos.y-m_front_pos.y),(m_back_pos.x-m_front_pos.x))+M_PI;
   publish_pose(m_front_pos,m_back_pos,m_heading);
 }
 
@@ -119,7 +116,7 @@ void Robot::publish_pose(ball_position front_pos,ball_position back_pos, float y
     float psi = yaw;
     pose.position.x = (front_pos.x+back_pos.x)/2;
     pose.position.y = (front_pos.y+back_pos.y)/2;
-    pose.position.z = 0; //TODO
+    pose.position.z = 0; 
     pose.orientation.x = cos(phi/2)*cos(theta/2)*cos(psi/2)+sin(phi/2)*sin(theta/2)*sin(psi/2); 
     pose.orientation.y = sin(phi/2)*cos(theta/2)*cos(psi/2)-cos(phi/2)*sin(theta/2)*sin(psi/2); 
     pose.orientation.z = cos(phi/2)*sin(theta/2)*cos(psi/2)+sin(phi/2)*cos(theta/2)*sin(psi/2);
@@ -143,24 +140,4 @@ std::string Robot::color_b()
 }
 
 
-
-
-// void Robot::draw_circles(cv::Mat src)
-// {
-//   cv::Rect Box_f,Box_b;
-//   cv::Mat l_fdst,l_bdst;
-//   Box_f.height = m_front_pos.height;
-//   Box_f.width = m_front_pos.width;
-//   Box_f.x = m_front_pos.x;
-//   Box_f.y = m_front_pos.y;
-//   Box_b.height = m_back_pos.height;
-//   Box_b.width = m_back_pos.width;
-//   Box_b.x = m_back_pos.x;
-//   Box_b.y = m_back_pos.y;
-//   cv::rectangle(src, Box_f, CV_RGB(255,0,0), 5); // THE FRONT BALL IS IN RED BOX
-//   cv::rectangle(src,Box_b, CV_RGB(0,255,0),5); // THE BACK BALL IS IN GREEN BOX
-//   cv::rectangle(src,m_f_rect, CV_RGB(0,255,255),2); // THE BACK BALL IS IN TURQUOISE BOX
-//   cv::rectangle(src,m_b_rect, CV_RGB(255,0,255),2); // THE BACK BALL IS IN FUCHSIA BOX
-//   imshow("robot "+ m_name,src );
-// }
 
