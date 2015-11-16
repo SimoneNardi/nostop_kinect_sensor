@@ -100,8 +100,8 @@ void R_reconfigure(nostop_kinect_sensor::R_valueConfig  &config, uint32_t level)
 }
 int main(int argc, char *argv[])
 {
-	ROS_INFO("Calibration : ON");
-	ros::init(argc, argv, "calibrator");
+	ROS_INFO("Calibration %s : ON",argv[1]);
+	ros::init(argc, argv, argv[1]);
 	message.data.resize(2);
 	ros::NodeHandle calibrator;
 	ros::Publisher Roll_R_pub;
@@ -109,8 +109,8 @@ int main(int argc, char *argv[])
 	A_toimage.y=240.5;
 	image_transport::ImageTransport it(calibrator);
 	image_transport::Subscriber subscriber;
-	subscriber = it.subscribe(argv[1], 1, &subscriber_callback,image_transport::TransportHints("raw"));
-	Roll_R_pub = calibrator.advertise<std_msgs::Float64MultiArray>(argv[2],1000);
+	subscriber = it.subscribe(argv[2], 1, &subscriber_callback,image_transport::TransportHints("raw"));
+	Roll_R_pub = calibrator.advertise<std_msgs::Float64MultiArray>(argv[3],1000);
 	
 	dynamic_reconfigure::Server<nostop_kinect_sensor::R_valueConfig> R_camera;
 	dynamic_reconfigure::Server<nostop_kinect_sensor::R_valueConfig>::CallbackType f;
