@@ -10,9 +10,7 @@
 #include "Robot.h"
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
-
-
-#include "nostop_agent/Id_robot.h"
+#include <std_msgs/String.h>
 
 #include <vector>
 
@@ -37,7 +35,7 @@ namespace Robotics
 		public:
 			Robot_manager();
 			~Robot_manager();
-			void new_robot_id(const nostop_agent::Id_robot::ConstPtr& msg);
+			void new_robot_id(const std_msgs::String::ConstPtr& msg);
 			void array_assignment(std::vector<ball_position>& blue_array, 
 						std::vector<ball_position>& green_array,
 						std::vector<ball_position>& red_array,

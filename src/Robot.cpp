@@ -3,7 +3,6 @@
 #include "ros/ros.h"
 #include <geometry_msgs/Pose.h>
 #include "Ball_tracker.h"
-#include "nostop_agent/Id_robot.h"
 #include "Camera.h"
 #include "math.h"
 #include <string>
@@ -19,11 +18,11 @@ Robot::Robot(std::string name_):
   m_heading(0)
 , found(false)
 , m_notFoundCount(0)
+, m_name(name_)
 { 
-  m_name = name_;
   m_front_marker_color = m_name.substr(0,m_name.find("_"));
   m_back_marker_color = m_name.substr(m_name.find("_")+1,m_name.length());
-  m_robot_pub = m_robot.advertise<nostop_agent::Id_robot>("/localizer/kinect/add_robot",1);
+  m_robot_pub = m_robot.advertise<std_msgs::String>("/localizer/kinect/add_robot",1);
   m_robot_pose_pub = m_robot.advertise<geometry_msgs::Pose>("/"+m_name+"/localizer/camera/pose",1);
   Front_ptr = std::make_shared<Ball_tracker>();
   Back_ptr = std::make_shared<Ball_tracker>();
@@ -36,9 +35,9 @@ Robot::~Robot()
 
 void Robot::pubID()
 {
-  nostop_agent::Id_robot l_msgs;
-  l_msgs.name = m_name;
-  m_robot_pub.publish(l_msgs);
+  std_msgs::String robot_name;
+  robot_name.data = m_name.c_str();
+  m_robot_pub.publish(robot_name);
 }
 
  

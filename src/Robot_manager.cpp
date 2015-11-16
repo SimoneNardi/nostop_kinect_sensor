@@ -4,7 +4,6 @@
 #include <string.h>
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Robot_manager.h"
-#include "nostop_agent/Id_robot.h"
 
 using namespace std;
 using namespace Robotics;
@@ -14,7 +13,7 @@ using namespace Robotics::GameTheory;
 Robot_manager::Robot_manager()
 {
   ROS_INFO("ROBOT MANAGER ON!");
-  m_robot_in = m_manager_node.subscribe<nostop_agent::Id_robot>("/localizer/kinect/add_robot", 1000, &Robot_manager::new_robot_id,this);// TOPIC VA BENE?
+  m_robot_in = m_manager_node.subscribe<std_msgs::String>("/localizer/kinect/add_robot", 1000, &Robot_manager::new_robot_id,this);
 }
 
 
@@ -22,9 +21,9 @@ Robot_manager::~Robot_manager()
 {}
 
 
-void Robot_manager::new_robot_id(const nostop_agent::Id_robot::ConstPtr& msg)
+void Robot_manager::new_robot_id(const std_msgs::String::ConstPtr& msg)
 {	
-    m_robot_array.push_back( std::make_shared<Robot>(msg->name) );
+    m_robot_array.push_back( std::make_shared<Robot>(msg->data) );
 }
 
 void Robot_manager::array_assignment(
