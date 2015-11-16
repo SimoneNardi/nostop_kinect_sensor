@@ -1,27 +1,29 @@
+<!-- Philips Cam -->
+<!-- TO DO BEFORE EXPERIMENT -->
 <launch>
   <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen">
-   <remap from="/usb_cam/image_raw" to="/usb/cam_img"/>
+   <remap from="/usb_cam/image_raw" to="/usb/philips/cam_img"/>
     <param name="video_device" value="/dev/video1" />
     <param name="image_width" value="640" />
     <param name="image_height" value="480" />
     <param name="camera_name" value="list" />
   </node>   
   
-<arg name="image_topic" default="/usb/cam_img" />
-<arg name="roll_R_correction_topic_name" default="/calibration_topic"/>
+<arg name="image_topic" default="/usb/philips/cam_img" />
+<arg name="roll_R_correction_topic_name" default="/philips/calibration_topic"/>
 <node pkg="nostop_kinect_sensor" type="script_calibration.sh" 
     args="$(arg image_topic) $(arg roll_R_correction_topic_name)"
     name="calibration_node" output="screen">
 </node>
 
 <arg name="camera_name" default="usb" />
-<arg name="xC" default="0" />
+<arg name="xC" default="128" />
 <arg name="x_sign" default="positive" />
-<arg name="yC" default="0" />
+<arg name="yC" default="197" />
 <arg name="y_sign" default="positive" />
-<arg name="zC" default="105" />
-<arg name="omega" default="0" />
-<arg name="gamma" default="180" />
+<arg name="zC" default="145" />
+<arg name="omega" default="90" /> <!-- rotation around zCamera to have xCamera to xWorld -->
+<arg name="gamma" default="180" /> <!-- rotation around xCamera to have yCamera to yWorld -->
   <node pkg="nostop_kinect_sensor" type="script_cam.sh" 
     args="$(arg camera_name) $(arg image_topic) $(arg roll_R_correction_topic_name) $(arg xC) $(arg x_sign) $(arg yC) $(arg y_sign)
 	  $(arg zC) $(arg omega) $(arg gamma)" 

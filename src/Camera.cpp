@@ -188,22 +188,22 @@ void Camera::search_ball_pos()
 
      // THRESHOLDED IMG
      imshow(BLUE_THRESHOLD_WINDOWS+m_camera_name,m_only_blue);
-//      imshow(GREEN_THRESHOLD_WINDOWS+m_camera_name,m_only_green);
+     imshow(GREEN_THRESHOLD_WINDOWS+m_camera_name,m_only_green);
      imshow(RED_THRESHOLD_WINDOWS+m_camera_name,m_only_red);
-//      imshow(YELLOW_THRESHOLD_WINDOWS+m_camera_name,m_only_yellow);  
+     imshow(YELLOW_THRESHOLD_WINDOWS+m_camera_name,m_only_yellow);  
      
      // FIND BALLS ARRAY
      m_blue_circles = charge_array(m_only_blue);
-//      m_green_circles = charge_array(m_only_green);
+     m_green_circles = charge_array(m_only_green);
      m_red_circles = charge_array(m_only_red);
-//      m_yellow_circles = charge_array(m_only_yellow);
+     m_yellow_circles = charge_array(m_only_yellow);
  
      
      //FROM CAM (pixel) TO WORLD (cm)
      m_blue_circles=cam_to_W(m_blue_circles);
-//      m_green_circles=cam_to_W(m_green_circles);
+     m_green_circles=cam_to_W(m_green_circles);
      m_red_circles=cam_to_W(m_red_circles);
-//      m_yellow_circles=cam_to_W(m_yellow_circles);
+     m_yellow_circles=cam_to_W(m_yellow_circles);
      Point center;
      center.x=320;
      center.y=240;
@@ -334,10 +334,6 @@ std::vector< ball_position > Camera::cam_to_W(std::vector< ball_position >& arra
       l_world_cm.height = l_pos_cm.height;
       l_world_cm.width = l_pos_cm.width;
       l_out_array.push_back(l_world_cm);
-//       ROS_INFO("x cam %f",pos_cam[0]);
-//       ROS_INFO("y cam %f", pos_cam[1]);
-//       ROS_INFO("x world %f",pos_world[0]);
-//       ROS_INFO("y world %f", pos_world[1]); 
    }
    return l_out_array;
 }

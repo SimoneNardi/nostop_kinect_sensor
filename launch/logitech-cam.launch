@@ -1,0 +1,35 @@
+<!-- Logitech Cam -->
+<!-- TO DO BEFORE EXPERIMENT -->
+<launch>
+  <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen">
+   <remap from="/usb_cam/image_raw" to="/usb/logitech/cam_img"/>
+    <param name="video_device" value="/dev/video1" />
+    <param name="image_width" value="640" />
+    <param name="image_height" value="480" />
+    <param name="camera_name" value="list" />
+  </node>   
+  
+<arg name="image_topic" default="/usb/logitech/cam_img" />
+<arg name="roll_R_correction_topic_name" default="/logitech/calibration_topic"/>
+<node pkg="nostop_kinect_sensor" type="script_calibration.sh" 
+    args="$(arg image_topic) $(arg roll_R_correction_topic_name)"
+    name="calibration_node" output="screen">
+</node>
+
+<arg name="camera_name" default="usb" />
+<arg name="xC" default="0" />
+<arg name="x_sign" default="positive" />
+<arg name="yC" default="0" />
+<arg name="y_sign" default="positive" />
+<arg name="zC" default="105" />
+<arg name="omega" default="0" /> <!-- rotation around zCamera to have xCamera to xWorld -->
+<arg name="gamma" default="180" />  <!-- rotation around xCamera to have yCamera to yWorld -->
+  <node pkg="nostop_kinect_sensor" type="script_cam.sh" 
+    args="$(arg camera_name) $(arg image_topic) $(arg roll_R_correction_topic_name) $(arg xC) $(arg x_sign) $(arg yC) $(arg y_sign)
+	  $(arg zC) $(arg omega) $(arg gamma)" 
+    name="camera_node" output="screen">
+  </node>
+  
+  <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure"/>
+  
+</launch>

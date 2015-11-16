@@ -85,10 +85,8 @@ void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vecto
 		    if(m_notFoundCount >= 10 )
 		    {
 		      m_notFoundCount = 0;
-		      ROS_INFO("L'ho persa!!");
 		      found = false;
 		    }else{
-		      ROS_INFO("SONO QUI");
 		      m_f_rect = Front_ptr->kalman_update(m_front_pos);
 		      m_b_rect = Back_ptr->kalman_update(m_back_pos);
 		      m_front_pos.x = m_f_rect.x;
