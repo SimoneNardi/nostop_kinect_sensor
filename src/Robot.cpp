@@ -2,13 +2,13 @@
 #include "Robot_manager.h"
 #include "ros/ros.h"
 #include <geometry_msgs/Pose.h>
+#include <nav_msgs/Odometry.h>
 #include "Ball_tracker.h"
 #include "Camera.h"
 #include "math.h"
 #include <string>
 
-#include "Box.h"
-#include <Quaternion.h>
+
 using namespace std;
 using namespace Robotics;
 using namespace Robotics::GameTheory;
@@ -23,7 +23,7 @@ Robot::Robot(std::string name_):
   m_front_marker_color = m_name.substr(0,m_name.find("_"));
   m_back_marker_color = m_name.substr(m_name.find("_")+1,m_name.length());
   m_robot_pub = m_robot.advertise<std_msgs::String>("/localizer/kinect/add_robot",1);
-  m_robot_pose_pub = m_robot.advertise<geometry_msgs::Pose>("/"+m_name+"/localizer/camera/pose",1);
+  m_robot_pose_pub = m_robot.advertise<nav_msgs::Odometry>("/"+m_name+"/localizer/camera/pose",1);
   Front_ptr = std::make_shared<Ball_tracker>();
   Back_ptr = std::make_shared<Ball_tracker>();
   ROS_INFO("ROBOT %s ON!",m_name.c_str());
@@ -107,18 +107,18 @@ void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vecto
 
 void Robot::publish_pose(ball_position front_pos,ball_position back_pos, float yaw)
 {
-    geometry_msgs::Pose pose;
+    nav_msgs::Odometry pose;
     float phi = 0;//ROLL
     float theta = 0;//PITCH
     float psi = yaw;
-    pose.position.x = (front_pos.x+back_pos.x)/2;
-    pose.position.y = (front_pos.y+back_pos.y)/2;
-    pose.position.z = 0; 
-    pose.orientation.x = cos(phi/2)*cos(theta/2)*cos(psi/2)+sin(phi/2)*sin(theta/2)*sin(psi/2); 
-    pose.orientation.y = sin(phi/2)*cos(theta/2)*cos(psi/2)-cos(phi/2)*sin(theta/2)*sin(psi/2); 
-    pose.orientation.z = cos(phi/2)*sin(theta/2)*cos(psi/2)+sin(phi/2)*cos(theta/2)*sin(psi/2);
-    pose.orientation.w = cos(phi/2)*cos(theta/2)*sin(psi/2)-sin(phi/2)*sin(theta/2)*cos(psi/2);
-    m_robot_pose_pub.publish<geometry_msgs::Pose>(pose);
+    pose.pose.pose.position.x = (front_pos.x+back_pos.x)/2;
+    pose.pose.pose.position.y = (front_pos.y+back_pos.y)/2;
+    pose.pose.pose.position.z = 0; 
+    pose.pose.pose.orientation.x = cos(phi/2)*cos(theta/2)*cos(psi/2)+sin(phi/2)*sin(theta/2)*sin(psi/2); 
+    pose.pose.pose.orientation.y = sin(phi/2)*cos(theta/2)*cos(psi/2)-cos(phi/2)*sin(theta/2)*sin(psi/2); 
+    pose.pose.pose.orientation.z = cos(phi/2)*sin(theta/2)*cos(psi/2)+sin(phi/2)*cos(theta/2)*sin(psi/2);
+    pose.pose.pose.orientation.w = cos(phi/2)*cos(theta/2)*sin(psi/2)-sin(phi/2)*sin(theta/2)*cos(psi/2);
+    m_robot_pose_pub.publish<nav_msgs::Odometry>(pose);
 }
 
 
