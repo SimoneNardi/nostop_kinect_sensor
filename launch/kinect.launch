@@ -112,4 +112,32 @@
     <arg name="camera" value="$(arg camera)" />
   </include>
 
+  
+  
+  
+  
+  <!--SETTINGS-->
+  <arg name="image_topic" default="/camera/rgb/image_raw" />
+<arg name="roll_R_correction_topic_name" default="/kinect/calibration_topic"/>
+<arg name="node_name" default = "kinect_calibration"/>
+<node pkg="nostop_kinect_sensor" type="script_calibration.sh" 
+    args="$(arg node_name) $(arg image_topic) $(arg roll_R_correction_topic_name)"
+    name="calibration_node" output="screen">
+</node>
+
+<arg name="camera_name" default="kinect" />
+<arg name="xC" default="128" />
+<arg name="x_sign" default="positive" />
+<arg name="yC" default="197" />
+<arg name="y_sign" default="positive" />
+<arg name="zC" default="145" />
+<arg name="omega" default="90" /> <!-- rotation around zCamera to have xCamera to xWorld -->
+<arg name="gamma" default="180" /> <!-- rotation around xCamera to have yCamera to yWorld -->
+  <node pkg="nostop_kinect_sensor" type="script_cam.sh" 
+    args="$(arg camera_name) $(arg image_topic) $(arg roll_R_correction_topic_name) $(arg xC) $(arg x_sign) $(arg yC) $(arg y_sign)
+	  $(arg zC) $(arg omega) $(arg gamma)" 
+    name="camera_node" output="screen">
+  </node>
+  
+    <node name="rqt_reconfigure_kinect" pkg="rqt_reconfigure" type="rqt_reconfigure"/>
 </launch>
