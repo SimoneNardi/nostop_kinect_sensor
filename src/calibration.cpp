@@ -15,8 +15,7 @@ cv::Point2f A_toimage;
 std_msgs::Float64MultiArray message;
 bool to_publish;
 float R=1;
-std::string cam_name;
-char* bau;
+char* camera_name;
  
 void mouse_callback(int event, int x, int y, int flags, void* param)
 {
@@ -77,8 +76,8 @@ void subscriber_callback(const sensor_msgs::ImageConstPtr &msg)
 	  cv::line(video_image,center,A_symmetric,cv::Scalar(0,255,0),0,8,0);
 	  cv::line(video_image,A_toimage,center_symmetric,cv::Scalar(0,0,255),0,8,0);
     }
-      cv::imshow(cam_name,video_image);
-    cvSetMouseCallback(bau,mouse_callback,NULL);	
+    cv::imshow(camera_name,video_image);
+    cvSetMouseCallback(camera_name,mouse_callback,NULL);	
       if (vertex.size()==1)
 	    { 
 	         to_publish = true;
@@ -103,8 +102,7 @@ int main(int argc, char *argv[])
 {
 	ROS_INFO("Calibration %s : ON",argv[1]);
 	ros::init(argc, argv, argv[1]);
-	cam_name = argv[1];
-	bau = argv[1];
+	camera_name = argv[1];
 	message.data.resize(2);
 	ros::NodeHandle calibrator;
 	ros::Publisher Roll_R_pub;

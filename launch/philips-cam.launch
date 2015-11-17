@@ -1,5 +1,5 @@
 <!-- Philips Cam -->
-<!-- TO DO BEFORE EXPERIMENT -->
+<!-- TO SET BEFORE EXPERIMENT -->
 <launch>
   <node name="philips_cam" pkg="usb_cam" type="usb_cam_node" output="screen">
    <remap from="/philips_cam/image_raw" to="/usb/philips/cam_img"/>

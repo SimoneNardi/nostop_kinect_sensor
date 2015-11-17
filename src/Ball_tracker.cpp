@@ -94,8 +94,8 @@ cv::Rect Ball_tracker::kalman_update(ball_position& position)
     m_meas.at<float>(3) = (float)position.height;
     m_kf.correct(m_meas); // Kalman Correction
     m_state = m_kf.predict();     
-    predRect.width = 2*m_state.at<float>(4);          
-    predRect.height = 2* m_state.at<float>(5);          
+    predRect.width = 1.25*m_state.at<float>(4);          
+    predRect.height = 1.25*m_state.at<float>(5);          
     predRect.x = m_state.at<float>(0) - predRect.width / 2;          
     predRect.y = m_state.at<float>(1) - predRect.height / 2;          
     return predRect;

@@ -10,8 +10,8 @@
 
   
    <!-- M USB-CAM ( M CAMERAS = M LAUNCH FILE ) -->
-   <!-- include file="$(find nostop_kinect_sensor)/launch/logitech-cam.launch"/ -->
-   <!-- include file="$(find nostop_kinect_sensor)/launch/philips-cam.launch"/ -->
+   <include file="$(find nostop_kinect_sensor)/launch/logitech-cam.launch"/>
+   <include file="$(find nostop_kinect_sensor)/launch/philips-cam.launch"/>
   
  
   
