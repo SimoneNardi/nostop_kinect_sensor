@@ -12,7 +12,6 @@
 #include "Ball_tracker.h"
 #include "Robot_manager.h"
 #include "Camera.h"
-#include "nostop_agent/Id_robot.h"
 
 
 namespace Robotics 
