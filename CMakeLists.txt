@@ -25,7 +25,9 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   cv_bridge
   nostop_agent
-  nostop_learning)
+  nostop_learning
+  tf
+  )
 
 generate_dynamic_reconfigure_options(
    cfg/R_value.cfg

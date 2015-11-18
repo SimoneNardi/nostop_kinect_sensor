@@ -2,7 +2,7 @@
 <launch>
   
    
-   <node pkg="nostop_kinect_sensor" type="sensor_node" name="sensor_node" required="true" output="screen" />
+   <node pkg="nostop_kinect_sensor" type="acquisition_node" name="sensor_node" required="true" output="screen" />
    
    
   <!-- N KINECT CAMERAS ( N CAMERAS = N LAUNCH FILE )-->
