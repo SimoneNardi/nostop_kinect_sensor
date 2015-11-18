@@ -7,14 +7,15 @@
 
 #include <std_msgs/Float64MultiArray.h>
 #include <dynamic_reconfigure/server.h>
-#include <nostop_kinect_sensor/R_valueConfig.h>
+#include <nostop_kinect_sensor/Camera_calibrationConfig.h>
+
 
 cv::Point2f xy;
 std::vector<cv::Point2f> vertex;
 cv::Point2f A_toimage;
 std_msgs::Float64MultiArray message;
 bool to_publish;
-float R=1;
+float R,xC,yC,zC,omega,gam,h_robot;
 char* camera_name;
  
 void mouse_callback(int event, int x, int y, int flags, void* param)
@@ -93,9 +94,15 @@ void subscriber_callback(const sensor_msgs::ImageConstPtr &msg)
 
 }
 
-void R_reconfigure(nostop_kinect_sensor::R_valueConfig  &config, uint32_t level) 
+void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &config, uint32_t level) 
  {
   R = config.R_distance;
+  xC = config.xC;
+  yC = config.yC;
+  zC = config.zC;
+  omega = config.omega;
+  gam = config.gamma;  
+  h_robot = config.h_robot;
   to_publish = true;
 }
 int main(int argc, char *argv[])
@@ -105,25 +112,25 @@ int main(int argc, char *argv[])
 	camera_name = argv[1];
 	message.data.resize(2);
 	ros::NodeHandle calibrator;
-	ros::Publisher Roll_R_pub;
+	ros::Publisher calibrator_pub;
 	A_toimage.x=320.5;
 	A_toimage.y=240.5;
 	image_transport::ImageTransport it(calibrator);
 	image_transport::Subscriber subscriber;
 	subscriber = it.subscribe(argv[2], 1, &subscriber_callback,image_transport::TransportHints("raw"));
-	Roll_R_pub = calibrator.advertise<std_msgs::Float64MultiArray>(argv[3],1000);
+	calibrator_pub = calibrator.advertise<std_msgs::Float64MultiArray>(argv[3],1000);
 	
-	dynamic_reconfigure::Server<nostop_kinect_sensor::R_valueConfig> R_camera;
-	dynamic_reconfigure::Server<nostop_kinect_sensor::R_valueConfig>::CallbackType f;
-	f = boost::bind(&R_reconfigure,_1,_2);
-	R_camera.setCallback(f);
+	dynamic_reconfigure::Server<nostop_kinect_sensor::Camera_calibrationConfig> camera_calibration;
+	dynamic_reconfigure::Server<nostop_kinect_sensor::Camera_calibrationConfig>::CallbackType callback;
+	callback = boost::bind(&calibration_callback,_1,_2);
+	camera_calibration.setCallback(callback);
 	
 	while (ros::ok())
 	{
 	    if(to_publish)
 	      {	  
 		 message.data[1] = R;
-                 Roll_R_pub.publish(message);
+                 calibrator_pub.publish(message);
 	         ROS_INFO("Value published");
 	         to_publish=false;
 	      }

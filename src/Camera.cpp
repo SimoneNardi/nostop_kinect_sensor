@@ -35,25 +35,19 @@ static const std::string GREEN_THRESHOLD_WINDOWS = "Green threshold ";
 static const std::string RED_THRESHOLD_WINDOWS = "Red threshold ";
 static const std::string YELLOW_THRESHOLD_WINDOWS = "Yellow threshold ";
 static const float ball_radius = 7.0;
-static const float h_robot = 3.5;
 
  
 /////////////////////////////////////////////
-Camera::Camera(std::string name_,std::string topic_name,std::string roll_R_topic,std::vector<float> pos_camera,float omega,float gamma)
+Camera::Camera(std::string name_,std::string image_topic_name,std::string calibration_topic)
 : m_available(false)
 , m_it(m_node)
 , m_camera_name(name_)
-, m_topic_name(topic_name)
-, m_xCamera(pos_camera.at(0))
-, m_yCamera(pos_camera.at(1))
-, m_zCamera(pos_camera.at(2))
+, m_topic_name(image_topic_name)
 , m_R(1)
-, m_omegaz(omega)
-, m_gammax(gamma)
 , m_roll(0)
 {
   ROS_INFO("CAMERA %s ON!",m_camera_name.c_str());
-  m_roll_R_read = m_node.subscribe(roll_R_topic,1,&Camera::roll_R_correction,this);
+  m_calibration_sub = m_node.subscribe(calibration_topic,1,&Camera::camera_calibration,this);
   subscribe();  
 }
 
@@ -69,12 +63,17 @@ Camera::~Camera()
 }
 
 
-void Camera::roll_R_correction(const std_msgs::Float64MultiArray::ConstPtr& msg)
+void Camera::camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg)
 {
   Lock l_lock(m_mutex);
-  m_roll = msg->data[0];
-  m_roll = -m_roll*M_PI/180;
+  m_roll = msg->data[0]*M_PI/180;
   m_R = msg->data[1];
+  m_xCamera = msg->data[2];
+  m_yCamera = msg->data[3];
+  m_zCamera = msg->data[4];
+  m_omegaz = msg->data[5];
+  m_gammax = msg->data[6];
+  m_h_robot = msg->data[7];
 }
 /////////////////////////////////////////////
 void Camera::subscribe()
@@ -293,7 +292,7 @@ std::vector< ball_position > Camera::cam_to_W(std::vector< ball_position >& arra
       l_pos_cm.height=2*ball_radius;
       l_pos_cm.width=2*ball_radius;
       psi = atan(m_zCamera/l_pos_cm.y);
-      l_pos_cm.y= l_pos_cm.y-h_robot/tan(psi);
+      l_pos_cm.y= l_pos_cm.y-m_h_robot/tan(psi);
       pos_cam[0] = l_pos_cm.x;
       pos_cam[1] = l_pos_cm.y;
       pos_cam[2] = 0;

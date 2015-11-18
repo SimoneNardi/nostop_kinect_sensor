@@ -10,24 +10,16 @@
   </node>   
   
 <arg name="image_topic" default="/usb/logitech/cam_img" />
-<arg name="roll_R_correction_topic_name" default="/logitech/calibration_topic"/>
+<arg name="calibration_topic_name" default="/logitech/calibration_topic"/>
 <arg name="node_name" default = "logitech_calibration" />
 <node name="calibration" pkg="nostop_kinect_sensor" type="script_calibration.sh" 
-    args="$(arg node_name) $(arg image_topic) $(arg roll_R_correction_topic_name)"
+    args="$(arg node_name) $(arg image_topic) $(arg calibration_topic_name)"
      output="screen">
 </node>
 
 <arg name="camera_name" default="logitech" />
-<arg name="xC" default="0" />
-<arg name="x_sign" default="positive" />
-<arg name="yC" default="0" />
-<arg name="y_sign" default="positive" />
-<arg name="zC" default="105" />
-<arg name="omega" default="0" /> <!-- rotation around zCamera to have xCamera to xWorld -->
-<arg name="gamma" default="180" />  <!-- rotation around xCamera to have yCamera to yWorld -->
   <node pkg="nostop_kinect_sensor" type="script_cam.sh" 
-    args="$(arg camera_name) $(arg image_topic) $(arg roll_R_correction_topic_name) $(arg xC) $(arg x_sign) $(arg yC) $(arg y_sign)
-	  $(arg zC) $(arg omega) $(arg gamma)" 
+    args="$(arg camera_name) $(arg image_topic) $(arg calibration_topic_name)" 
     name="camera_node" output="screen">
   </node>
   

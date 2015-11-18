@@ -55,7 +55,7 @@ namespace Robotics
 		  bool m_available;
 		  
 		  ros::NodeHandle m_node;
-		  ros::Subscriber m_roll_R_read;
+		  ros::Subscriber m_calibration_sub;
 		  image_transport::ImageTransport m_it;
 		  image_transport::Subscriber m_image_sub;
 		  
@@ -68,7 +68,7 @@ namespace Robotics
 		  cv::Mat m_only_yellow;
 		  
 		  //POINT TRASFORMATION
-		  float m_xCamera,m_yCamera,m_zCamera,m_R,m_omegaz,m_gammax,m_roll;
+		  float m_xCamera,m_yCamera,m_zCamera,m_R,m_omegaz,m_gammax,m_roll,m_h_robot;
 		  geometry_msgs::PointStamped m_camera_point;
 
 		  // BALLS ARRAY
@@ -80,13 +80,12 @@ namespace Robotics
 
 		  
 		public:
-			Camera(std::string name_,std::string topic_name,std::string roll_R_topic,std::vector<float> pos_camera,float omega,float gamma);
+			Camera(std::string name_,std::string topic_name,std::string calibration_topic);
 			
 			~Camera();
 			
 			void subscribe();
-			void R_reconfigure(nostop_kinect_sensor::R_valueConfig  &config, uint32_t level);
-			void roll_R_correction(const std_msgs::Float64MultiArray::ConstPtr& msg);
+			void camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg);
 			void video_acquisition(const sensor_msgs::ImageConstPtr& msg);
 			void search_ball_pos();
 			void filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[]);
