@@ -6,7 +6,7 @@
   <arg name="camera" default="camera" />
   <arg name="rgb_frame_id"   default="$(arg camera)_rgb_optical_frame" />
   <arg name="depth_frame_id" default="$(arg camera)_depth_optical_frame" />
-
+      <remap from="/camera/rgb/image_raw" to = "/kinect/cam_img" /> <!-- TO REMAP!!!! -->
   <!-- device_id can have the following formats:
          "#1"  : the first device found
          "2@X" : the Xth device on USB bus 2 -->
@@ -30,7 +30,7 @@
   <arg name="rgb"              default="rgb" />
   <arg name="ir"               default="ir" />
   <arg name="depth"            default="depth" />
-
+  
   <!-- Optionally suppress loading the driver nodelet and/or publishing the default tf
        tree. Useful if you are playing back recorded raw data from a bag, or are
        supplying a more accurate tf tree from calibration. -->
@@ -84,6 +84,7 @@
       <arg name="color_depth_synchronization"     value="$(arg color_depth_synchronization)" />
       <arg name="auto_exposure"                   value="$(arg auto_exposure)" />
       <arg name="auto_white_balance"              value="$(arg auto_white_balance)" />
+
     </include>
 
     <!-- Load standard constellation of processing nodelets -->
@@ -117,25 +118,18 @@
   
   
   <!--SETTINGS-->
+  <remap from="/camera/rgb/image_raw" to = "/kinect/cam_img" />
   <arg name="image_topic" default="/camera/rgb/image_raw" />
-<arg name="roll_R_correction_topic_name" default="/kinect/calibration_topic"/>
+<arg name="calibration_topic_name" default="/kinect/calibration_topic"/>
 <arg name="node_name" default = "kinect_calibration"/>
 <node pkg="nostop_kinect_sensor" type="script_calibration.sh" 
-    args="$(arg node_name) $(arg image_topic) $(arg roll_R_correction_topic_name)"
+    args="$(arg node_name) $(arg image_topic) $(arg calibration_topic_name)"
     name="calibration_node" output="screen">
 </node>
 
 <arg name="camera_name" default="kinect" />
-<arg name="xC" default="128" />
-<arg name="x_sign" default="positive" />
-<arg name="yC" default="197" />
-<arg name="y_sign" default="positive" />
-<arg name="zC" default="145" />
-<arg name="omega" default="90" /> <!-- rotation around zCamera to have xCamera to xWorld -->
-<arg name="gamma" default="180" /> <!-- rotation around xCamera to have yCamera to yWorld -->
   <node pkg="nostop_kinect_sensor" type="script_cam.sh" 
-    args="$(arg camera_name) $(arg image_topic) $(arg roll_R_correction_topic_name) $(arg xC) $(arg x_sign) $(arg yC) $(arg y_sign)
-	  $(arg zC) $(arg omega) $(arg gamma)" 
+    args="$(arg camera_name) $(arg image_topic) $(arg calibration_topic_name)" 
     name="camera_node" output="screen">
   </node>
   

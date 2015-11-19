@@ -3,7 +3,7 @@
 <launch>
   <node name="philips_cam" pkg="usb_cam" type="usb_cam_node" output="screen">
    <remap from="/philips_cam/image_raw" to="/usb/philips/cam_img"/>
-    <param name="video_device" value="/dev/video0" />
+    <param name="video_device" value="/dev/video1" />
     <param name="image_width" value="640" />
     <param name="image_height" value="480" />
     <param name="camera_name" value="philips" />
@@ -18,7 +18,6 @@
 </node>
 
 <arg name="camera_name" default="philips" />
-
   <node pkg="nostop_kinect_sensor" type="script_cam.sh" 
     args="$(arg camera_name) $(arg image_topic) $(arg calibration_topic_name)" 
     name="camera_node_philips" output="screen">

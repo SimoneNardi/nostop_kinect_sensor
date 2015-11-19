@@ -17,7 +17,6 @@
 #include "ros/ros.h"
 #include <std_msgs/Float64MultiArray.h>
 #include <dynamic_reconfigure/server.h>
-#include "nostop_kinect_sensor/R_valueConfig.h"
 #include <math.h>
 #include <iostream>
  
@@ -111,6 +110,21 @@ void Camera::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
      search_ball_pos();
 }
 
+
+
+
+
+// FILTERING INITIAL VALUES
+int  lb_b[3]={100,125,100};
+int  ub_b[3] = {160,255,255};
+int  lb_g[3] = {30,150,50};
+int  ub_g[3] = {60,255,180}; 
+int  lower_lb_r[3] = {0,100,150};
+int  lower_ub_r[3] = {10,255,255}; 
+int  upper_lb_r[3] = {160,100,150};
+int  upper_ub_r[3] = {179,255,255};
+int  lb_y[3] = {20,115,135};
+int  ub_y[3] = {45,255,255}; 
 /////////////////////////////////////////////////////
 void Camera::search_ball_pos()
 { 
@@ -128,54 +142,53 @@ void Camera::search_ball_pos()
 
      
      // Filtering
-     // Blue Ball HSV values (H had *0.5 scale factor)
-     int64_t lb_b[3],ub_b[3]; 
-     lb_b[0] = 200*0.5; 
-     lb_b[1] = 125;
-     lb_b[2] = 100;
-     ub_b[0] = 320*0.5;
-     ub_b[1] = 255;
-     ub_b[2] = 255;
+     // Blue Ball HSV values 
+     namedWindow(BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name);
+     createTrackbar("H lower",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_b[0],180,0,0);
+     createTrackbar("S lower",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_b[1],255,0,0);
+     createTrackbar("V lower",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_b[2],255,0,0);
+     createTrackbar("H upper",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_b[0],180,0,0);
+     createTrackbar("S upper",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_b[1],255,0,0);
+     createTrackbar("V upper",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_b[2],255,0,0);
      filtering(m_stream_video,m_only_blue,lb_b,ub_b);  
      
-     // Green Ball HSV values (H had *0.5 scale factor)
-     int64_t lb_g[3],ub_g[3]; 
-     lb_g[0] = 30; 
-     lb_g[1] = 150;
-     lb_g[2] = 50;
-     ub_g[0] = 60;
-     ub_g[1] = 255;
-     ub_g[2] = 180;
+     // Green Ball HSV values
+     namedWindow(GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name);
+     createTrackbar("H lower",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_g[0],180,0,0);
+     createTrackbar("S lower",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_g[1],255,0,0);
+     createTrackbar("V lower",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_g[2],255,0,0);
+     createTrackbar("H upper",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_g[0],180,0,0);
+     createTrackbar("S upper",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_g[1],255,0,0);
+     createTrackbar("V upper",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_g[2],255,0,0);
      filtering(m_stream_video,m_only_green,lb_g,ub_g);  
      
      // Red Ball HSV values (H had *0.5 scale factor)
      cv::Mat l_only_lower_red, l_only_upper_red;
-     int64_t lb_r[3],ub_r[3]; 
-     lb_r[0] = 0; 
-     lb_r[1] = 100;
-     lb_r[2] = 150;
-     ub_r[0] = 10;
-     ub_r[1] = 255;
-     ub_r[2] = 255;
-     filtering(m_stream_video,l_only_lower_red,lb_r,ub_r);  
-     
-     lb_r[0] = 160; 
-     lb_r[1] = 100;
-     lb_r[2] = 150;
-     ub_r[0] = 179;
-     ub_r[1] = 255;
-     ub_r[2] = 255;
-     filtering(m_stream_video,l_only_upper_red,lb_r,ub_r);  
+     namedWindow(RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name);
+     createTrackbar("H lower (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lower_lb_r[0],180,0,0);
+     createTrackbar("S lower (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lower_lb_r[1],255,0,0);
+     createTrackbar("V lower (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lower_lb_r[2],255,0,0);
+     createTrackbar("H upper (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lower_ub_r[0],180,0,0);
+     createTrackbar("S upper (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lower_ub_r[1],255,0,0);
+     createTrackbar("V upper (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lower_ub_r[2],255,0,0);
+     createTrackbar("H lower (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&upper_lb_r[0],180,0,0);
+     createTrackbar("S lower (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&upper_lb_r[1],255,0,0);
+     createTrackbar("V lower (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&upper_lb_r[2],255,0,0);
+     createTrackbar("H upper (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&upper_ub_r[0],180,0,0);
+     createTrackbar("S upper (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&upper_ub_r[1],255,0,0);
+     createTrackbar("V upper (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&upper_ub_r[2],255,0,0);
+     filtering(m_stream_video,l_only_lower_red,lower_lb_r,lower_ub_r);  
+     filtering(m_stream_video,l_only_upper_red,upper_lb_r,upper_ub_r);  
      cv::addWeighted(l_only_lower_red,1.0,l_only_upper_red,1.0,0.0,m_only_red);
           
-     // Yellow Ball HSV values (H had *0.5 scale factor)
-     int64_t lb_y[3],ub_y[3]; 
-     lb_y[0] = 20; 
-     lb_y[1] = 115;
-     lb_y[2] = 135;
-     ub_y[0] = 45;
-     ub_y[1] = 255;
-     ub_y[2] = 255;
+     // Yellow Ball HSV values
+     namedWindow(YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name);
+     createTrackbar("H lower",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_y[0],180,0,0);
+     createTrackbar("S lower",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_y[1],255,0,0);
+     createTrackbar("V lower",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_y[2],255,0,0);
+     createTrackbar("H upper",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_y[0],180,0,0);
+     createTrackbar("S upper",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_y[1],255,0,0);
+     createTrackbar("V upper",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_y[2],255,0,0);
      filtering(m_stream_video,m_only_yellow,lb_y,ub_y);  
      
 
@@ -214,24 +227,23 @@ void Camera::search_ball_pos()
 }
        
 
-
-void Camera::filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[])
+void Camera::filtering(cv::Mat &src,cv::Mat &dst,int  lb[],int  ub[])
 {
      // Noise smoothing
      cv::Mat blur;
-     cv::GaussianBlur(src, blur, cv::Size(5, 5), 3.0, 3.0);
+     cv::GaussianBlur(src,blur, cv::Size(5, 5), 3.0, 0);
      
      //  HSV conversion
      cv::Mat frmHsv;
      cv::cvtColor(blur, frmHsv, CV_BGR2HSV);
-
+  
      //  Color Thresholding
      cv::Mat rangeRes = cv::Mat::zeros(src.size(), CV_8UC1);
-     cv::inRange(frmHsv, cv::Scalar(lb[0], lb[1], lb[2]),cv::Scalar(ub[0], ub[1], ub[2]), rangeRes);
-     
+     cv::inRange(frmHsv, cv::Scalar(lb[0], lb[1], lb[2]),cv::Scalar(ub[0], ub[1], ub[2]),dst);
+
 //     >>>>> Improving the result
-     cv::erode(rangeRes, dst, cv::Mat(), cv::Point(-1, -1), 2);
-     cv::dilate(dst, dst, cv::Mat(), cv::Point(-1, -1), 2);    
+//      cv::erode(rangeRes, dst, cv::Mat(), cv::Point(-1, -1), 2);
+//      cv::dilate(dst, dst, cv::Mat(), cv::Point(-1, -1), 2);    
      
 }
 
@@ -250,7 +262,7 @@ std::vector<ball_position> Camera::charge_array(cv::Mat img)
 	if (ratio > 1.0f)
             ratio = 1.0f / ratio;
          // Searching for a bBox almost square
-         if (ratio > 0.5)// && bBox.area() >= 100)// && bBox.area() <= 10000) 
+         if (ratio > 0.75)// && bBox.area() >= 100)// && bBox.area() <= 10000) 
          {
 	    l_ball.x = bBox.x;
 	    l_ball.y = bBox.y;
@@ -362,3 +374,7 @@ std::vector<ball_position> Camera::get_yellow_array()
   Lock l_lock(m_mutex);
   return m_yellow_circles;
 }
+
+
+
+

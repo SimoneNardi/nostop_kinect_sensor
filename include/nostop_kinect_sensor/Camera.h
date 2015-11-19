@@ -88,7 +88,7 @@ namespace Robotics
 			void camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg);
 			void video_acquisition(const sensor_msgs::ImageConstPtr& msg);
 			void search_ball_pos();
-			void filtering(cv::Mat &src,cv::Mat &dst,int64_t lb[],int64_t ub[]);
+			void filtering(cv::Mat &src,cv::Mat &dst,int  lb[],int ub[]);
 			std::vector<ball_position> charge_array(cv::Mat img);
 			std::vector<ball_position> cam_to_W(std::vector<ball_position> & array);
 			std::vector<ball_position> get_blue_array();
