@@ -6,7 +6,6 @@
 #ifndef ROBOT_MANAGER_H
 #define ROBOT_MANAGER_H
 #pragma once
-#include "some_struct.h"
 #include "Robot.h"
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
@@ -36,10 +35,10 @@ namespace Robotics
 			Robot_manager();
 			~Robot_manager();
 			void new_robot_id(const std_msgs::String::ConstPtr& msg);
-			void array_assignment(std::vector<ball_position>& blue_array, 
-						std::vector<ball_position>& green_array,
-						std::vector<ball_position>& red_array,
-						std::vector<ball_position>& yellow_array);
+			void array_assignment(std::vector<cv::Rect>& blue_array, 
+						std::vector<cv::Rect>& green_array,
+						std::vector<cv::Rect>& red_array,
+						std::vector<cv::Rect>& yellow_array);
 		};
 
 	}

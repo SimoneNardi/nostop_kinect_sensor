@@ -12,7 +12,6 @@
 
 #include "ros/ros.h"
 #include "rosbag/bag.h"
-#include "some_struct.h"
 #include <memory>
 #include "Camera.h"
 
@@ -34,7 +33,7 @@ namespace Robotics
 		public:
 			Ball_tracker();
 			void matrixSettings(cv::KalmanFilter m_kf);
-			cv::Rect kalman_update(ball_position& position);
+			cv::Rect kalman_update(cv::Rect& position);
 
 			
 			~Ball_tracker();

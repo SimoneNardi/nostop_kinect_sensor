@@ -8,7 +8,6 @@
 #pragma once
 #include <string>
 #include <ros/ros.h>
-#include "some_struct.h"
 #include "Ball_tracker.h"
 #include "Robot_manager.h"
 #include "Camera.h"
@@ -30,8 +29,8 @@ namespace Robotics
 		  std::string m_back_marker_color;
 		  
 		  // MARKER POSITION
-		  ball_position m_front_pos;
-		  ball_position m_back_pos;
+		  cv::Rect m_front_pos;
+		  cv::Rect m_back_pos;
 		  float m_heading;
 		  bool found;
 		  int m_notFoundCount;
@@ -44,8 +43,8 @@ namespace Robotics
 		public:
 
 		      void pubID();
-		      void publish_pose(ball_position front_pos,ball_position back_pos,float yaw);
-		      void select_robot_pose(std::vector<ball_position>& front_array,std::vector<ball_position>& back_array);
+		      void publish_pose(cv::Rect front_pos,cv::Rect back_pos,float yaw);
+		      void select_robot_pose(std::vector<cv::Rect>& front_array,std::vector<cv::Rect>& back_array);
 		      std::string color_f();
 		      std::string color_b();
 		      Robot(std::string name_);

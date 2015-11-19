@@ -43,7 +43,7 @@ void Robot::pubID()
 }
 
  
-void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vector<ball_position>& back_array)
+void Robot::select_robot_pose(std::vector<cv::Rect>& front_array,std::vector<cv::Rect>& back_array)
 {	
   float distance;
   if(!found)
@@ -113,7 +113,7 @@ void timerCallback(const ros::TimerEvent&)
   
 }
 
-void Robot::publish_pose(ball_position front_pos,ball_position back_pos, float yaw)
+void Robot::publish_pose(cv::Rect front_pos,cv::Rect back_pos, float yaw)
 {
 
     float phi = 0;//ROLL

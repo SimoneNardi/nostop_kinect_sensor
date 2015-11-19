@@ -74,7 +74,7 @@ void Ball_tracker::matrixSettings(cv::KalmanFilter m_kf)
 }
 
 
-cv::Rect Ball_tracker::kalman_update(ball_position& position) 
+cv::Rect Ball_tracker::kalman_update(Rect& position) 
 {
   double precTick = m_ticks;
   m_ticks = (double) cv::getTickCount();

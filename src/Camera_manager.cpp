@@ -1,7 +1,6 @@
 #include "Camera_manager.h"
 #include "Camera.h"
 #include "std_msgs/String.h"
-#include "some_struct.h"
 #include <Robot_manager.h>
 
 #include "nostop_kinect_sensor/Camera_data.h"
@@ -39,7 +38,7 @@ void Camera_manager::pack_passage()
 {
     for(size_t i = 0; i<m_camera_array.size();i++)
     {
-        std::vector<ball_position> l_blue,l_green,l_red,l_yellow;
+        std::vector<cv::Rect> l_blue,l_green,l_red,l_yellow;
 	l_blue = m_camera_array[i]->get_blue_array();
 	l_green = m_camera_array[i]->get_green_array();
 	l_red = m_camera_array[i]->get_red_array();
