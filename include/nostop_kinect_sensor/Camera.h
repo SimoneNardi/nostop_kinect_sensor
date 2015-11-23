@@ -33,7 +33,7 @@
 #include "ros/ros.h"
 #include "Robot_manager.h"
 #include <nostop_kinect_sensor/Camera_data.h>
-#include <nostop_kinect_sensor/R_valueConfig.h>
+//#include <nostop_kinect_sensor/R_valueConfig.h>
 
 
 
