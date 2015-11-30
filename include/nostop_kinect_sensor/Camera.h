@@ -71,10 +71,14 @@ namespace Robotics
 		  geometry_msgs::PointStamped m_camera_point;
 
 		  // BALLS ARRAY
-		  std::vector<ball_position> m_blue_circles;
-		  std::vector<ball_position> m_green_circles;
-		  std::vector<ball_position> m_red_circles;
+		  std::vector<ball_position>  m_blue_circles;
+		  std::vector<ball_position>  m_green_circles;
+		  std::vector<ball_position>  m_red_circles;
 		  std::vector<ball_position>  m_yellow_circles;
+		  std::vector<ball_position>  m_blue_circles_W;
+		  std::vector<ball_position>  m_green_circles_W;
+		  std::vector<ball_position>  m_red_circles_W;
+		  std::vector<ball_position>  m_yellow_circles_W;
 
 
 		  
@@ -90,7 +94,7 @@ namespace Robotics
 			void init_robot_pose(const std_msgs::String::ConstPtr& msg);
 			void filtering(cv::Mat &src,cv::Mat &dst,int  lb[],int ub[],int dim_kernel);
 			std::vector<ball_position> charge_array(cv::Mat img);
-			std::vector<ball_position> cam_to_W(std::vector<ball_position> & array);
+			std::vector<ball_position> cam_to_W(std::vector<ball_position>& array);
 			std::vector<ball_position> get_blue_array();
 			std::vector<ball_position> get_green_array();
 			std::vector<ball_position> get_red_array();

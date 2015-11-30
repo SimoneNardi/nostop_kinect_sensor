@@ -93,8 +93,8 @@ void mouse_callback(int event, int x, int y, int flags, void* param)
 		cv::Rect pose;
 		pose.height = 100;
 		pose.width = 100;
-		pose.x = round(x-pose.height/2);
-		pose.y = round(y-pose.width/2);
+		pose.x = x-pose.width/2;
+		pose.y = y-pose.height/2;
 		robot_initial_pose_rect.push_back(pose);
 		callback_done = true;
 	}
@@ -128,8 +128,6 @@ void Camera::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
   
     m_stream_video = cv_ptr->image.clone();
 
-      // Update GUI Window
-     
      // Update GUI Window
      cv::waitKey(3);
      // FUNCTION
@@ -251,11 +249,6 @@ void Camera::search_ball_pos()
      
 
      Lock l_lock(m_mutex);
-     
-     m_blue_circles.clear();
-     m_green_circles.clear();
-     m_red_circles.clear();
-     m_yellow_circles.clear();
 
 // //      THRESHOLDED IMG
 //      imshow(BLUE_THRESHOLD_WINDOWS+m_camera_name,m_only_blue);
@@ -268,11 +261,18 @@ void Camera::search_ball_pos()
      m_green_circles = charge_array(m_only_green);
      m_red_circles = charge_array(m_only_red);
      m_yellow_circles = charge_array(m_only_yellow);
-//        if(m_blue_circles.size()>0)
-//     {
-//           ROS_INFO("x-->%f",m_blue_circles[0].x);
-//      ROS_INFO("y-->%f",m_blue_circles[0].y);
-//     }
+
+       //FROM CAM (pixel) TO WORLD (cm)
+     m_blue_circles_W=cam_to_W(m_blue_circles);
+     m_green_circles_W=cam_to_W(m_green_circles);
+     m_red_circles_W=cam_to_W(m_red_circles);
+     m_yellow_circles_W=cam_to_W(m_yellow_circles);
+
+     Point center;
+     center.x=320;
+     center.y=240;
+    
+     
       for(size_t i = 0;i<m_blue_circles.size();i++)
      {
        cv::Rect rec;
@@ -321,19 +321,18 @@ void Camera::search_ball_pos()
        rectangle(m_stream_video,rec,cv::Scalar(255, 255, 255),1,8,0);
        
      }
-     //FROM CAM (pixel) TO WORLD (cm)
-     m_blue_circles=cam_to_W(m_blue_circles);
-     m_green_circles=cam_to_W(m_green_circles);
-     m_red_circles=cam_to_W(m_red_circles);
-     m_yellow_circles=cam_to_W(m_yellow_circles);
-
-     Point center;
-     center.x=320;
-     center.y=240;
-    
      cv::circle(m_stream_video,center,2,cv::Scalar(0, 0, 255),-1,8,0);
      cv::circle(m_stream_video,center,10,cv::Scalar(0, 0, 0),1,8,0);
      cv::imshow(SENSOR_CV_WINDOW+m_camera_name,m_stream_video);
+          
+     m_blue_circles.clear();
+     m_green_circles.clear();
+     m_red_circles.clear();
+     m_yellow_circles.clear();
+     m_blue_circles_W.clear();
+     m_green_circles_W.clear();
+     m_red_circles_W.clear();
+     m_yellow_circles_W.clear();
 }
        
 
@@ -379,15 +378,15 @@ std::vector<ball_position> Camera::charge_array(cv::Mat img)
 	possible_ball.y = bBox.y;
 	for(size_t j = 0;j<robot_initial_pose_rect.size();j++)
 	{
-         if (ratio > 0.5 && robot_initial_pose_rect[j].contains(possible_ball) )//&& bBox.area()<1000) 
+         if (ratio > 0.75 && possible_ball.inside(robot_initial_pose_rect[j]) && bBox.area()<100000) 
          {
 	    l_ball.x = bBox.x;
 	    l_ball.y = bBox.y;
 	    l_ball.height = bBox.height;
 	    l_ball.width = bBox.width;
          }
+         l_array.push_back(l_ball);
 	}
-	l_array.push_back(l_ball);
       }
       return l_array;
 }
@@ -404,23 +403,39 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
   float psi;
   float distance_from_center_x,distance_from_center_y;
   float pitch = -atan(m_R/m_zCamera)+M_PI/2;
-   for (size_t i=0;i<array.size();i++)
+   for (size_t i = 0;i<array.size();i++)
    {
-      l_pos_pix = array[i];
+      l_pos_pix.x = array[i].x;
+      l_pos_pix.y = array[i].y;
+      l_pos_pix.width = array[i].width;
+      l_pos_pix.height = array[i].height;
       float R_z[3][3],R_x[3][3],Rtot[3][3];
       float x_SR_centered,y_SR_centered,x_roll_corrected,y_roll_corrected;
+      int k = array.size();
+      ROS_INFO("%d",k);
+      ROS_INFO("x_pos-->%f",l_pos_pix.x);
+      ROS_INFO("y_pos-->%f",l_pos_pix.y);
+      ROS_INFO("x_arr-->%f",array[i].x);
+      ROS_INFO("y_arr-->%f",array[i].y);
       x_SR_centered =l_pos_pix.x-320.5;
       y_SR_centered = l_pos_pix.y-240.5;
       x_roll_corrected = x_SR_centered*cos(m_roll)-y_SR_centered*sin(m_roll);
       y_roll_corrected = x_SR_centered*sin(m_roll)+y_SR_centered*cos(m_roll);
       azimuth = x_roll_corrected*iFOV_x;
       elevation = -y_roll_corrected*iFOV_y;
+      ROS_INFO("azimuth--->%f",azimuth);
+      ROS_INFO("elevation--->%f",elevation);
+      
       distance_from_center_x = tan(M_PI/2-pitch+elevation)*m_zCamera-m_R;
       distance_from_center_y = tan(azimuth)*(m_R+distance_from_center_x);
+      ROS_INFO("x to center--->%f",distance_from_center_x);
+       ROS_INFO("y to center--->%f",distance_from_center_y);
       l_pos_cm.x = distance_from_center_y;
       l_pos_cm.y = -(m_R+distance_from_center_x);
       l_pos_cm.height=2*ball_radius;
       l_pos_cm.width=2*ball_radius;
+       ROS_INFO("x cm--->%f",l_pos_cm.x);
+      ROS_INFO("y cm--->%f",l_pos_cm.y);
       psi = atan(m_zCamera/l_pos_cm.y);
       l_pos_cm.y= l_pos_cm.y-m_h_robot/tan(psi);
       pos_cam[0] = l_pos_cm.x;
@@ -463,8 +478,9 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       l_world_cm.y = pos_world[1];
       l_world_cm.height = l_pos_cm.height;
       l_world_cm.width = l_pos_cm.width;
+      ROS_INFO("x w cm--->%f",l_world_cm.x);
+      ROS_INFO("y w cm--->%f",l_world_cm.y);
       l_out_array.push_back(l_world_cm);
-      ROS_INFO("%f",l_world_cm.x);
    }
    return l_out_array;
 }
@@ -473,25 +489,25 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
 std::vector<ball_position> Camera::get_blue_array()
 {
   Lock l_lock(m_mutex);
-  return m_blue_circles;
+  return m_blue_circles_W;
 }
 
 std::vector<ball_position> Camera::get_green_array()
 {
   Lock l_lock(m_mutex);
-  return m_green_circles;
+  return m_green_circles_W;
 }
 
 std::vector<ball_position> Camera::get_red_array()
 {
   Lock l_lock(m_mutex);
-  return m_red_circles;
+  return m_red_circles_W;
 }
 
 std::vector<ball_position> Camera::get_yellow_array()
 {
   Lock l_lock(m_mutex);
-  return m_yellow_circles;
+  return m_yellow_circles_W;
 }
 
 
