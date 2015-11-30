@@ -74,7 +74,7 @@ void Ball_tracker::matrixSettings(cv::KalmanFilter m_kf)
 }
 
 
-cv::Rect Ball_tracker::kalman_update(Rect& position) 
+cv::Rect Ball_tracker::kalman_update(ball_position& position) 
 {
   double precTick = m_ticks;
   m_ticks = (double) cv::getTickCount();
@@ -94,9 +94,9 @@ cv::Rect Ball_tracker::kalman_update(Rect& position)
     m_meas.at<float>(3) = (float)position.height;
     m_kf.correct(m_meas); // Kalman Correction
     m_state = m_kf.predict();     
-    predRect.width = 1.25*m_state.at<float>(4);          
-    predRect.height = 1.25*m_state.at<float>(5);          
-    predRect.x = m_state.at<float>(0) - predRect.width / 2;          
-    predRect.y = m_state.at<float>(1) - predRect.height / 2;          
+    predRect.width = round(2*m_state.at<float>(4));          
+    predRect.height = round(2*m_state.at<float>(5));          
+    predRect.x = round(m_state.at<float>(0) - predRect.width / 2); 
+    predRect.y = round(m_state.at<float>(1) - predRect.height / 2);          
     return predRect;
 }

@@ -15,6 +15,7 @@
 #include <memory>
 #include "Camera.h"
 
+#include "ball_position.h"
 namespace Robotics 
 {
 	namespace GameTheory
@@ -33,7 +34,7 @@ namespace Robotics
 		public:
 			Ball_tracker();
 			void matrixSettings(cv::KalmanFilter m_kf);
-			cv::Rect kalman_update(cv::Rect& position);
+			cv::Rect kalman_update(ball_position& position);
 
 			
 			~Ball_tracker();

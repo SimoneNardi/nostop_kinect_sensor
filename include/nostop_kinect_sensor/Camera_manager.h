@@ -17,6 +17,7 @@
 // #include "Threads.h"
 #include "nostop_kinect_sensor/Camera_data.h"
 #include "Camera.h"
+#include "ball_position.h"
 
 namespace Robotics 
 {
@@ -35,10 +36,10 @@ namespace Robotics
 		  std::shared_ptr<Robot_manager> m_manager;
 		  
 		  // PACKAGE
-		  std::vector<cv::Rect> m_blue_ball_W;
-		  std::vector<cv::Rect> m_green_ball_W;
-		  std::vector<cv::Rect> m_red_ball_W;
-		  std::vector<cv::Rect> m_yellow_ball_W;
+		  std::vector<ball_position> m_blue_ball_W;
+		  std::vector<ball_position> m_green_ball_W;
+		  std::vector<ball_position> m_red_ball_W;
+		  std::vector<ball_position> m_yellow_ball_W;
 
 		  ros::NodeHandle m_node;
 		

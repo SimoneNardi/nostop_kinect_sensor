@@ -9,7 +9,7 @@
 #include "Camera.h"
 #include "math.h"
 #include <string>
-
+#include "ball_position.h"
 
 using namespace std;
 using namespace Robotics;
@@ -43,16 +43,16 @@ void Robot::pubID()
 }
 
  
-void Robot::select_robot_pose(std::vector<cv::Rect>& front_array,std::vector<cv::Rect>& back_array)
+void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vector<ball_position>& back_array)
 {	
   float distance;
   if(!found)
   {
    for (size_t i = 0;i < front_array.size();i++)
     { 
+     
      for(size_t j = 0;j < back_array.size();j++)
-     {
-	distance = sqrt(pow((front_array[i].x-back_array[j].x),2)+pow((front_array[i].y-back_array[j].y),2));
+     {	distance = sqrt(pow((front_array[i].x-back_array[j].x),2)+pow((front_array[i].y-back_array[j].y),2));
 	if(distance < 2*(front_array[i].width+back_array[j].width))
 	  {
 	    m_front_pos = front_array[i];
@@ -106,14 +106,7 @@ void Robot::select_robot_pose(std::vector<cv::Rect>& front_array,std::vector<cv:
 }
 
 
-
-
-void timerCallback(const ros::TimerEvent&)
-{
-  
-}
-
-void Robot::publish_pose(cv::Rect front_pos,cv::Rect back_pos, float yaw)
+void Robot::publish_pose(ball_position front_pos,ball_position back_pos, float yaw)
 {
 
     float phi = 0;//ROLL
@@ -129,7 +122,7 @@ void Robot::publish_pose(cv::Rect front_pos,cv::Rect back_pos, float yaw)
     pose.orientation.z = cos(phi/2)*sin(theta/2)*cos(psi/2)+sin(phi/2)*cos(theta/2)*sin(psi/2);
     pose.orientation.w = cos(phi/2)*cos(theta/2)*sin(psi/2)-sin(phi/2)*sin(theta/2)*cos(psi/2);
     m_robot_pose_pub.publish<geometry_msgs::Pose>(pose);
-    ROS_INFO("yaw--->%f",psi*180/M_PI);
+//     ROS_INFO("yaw post--->%f",psi*180/M_PI);
 }
 
 

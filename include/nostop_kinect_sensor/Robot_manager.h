@@ -12,7 +12,7 @@
 #include <std_msgs/String.h>
 
 #include <vector>
-
+#include "ball_position.h"
 
 namespace Robotics 
 {
@@ -35,10 +35,10 @@ namespace Robotics
 			Robot_manager();
 			~Robot_manager();
 			void new_robot_id(const std_msgs::String::ConstPtr& msg);
-			void array_assignment(std::vector<cv::Rect>& blue_array, 
-						std::vector<cv::Rect>& green_array,
-						std::vector<cv::Rect>& red_array,
-						std::vector<cv::Rect>& yellow_array);
+			void array_assignment(std::vector<ball_position>& blue_array, 
+						std::vector<ball_position>& green_array,
+						std::vector<ball_position>& red_array,
+						std::vector<ball_position>& yellow_array);
 		};
 
 	}

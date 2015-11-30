@@ -33,9 +33,8 @@
 #include "ros/ros.h"
 #include "Robot_manager.h"
 #include <nostop_kinect_sensor/Camera_data.h>
-//#include <nostop_kinect_sensor/R_valueConfig.h>
-
-
+#include "ball_position.h"
+#include "nostop_kinect_sensor/Camera_calibrationConfig.h"
 
 namespace Robotics 
 {
@@ -55,6 +54,7 @@ namespace Robotics
 		  
 		  ros::NodeHandle m_node;
 		  ros::Subscriber m_calibration_sub;
+		  ros::Subscriber m_robot_init_pose_sub;
 		  image_transport::ImageTransport m_it;
 		  image_transport::Subscriber m_image_sub;
 		  
@@ -71,10 +71,10 @@ namespace Robotics
 		  geometry_msgs::PointStamped m_camera_point;
 
 		  // BALLS ARRAY
-		  std::vector<cv::Rect> m_blue_circles;
-		  std::vector<cv::Rect> m_green_circles;
-		  std::vector<cv::Rect> m_red_circles;
-		  std::vector<cv::Rect>  m_yellow_circles;
+		  std::vector<ball_position> m_blue_circles;
+		  std::vector<ball_position> m_green_circles;
+		  std::vector<ball_position> m_red_circles;
+		  std::vector<ball_position>  m_yellow_circles;
 
 
 		  
@@ -87,13 +87,14 @@ namespace Robotics
 			void camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg);
 			void video_acquisition(const sensor_msgs::ImageConstPtr& msg);
 			void search_ball_pos();
+			void init_robot_pose(const std_msgs::String::ConstPtr& msg);
 			void filtering(cv::Mat &src,cv::Mat &dst,int  lb[],int ub[],int dim_kernel);
-			std::vector<cv::Rect> charge_array(cv::Mat img);
-			std::vector<cv::Rect> cam_to_W(std::vector<cv::Rect> & array);
-			std::vector<cv::Rect> get_blue_array();
-			std::vector<cv::Rect> get_green_array();
-			std::vector<cv::Rect> get_red_array();
-			std::vector<cv::Rect> get_yellow_array();
+			std::vector<ball_position> charge_array(cv::Mat img);
+			std::vector<ball_position> cam_to_W(std::vector<ball_position> & array);
+			std::vector<ball_position> get_blue_array();
+			std::vector<ball_position> get_green_array();
+			std::vector<ball_position> get_red_array();
+			std::vector<ball_position> get_yellow_array();
 		};
 
 	}

@@ -20,25 +20,24 @@ Robot_manager::Robot_manager()
 Robot_manager::~Robot_manager()	
 {}
 
-
 void Robot_manager::new_robot_id(const std_msgs::String::ConstPtr& msg)
 {	
     m_robot_array.push_back( std::make_shared<Robot>(msg->data) );
 }
 
 void Robot_manager::array_assignment(
-  std::vector<cv::Rect>& blue_array, 
-  std::vector<cv::Rect>& green_array,
-  std::vector<cv::Rect>& red_array,
-  std::vector<cv::Rect>& yellow_array)
+  std::vector<ball_position>& blue_array, 
+  std::vector<ball_position>& green_array,
+  std::vector<ball_position>& red_array,
+  std::vector<ball_position>& yellow_array)
 {
   if (m_robot_array.size() == 0 )
   {}
   else{
     for(size_t i=0;i<m_robot_array.size();i++)
     {
-      std::vector<cv::Rect> l_front_array;
-      std::vector<cv::Rect> l_back_array;
+      std::vector<ball_position> l_front_array;
+      std::vector<ball_position> l_back_array;
 
       if (m_robot_array[i]->color_f()== "blue")
 	{
@@ -77,6 +76,7 @@ void Robot_manager::array_assignment(
 	}
       
       m_robot_array[i]->select_robot_pose(l_front_array,l_back_array);
+
     }
   }
 }

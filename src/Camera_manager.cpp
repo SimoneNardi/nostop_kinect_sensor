@@ -38,7 +38,7 @@ void Camera_manager::pack_passage()
 {
     for(size_t i = 0; i<m_camera_array.size();i++)
     {
-        std::vector<cv::Rect> l_blue,l_green,l_red,l_yellow;
+        std::vector<ball_position> l_blue,l_green,l_red,l_yellow;
 	l_blue = m_camera_array[i]->get_blue_array();
 	l_green = m_camera_array[i]->get_green_array();
 	l_red = m_camera_array[i]->get_red_array();
@@ -64,8 +64,7 @@ void Camera_manager::pack_passage()
     // TO ROBOT MANAGER
     Lock l_lock(m_mutex);
     m_manager->array_assignment(m_blue_ball_W,m_green_ball_W,m_red_ball_W,m_yellow_ball_W);
-    
-    // CLEARING
+  // CLEARING
     m_blue_ball_W.clear();
     m_green_ball_W.clear();
     m_red_ball_W.clear();
