@@ -102,7 +102,7 @@ void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vecto
 	}
     }
   m_heading = atan2((m_back_pos.y-m_front_pos.y),(m_back_pos.x-m_front_pos.x))+M_PI;
-  ROS_INFO("Heading----> %f",m_heading*180/M_PI);
+//   ROS_INFO("Heading----> %f",m_heading*180/M_PI);
   publish_pose(m_front_pos,m_back_pos,m_heading);
 }
 
