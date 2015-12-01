@@ -267,7 +267,7 @@ void Camera::search_ball_pos()
      m_green_circles_W=cam_to_W(m_green_circles);
      m_red_circles_W=cam_to_W(m_red_circles);
      m_yellow_circles_W=cam_to_W(m_yellow_circles);
-
+      
      Point center;
      center.x=320;
      center.y=240;
@@ -329,10 +329,6 @@ void Camera::search_ball_pos()
      m_green_circles.clear();
      m_red_circles.clear();
      m_yellow_circles.clear();
-     m_blue_circles_W.clear();
-     m_green_circles_W.clear();
-     m_red_circles_W.clear();
-     m_yellow_circles_W.clear();
 }
        
 
@@ -384,8 +380,8 @@ std::vector<ball_position> Camera::charge_array(cv::Mat img)
 	    l_ball.y = bBox.y;
 	    l_ball.height = bBox.height;
 	    l_ball.width = bBox.width;
-         }
-         l_array.push_back(l_ball);
+	    l_array.push_back(l_ball);
+	 }
 	}
       }
       return l_array;
@@ -411,31 +407,18 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       l_pos_pix.height = array[i].height;
       float R_z[3][3],R_x[3][3],Rtot[3][3];
       float x_SR_centered,y_SR_centered,x_roll_corrected,y_roll_corrected;
-      int k = array.size();
-      ROS_INFO("%d",k);
-      ROS_INFO("x_pos-->%f",l_pos_pix.x);
-      ROS_INFO("y_pos-->%f",l_pos_pix.y);
-      ROS_INFO("x_arr-->%f",array[i].x);
-      ROS_INFO("y_arr-->%f",array[i].y);
       x_SR_centered =l_pos_pix.x-320.5;
       y_SR_centered = l_pos_pix.y-240.5;
       x_roll_corrected = x_SR_centered*cos(m_roll)-y_SR_centered*sin(m_roll);
       y_roll_corrected = x_SR_centered*sin(m_roll)+y_SR_centered*cos(m_roll);
       azimuth = x_roll_corrected*iFOV_x;
       elevation = -y_roll_corrected*iFOV_y;
-      ROS_INFO("azimuth--->%f",azimuth);
-      ROS_INFO("elevation--->%f",elevation);
-      
       distance_from_center_x = tan(M_PI/2-pitch+elevation)*m_zCamera-m_R;
       distance_from_center_y = tan(azimuth)*(m_R+distance_from_center_x);
-      ROS_INFO("x to center--->%f",distance_from_center_x);
-       ROS_INFO("y to center--->%f",distance_from_center_y);
       l_pos_cm.x = distance_from_center_y;
       l_pos_cm.y = -(m_R+distance_from_center_x);
       l_pos_cm.height=2*ball_radius;
       l_pos_cm.width=2*ball_radius;
-       ROS_INFO("x cm--->%f",l_pos_cm.x);
-      ROS_INFO("y cm--->%f",l_pos_cm.y);
       psi = atan(m_zCamera/l_pos_cm.y);
       l_pos_cm.y= l_pos_cm.y-m_h_robot/tan(psi);
       pos_cam[0] = l_pos_cm.x;
@@ -478,8 +461,6 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       l_world_cm.y = pos_world[1];
       l_world_cm.height = l_pos_cm.height;
       l_world_cm.width = l_pos_cm.width;
-      ROS_INFO("x w cm--->%f",l_world_cm.x);
-      ROS_INFO("y w cm--->%f",l_world_cm.y);
       l_out_array.push_back(l_world_cm);
    }
    return l_out_array;

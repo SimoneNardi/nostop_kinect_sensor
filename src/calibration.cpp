@@ -97,12 +97,19 @@ void subscriber_callback(const sensor_msgs::ImageConstPtr &msg)
 void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &config, uint32_t level) 
  {
   R = config.R_distance;
+  message.data[1] = R;
   xC = config.xC;
+  message.data[2] = xC;
   yC = config.yC;
+  message.data[3] = yC;
   zC = config.zC;
-  omega = config.omega;
-  gam = config.gamma;  
+  message.data[4] = zC;
+  omega = config.omega_zC;
+  message.data[5] = omega;
+  gam = config.gamma_xC;  
+  message.data[6] = gam;
   h_robot = config.h_robot;
+  message.data[7] = h_robot;
   to_publish = true;
 }
 int main(int argc, char *argv[])
@@ -110,7 +117,7 @@ int main(int argc, char *argv[])
 	ROS_INFO("Calibration %s : ON",argv[1]);
 	ros::init(argc, argv, argv[1]);
 	camera_name = argv[1];
-	message.data.resize(2);
+	message.data.resize(8);
 	ros::NodeHandle calibrator;
 	ros::Publisher calibrator_pub;
 	A_toimage.x=320.5;
@@ -119,7 +126,6 @@ int main(int argc, char *argv[])
 	image_transport::Subscriber subscriber;
 	subscriber = it.subscribe(argv[2], 1, &subscriber_callback,image_transport::TransportHints("raw"));
 	calibrator_pub = calibrator.advertise<std_msgs::Float64MultiArray>(argv[3],1000);
-	
 	dynamic_reconfigure::Server<nostop_kinect_sensor::Camera_calibrationConfig> camera_calibration;
 	dynamic_reconfigure::Server<nostop_kinect_sensor::Camera_calibrationConfig>::CallbackType callback;
 	callback = boost::bind(&calibration_callback,_1,_2);

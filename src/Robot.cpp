@@ -102,6 +102,7 @@ void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vecto
 	}
     }
   m_heading = atan2((m_back_pos.y-m_front_pos.y),(m_back_pos.x-m_front_pos.x))+M_PI;
+  ROS_INFO("Heading----> %f",m_heading*180/M_PI);
   publish_pose(m_front_pos,m_back_pos,m_heading);
 }
 
@@ -112,7 +113,6 @@ void Robot::publish_pose(ball_position front_pos,ball_position back_pos, float y
     float phi = 0;//ROLL
     float theta = 0;//PITCH
     float psi = yaw;
-    
     geometry_msgs::Pose pose;
     pose.position.x = (front_pos.x+back_pos.x)/2;
     pose.position.y = (front_pos.y+back_pos.y)/2;
@@ -122,7 +122,6 @@ void Robot::publish_pose(ball_position front_pos,ball_position back_pos, float y
     pose.orientation.z = cos(phi/2)*sin(theta/2)*cos(psi/2)+sin(phi/2)*cos(theta/2)*sin(psi/2);
     pose.orientation.w = cos(phi/2)*cos(theta/2)*sin(psi/2)-sin(phi/2)*sin(theta/2)*cos(psi/2);
     m_robot_pose_pub.publish<geometry_msgs::Pose>(pose);
-//     ROS_INFO("yaw post--->%f",psi*180/M_PI);
 }
 
 
