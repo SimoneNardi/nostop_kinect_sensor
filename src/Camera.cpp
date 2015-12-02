@@ -96,8 +96,6 @@ void mouse_callback(int event, int x, int y, int flags, void* param)
 		pose.width = 100;
 		pose.x = x-pose.width/2;
 		pose.y = y-pose.height/2;
-		ROS_INFO("x-->%d",pose.x);
-		ROS_INFO("y-->%d",pose.y);
 		robot_initial_pose_rect.push_back(pose);
 		callback_done = true;
 	}
@@ -165,19 +163,20 @@ void Camera::pose_feedback(const geometry_msgs::Pose::ConstPtr& msg)
       }
     }
     robot_position = W_to_cam(robot_position);
-    robot_position.height = 100;
-    robot_position.width = 100;
-    robot_position.x = robot_position.x-robot_position.height/2;
-    robot_position.y = robot_position.y-robot_position.width/2;
-    Point p1,p2;
-    p1 = robot_position.tl();
-    p2 = robot_position.br();
-    ROS_ERROR("tl x-->%d",p1.x);
-    ROS_ERROR("tl x-->%d",p1.y);
-    ROS_ERROR("br x-->%d",p2.x);
-    ROS_ERROR("br x-->%d",p2.y);
-    ROS_ERROR("x-->%d",robot_position.x);
-    ROS_ERROR("y-->%d",robot_position.y);
+    if(robot_position.y > 240)
+    {
+      robot_position.height = 150;
+      robot_position.width = 150;
+      robot_position.x = robot_position.x-robot_position.height/2;
+      robot_position.y = robot_position.y-robot_position.width/2;
+    }else{
+      robot_position.height = 100;
+      robot_position.width = 100;
+      robot_position.x = robot_position.x-robot_position.height/2;
+      robot_position.y = robot_position.y-robot_position.width/2;
+    }
+//     robot_position.x = robot_position.x-robot_position.height;
+//     robot_position.y = robot_position.y-robot_position.width/2;
     robot_initial_pose_rect.push_back(robot_position);
     robot_initial_pose_rect.erase(robot_initial_pose_rect.begin()+to_erase);
   }
@@ -403,6 +402,15 @@ void Camera::search_ball_pos()
        rectangle(m_stream_video,rec,cv::Scalar(255, 255, 255),1,8,0);
        
      }
+     
+     //// SEARCH RECTANGLE
+     for(size_t i = 0;i<robot_initial_pose_rect.size();i++)
+     {
+       cv::Rect rec;
+       rec = robot_initial_pose_rect.at(i);
+       rectangle(m_stream_video,rec,cv::Scalar(0, 0, 0),1,8,0);
+       
+     }
      cv::circle(m_stream_video,center,2,cv::Scalar(0, 0, 255),-1,8,0);
      cv::circle(m_stream_video,center,10,cv::Scalar(0, 0, 0),1,8,0);
      cv::imshow(SENSOR_CV_WINDOW+m_camera_name,m_stream_video);
@@ -456,7 +464,7 @@ std::vector<ball_position> Camera::charge_array(cv::Mat img)
 	possible_ball.y = bBox.y;
 	for(size_t j = 0;j<robot_initial_pose_rect.size();j++)
 	{
-         if (ratio > 0.75 && possible_ball.inside(robot_initial_pose_rect.at(j)) && bBox.area()<100000) 
+         if (ratio > 0.75 && possible_ball.inside(robot_initial_pose_rect.at(j)) && bBox.area()<900 && bBox.area()>200) 
          {
 	    l_ball.x = bBox.x;
 	    l_ball.y = bBox.y;
