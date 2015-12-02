@@ -118,7 +118,7 @@ void Camera::pose_feedback(const geometry_msgs::Pose::ConstPtr& msg)
   std::vector<ball_position> corners_pixel,corners_cm_w;
   ball_position corn;
   float x_min,x_max,y_min,y_max;
-  cv::Rect robot_position;
+  cv::Rect robot_position_cm,robot_position_pixel;
   corn.x = 0;
   corn.y = 0;
   corners_pixel.push_back(corn);
@@ -132,8 +132,8 @@ void Camera::pose_feedback(const geometry_msgs::Pose::ConstPtr& msg)
   corn.y = 480;
   corners_pixel.push_back(corn);
   corners_cm_w = cam_to_W(corners_pixel);
-  robot_position.x = msg->position.x;
-  robot_position.y = msg->position.y;
+  robot_position_cm.x = msg->position.x;
+  robot_position_cm.y = msg->position.y;
   x_min = min(corners_cm_w.at(0).x,corners_cm_w.at(1).x);
   x_max = max(corners_cm_w.at(0).x,corners_cm_w.at(1).x);
   y_min = min(corners_cm_w.at(0).y,corners_cm_w.at(1).y);
@@ -145,40 +145,55 @@ void Camera::pose_feedback(const geometry_msgs::Pose::ConstPtr& msg)
     y_min = min(y_min,corners_cm_w.at(i).y);
     y_max = max(y_max,corners_cm_w.at(i).y);
   }
-  if (robot_position.x<x_max && robot_position.x>x_min && robot_position.y<y_max && robot_position.y>y_min )
+   Lock l_lock(m_mutex);
+  if (robot_position_cm.x<x_max && robot_position_cm.x>x_min && robot_position_cm.y<y_max && robot_position_cm.y>y_min )
   {
     float diff;
     int to_erase;
-     Lock l_lock(m_mutex);
+    cv::Rect new_rect;
+    robot_position_pixel = W_to_cam(robot_position_cm);
     if (robot_initial_pose_rect.size()>0)
     {
-      diff = sqrt((robot_position.x-robot_initial_pose_rect.at(0).x)^2+(robot_position.y-robot_initial_pose_rect.at(0).y)^2);
+      diff = sqrt((robot_position_pixel.x-robot_initial_pose_rect.at(0).x)^2+(robot_position_pixel.y-robot_initial_pose_rect.at(0).y)^2);
       to_erase = 0;
     }
     for(size_t i = 1;i<robot_initial_pose_rect.size();i++)
     {
-      if(sqrt((robot_position.x-robot_initial_pose_rect.at(i).x)^2+(robot_position.y-robot_initial_pose_rect.at(i).y)^2)<diff)
+      if(sqrt((robot_position_pixel.x-robot_initial_pose_rect.at(i).x)^2+(robot_position_pixel.y-robot_initial_pose_rect.at(i).y)^2)<diff)
       {
 	to_erase = i;
       }
     }
-    robot_position = W_to_cam(robot_position);
-    if(robot_position.y > 240)
+   
+    cv::Point l_tl,l_br;
+    if (robot_position_pixel.y>-240)
     {
-      robot_position.height = 150;
-      robot_position.width = 150;
-      robot_position.x = robot_position.x-robot_position.height/2;
-      robot_position.y = robot_position.y-robot_position.width/2;
+      robot_position_pixel.height = 150;
+      robot_position_pixel.width = 150;
+      l_tl.x = robot_position_pixel.x-robot_position_pixel.height/2;
+      l_tl.y = robot_position_pixel.y-robot_position_pixel.width/2;
+      l_br.x = l_tl.x+robot_position_pixel.height;
+      l_br.y = l_tl.y+robot_position_pixel.width;
+      new_rect.x = l_tl.x;
+      new_rect.y = l_tl.y;
+      new_rect.height = robot_position_pixel.height;
+      new_rect.width = robot_position_pixel.width;
+      robot_initial_pose_rect.push_back(new_rect);
+      robot_initial_pose_rect.erase(robot_initial_pose_rect.begin()+to_erase);
     }else{
-      robot_position.height = 100;
-      robot_position.width = 100;
-      robot_position.x = robot_position.x-robot_position.height/2;
-      robot_position.y = robot_position.y-robot_position.width/2;
+      robot_position_pixel.height = 125;
+      robot_position_pixel.width = 125;
+      l_tl.x = robot_position_pixel.x-robot_position_pixel.height/2;
+      l_tl.y = robot_position_pixel.y-robot_position_pixel.width/2;
+      l_br.x = l_tl.x+robot_position_pixel.height;
+      l_br.y = l_tl.y+robot_position_pixel.width;
+      new_rect.x = l_tl.x;
+      new_rect.y = l_tl.y;
+      new_rect.height = robot_position_pixel.height;
+      new_rect.width = robot_position_pixel.width;
+      robot_initial_pose_rect.push_back(new_rect);
+      robot_initial_pose_rect.erase(robot_initial_pose_rect.begin()+to_erase);
     }
-//     robot_position.x = robot_position.x-robot_position.height;
-//     robot_position.y = robot_position.y-robot_position.width/2;
-    robot_initial_pose_rect.push_back(robot_position);
-    robot_initial_pose_rect.erase(robot_initial_pose_rect.begin()+to_erase);
   }
 }
 
@@ -204,13 +219,13 @@ void Camera::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
 
      // Update GUI Window
      cv::waitKey(3);
-     // FUNCTION
      search_ball_pos();
 }
 
 
 
-
+//TEST
+       int k,k2;
 
 // FILTERING INITIAL VALUES
 int  lb_b[3]={100,125,100};
@@ -221,7 +236,7 @@ int  lower_lb_r[3] = {0,100,150};
 int  lower_ub_r[3] = {10,255,255}; 
 int  upper_lb_r[3] = {160,100,150};
 int  upper_ub_r[3] = {179,255,255};
-int  lb_y[3] = {20,0,135};
+int  lb_y[3] = {20,35,135};
 int  ub_y[3] = {45,255,255}; 
 int dim_kernel_blue=4,dim_kernel_green=4,dim_kernel_red=4,dim_kernel_yellow=4;
 /////////////////////////////////////////////////////
@@ -408,6 +423,11 @@ void Camera::search_ball_pos()
      {
        cv::Rect rec;
        rec = robot_initial_pose_rect.at(i);
+
+       createTrackbar(" Adjoint x",SENSOR_CV_WINDOW+m_camera_name,&k,250,0,0);
+       createTrackbar(" Adjoint y",SENSOR_CV_WINDOW+m_camera_name,&k2,250,0,0);
+       rec.x = rec.x+k;
+       rec.y = rec.y+k2;
        rectangle(m_stream_video,rec,cv::Scalar(0, 0, 0),1,8,0);
        
      }
@@ -464,7 +484,7 @@ std::vector<ball_position> Camera::charge_array(cv::Mat img)
 	possible_ball.y = bBox.y;
 	for(size_t j = 0;j<robot_initial_pose_rect.size();j++)
 	{
-         if (ratio > 0.75 && possible_ball.inside(robot_initial_pose_rect.at(j)) && bBox.area()<900 && bBox.area()>200) 
+         if (ratio > 0.6 && possible_ball.inside(robot_initial_pose_rect.at(j)) && bBox.area()<900 && bBox.area()>100) 
          {
 	    l_ball.x = bBox.x;
 	    l_ball.y = bBox.y;
@@ -538,7 +558,7 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       Rtot[1][1] = cos(m_omegaz);
       Rtot[1][2] = -sin(m_omegaz);
       Rtot[1][3] = 0;
-      Rtot[2][1] = cos(m_omegaz)*sin(m_gammax);
+      Rtot[2][1] = sin(m_omegaz)*cos(m_gammax);
       Rtot[2][2] = cos(m_gammax)*cos(m_omegaz);
       Rtot[2][3] = -sin(m_gammax);
       Rtot[3][1] = sin(m_gammax)*sin(m_omegaz);
@@ -596,7 +616,7 @@ cv::Rect Camera::W_to_cam(cv::Rect& pos_in)
   Rtot[1][1] = cos(m_omegaz);
   Rtot[1][2] = -sin(m_omegaz);
   Rtot[1][3] = 0;
-  Rtot[2][1] = cos(m_omegaz)*sin(m_gammax);
+  Rtot[2][1] = sin(m_omegaz)*cos(m_gammax);
   Rtot[2][2] = cos(m_gammax)*cos(m_omegaz);
   Rtot[2][3] = -sin(m_gammax);
   Rtot[3][1] = sin(m_gammax)*sin(m_omegaz);
