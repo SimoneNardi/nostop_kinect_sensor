@@ -21,6 +21,8 @@ Robot::Robot(std::string name_):
 , found(false)
 , m_notFoundCount(0)
 , m_name(name_)
+, m_front_pos()
+, m_back_pos()
 { 
   m_front_marker_color = m_name.substr(0,m_name.find("_"));
   m_back_marker_color = m_name.substr(m_name.find("_")+1,m_name.length());
