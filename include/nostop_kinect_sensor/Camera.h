@@ -56,7 +56,6 @@ namespace Robotics
 		  ros::NodeHandle m_node;
 		  ros::Subscriber m_calibration_sub;
 		  ros::Subscriber m_robot_init_pose_sub;
-		  ros::Subscriber m_pose_sub;
 		  std::vector<ros::Subscriber> m_robot_feedback_pose_sub;
 		  image_transport::ImageTransport m_it;
 		  image_transport::Subscriber m_image_sub;
@@ -89,14 +88,13 @@ namespace Robotics
 			Camera(std::string name_,std::string topic_name,std::string calibration_topic);
 			
 			~Camera();
-			
 			void subscribe();
 			void camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg);
 			void video_acquisition(const sensor_msgs::ImageConstPtr& msg);
 			void search_ball_pos();
 			void init_robot_pose(const std_msgs::String::ConstPtr& msg);
 			void pose_feedback(const geometry_msgs::Pose::ConstPtr& msg);
-			cv::Rect W_to_cam(cv::Rect& in);
+			ball_position W_to_cam(ball_position& in);
 			void filtering(cv::Mat &src,cv::Mat &dst,int  lb[],int ub[],int dim_kernel);
 			std::vector<ball_position> charge_array(cv::Mat img);
 			std::vector<ball_position> cam_to_W(std::vector<ball_position>& array);
