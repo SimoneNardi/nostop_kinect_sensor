@@ -66,7 +66,7 @@ Camera::~Camera()
 void Camera::camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg)
 {
   Lock l_lock(m_mutex);
-  ROS_INFO("Calibration Value read");
+  ROS_INFO("%s published calibration values",m_camera_name.c_str());
   m_roll = msg->data[0]*M_PI/180;
   m_R = msg->data[1];
   m_xCamera = msg->data[2];
@@ -105,8 +105,9 @@ void mouse_callback(int event, int x, int y, int flags, void* param)
 {
 	if (event == CV_EVENT_LBUTTONDBLCLK) { 
 		cv::Rect pose;
-		pose.height = 100;
-		pose.width = 100;
+		Point l_tl;
+		pose.height = 1;//TODO
+		pose.width = 1;
 		pose.x = x-pose.width/2;
 		pose.y = y-pose.height/2;
 		robot_initial_pose_rect.push_back(pose);
@@ -364,11 +365,13 @@ void Camera::search_ball_pos()
       ball_position a,b;
       if(robot_initial_pose_rect.size()>0)
       {
-	a.x = robot_initial_pose_rect.at(0).x;
-	a.y = robot_initial_pose_rect.at(0).y;
+	a.x = robot_initial_pose_rect.at(0).x+robot_initial_pose_rect.at(0).height/2;
+	a.y = robot_initial_pose_rect.at(0).y+robot_initial_pose_rect.at(0).height/2;
 	test_p.push_back(a);
 	test_cm = cam_to_W(test_p);
 	b = test_cm.at(0);      
+	ROS_INFO("x pixel -->%f",a.x);
+	ROS_INFO("y pixel -->%f",a.y);
 	ROS_INFO("x cm ---> %f",b.x);
 	ROS_INFO("y cm ---> %f",b.y);
       }
@@ -527,12 +530,14 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       y_roll_corrected = x_SR_centered*sin(m_roll)+y_SR_centered*cos(m_roll);
       azimuth = x_roll_corrected*iFOV_x;
       elevation = -y_roll_corrected*iFOV_y;
-      distance_from_center_x = tan(M_PI/2-pitch+elevation)*m_zCamera-m_R;
-      distance_from_center_y = tan(azimuth)*(m_R+distance_from_center_x);
-      l_pos_cm.x = distance_from_center_y;
-      l_pos_cm.y = -(m_R+distance_from_center_x);
-      l_pos_cm.height=2*ball_radius;
-      l_pos_cm.width=2*ball_radius;
+      // SR IN CENTER OF VIEW
+      distance_from_center_y = tan(M_PI/2-pitch+elevation)*m_zCamera-m_R;
+      distance_from_center_x = tan(azimuth)*(m_R+distance_from_center_y);
+      // SR UNDER CAMERA 
+      l_pos_cm.x = distance_from_center_x;
+      l_pos_cm.y = -(m_R+distance_from_center_y);
+      l_pos_cm.height=3*ball_radius;
+      l_pos_cm.width=3*ball_radius;
       psi = atan(m_zCamera/l_pos_cm.y);
       l_pos_cm.y= l_pos_cm.y-m_h_robot/tan(psi);
       pos_cam[0] = l_pos_cm.x;
