@@ -137,7 +137,8 @@ int main(int argc, char *argv[])
 	      {	  
 		 message.data[1] = R;
                  calibrator_pub.publish(message);
-	         ROS_INFO("Value published");
+		 std::string name = camera_name;
+	         ROS_INFO("%s published calibration values",name.c_str());
 	         to_publish=false;
 	      }
 	      ros::spinOnce();
