@@ -160,15 +160,16 @@ void Camera::pose_feedback(const geometry_msgs::Pose::ConstPtr& msg)
       diff = sqrt((robot_position_pixel.x-robot_initial_pose_rect.at(0).x)*(robot_position_pixel.x-robot_initial_pose_rect.at(0).x)+
       (robot_position_pixel.y-robot_initial_pose_rect.at(0).y)*(robot_position_pixel.y-robot_initial_pose_rect.at(0).y));
       to_erase = 0;
-    }
-    for(size_t i = 1;i<robot_initial_pose_rect.size();i++)
-    {
-      if(sqrt((robot_position_pixel.x-robot_initial_pose_rect.at(0).x)*(robot_position_pixel.x-robot_initial_pose_rect.at(0).x)+
-      (robot_position_pixel.y-robot_initial_pose_rect.at(0).y)*(robot_position_pixel.y-robot_initial_pose_rect.at(0).y))<diff)
+      for(size_t i = 1;i<robot_initial_pose_rect.size();i++)
       {
-	to_erase = i;
+	if(sqrt((robot_position_pixel.x-robot_initial_pose_rect.at(i).x)*(robot_position_pixel.x-robot_initial_pose_rect.at(i).x)+
+	  (robot_position_pixel.y-robot_initial_pose_rect.at(i).y)*(robot_position_pixel.y-robot_initial_pose_rect.at(i).y))<diff)
+	{
+	  to_erase = i;
+	}
       }
     }
+    
     cv::Point l_tl,l_br;
     if (robot_position_pixel.y>240)
     {
@@ -182,6 +183,7 @@ void Camera::pose_feedback(const geometry_msgs::Pose::ConstPtr& msg)
       new_rect.y = l_tl.y;
       new_rect.height = robot_position_pixel.height;
       new_rect.width = robot_position_pixel.width;
+      robot_initial_pose_rect.at(to_erase) = new_rect;
     }else{
       robot_position_pixel.height = 125;
       robot_position_pixel.width = 125;
@@ -193,9 +195,9 @@ void Camera::pose_feedback(const geometry_msgs::Pose::ConstPtr& msg)
       new_rect.y = l_tl.y;
       new_rect.height = robot_position_pixel.height;
       new_rect.width = robot_position_pixel.width;
-    }
       robot_initial_pose_rect.at(to_erase) = new_rect;
-//       robot_initial_pose_rect.erase(robot_initial_pose_rect.begin()+to_erase);
+    }
+      
   }
 }
 
@@ -230,11 +232,11 @@ int  lb_b[3]={100,125,100};
 int  ub_b[3] = {160,255,255};
 int  lb_g[3] = {30,150,50};
 int  ub_g[3] = {60,255,180}; 
-int  lower_lb_r[3] = {0,100,150};
+int  lower_lb_r[3] = {0,125,150};
 int  lower_ub_r[3] = {10,255,255}; 
 int  upper_lb_r[3] = {160,100,150};
 int  upper_ub_r[3] = {179,255,255};
-int  lb_y[3] = {20,35,135};
+int  lb_y[3] = {20,50,160};
 int  ub_y[3] = {45,255,255}; 
 int dim_kernel_blue=4,dim_kernel_green=4,dim_kernel_red=4,dim_kernel_yellow=4;
 /////////////////////////////////////////////////////
@@ -354,11 +356,23 @@ void Camera::search_ball_pos()
      m_yellow_circles = charge_array(m_only_yellow);
 
        //FROM CAM (pixel) TO WORLD (cm)
-     m_blue_circles_W=cam_to_W(m_blue_circles);
-     m_green_circles_W=cam_to_W(m_green_circles);
-     m_red_circles_W=cam_to_W(m_red_circles);
-     m_yellow_circles_W=cam_to_W(m_yellow_circles);
-      
+//      m_blue_circles_W=cam_to_W(m_blue_circles);
+//      m_green_circles_W=cam_to_W(m_green_circles);
+//      m_red_circles_W=cam_to_W(m_red_circles);
+//      m_yellow_circles_W=cam_to_W(m_yellow_circles);
+      std::vector<ball_position> test_p,test_cm;
+      ball_position a,b;
+      if(robot_initial_pose_rect.size()>0)
+      {
+	a.x = robot_initial_pose_rect.at(0).x;
+	a.y = robot_initial_pose_rect.at(0).y;
+	test_p.push_back(a);
+	test_cm = cam_to_W(test_p);
+	b = test_cm.at(0);      
+	ROS_INFO("x cm ---> %f",b.x);
+	ROS_INFO("y cm ---> %f",b.y);
+      }
+
      Point center;
      center.x=320;
      center.y=240;
@@ -611,11 +625,14 @@ ball_position Camera::W_to_cam(ball_position& pos_in)
   Rtot[3][1] = sin(m_gammax)*sin(m_omegaz);
   Rtot[3][2] = sin(m_gammax)*cos(m_omegaz);
   Rtot[3][3] = cos(m_gammax);
-  pos_cam_cm[0] = Rtot[1][1]*pos_world[0]+Rtot[2][1]*pos_world[1]+Rtot[3][1]*pos_world[2]-o01[0];
-  pos_cam_cm[1] = Rtot[1][2]*pos_world[0]+Rtot[2][2]*pos_world[1]+Rtot[3][2]*pos_world[2]-o01[1];
-  pos_cam_cm[2] = Rtot[1][3]*pos_world[0]+Rtot[2][3]*pos_world[1]+Rtot[3][3]*pos_world[2]-o01[2];
+  pos_world[0] = pos_world[0]-o01[0];
+  pos_world[1] = pos_world[1]-o01[1];
+  pos_world[2] = pos_world[2]-o01[2];
+  pos_cam_cm[0] = Rtot[1][1]*pos_world[0]+Rtot[2][1]*pos_world[1]+Rtot[3][1]*pos_world[2];
+  pos_cam_cm[1] = Rtot[1][2]*pos_world[0]+Rtot[2][2]*pos_world[1]+Rtot[3][2]*pos_world[2];
+  pos_cam_cm[2] = Rtot[1][3]*pos_world[0]+Rtot[2][3]*pos_world[1]+Rtot[3][3]*pos_world[2];
   psi = atan(m_zCamera/pos_cam_cm[1]);
-  pos_cam_cm[1]= pos_cam_cm[1]-m_h_robot/tan(psi);
+  pos_cam_cm[1]= pos_cam_cm[1]+m_h_robot/tan(psi);
   distance_from_center_y = pos_cam_cm[0];
   distance_from_center_x = -(pos_cam_cm[1]+m_R);
   azimuth = atan(distance_from_center_y/(m_R+distance_from_center_x)) ;
@@ -626,8 +643,6 @@ ball_position Camera::W_to_cam(ball_position& pos_in)
   y_SR_centered = -x_roll_corrected*sin(m_roll)+y_roll_corrected*cos(m_roll);
   pos_cam_pixel.x = x_SR_centered+320.5;
   pos_cam_pixel.y = y_SR_centered+240.5;
-  pos_cam_pixel.height = 200;
-  pos_cam_pixel.width = 200;
   return pos_cam_pixel;
 }
 
