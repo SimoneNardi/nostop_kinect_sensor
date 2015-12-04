@@ -62,7 +62,7 @@ Camera::~Camera()
 	cv::destroyWindow(YELLOW_THRESHOLD_WINDOWS+m_camera_name);
 }
 
-
+/////////////////////////////////////////////
 void Camera::camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg)
 {
   Lock l_lock(m_mutex);
@@ -76,6 +76,7 @@ void Camera::camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg
   m_gammax = msg->data[6];
   m_h_robot = msg->data[7];
 }
+
 /////////////////////////////////////////////
 void Camera::subscribe()
 {
@@ -101,6 +102,7 @@ void Camera::init_robot_pose(const std_msgs::String::ConstPtr& msg)
     robot_number = robot_number+1;
 }
 
+/////////////////////////////////////////////
 void mouse_callback(int event, int x, int y, int flags, void* param)
 {
 	if (event == CV_EVENT_LBUTTONDBLCLK) { 
@@ -114,7 +116,6 @@ void mouse_callback(int event, int x, int y, int flags, void* param)
 		callback_done = true;
 	}
 }
-
 
 ////////////////////////////////////////////////////////////////
 void Camera::pose_feedback(const geometry_msgs::Pose::ConstPtr& msg)
@@ -149,6 +150,7 @@ void Camera::pose_feedback(const geometry_msgs::Pose::ConstPtr& msg)
     y_min = min(y_min,corners_cm_w.at(i).y);
     y_max = max(y_max,corners_cm_w.at(i).y);
   }
+  
   Lock l_lock(m_mutex);
   if (robot_position_cm.x<x_max && robot_position_cm.x>x_min && robot_position_cm.y<y_max && robot_position_cm.y>y_min )
   {
@@ -185,7 +187,9 @@ void Camera::pose_feedback(const geometry_msgs::Pose::ConstPtr& msg)
       new_rect.height = robot_position_pixel.height;
       new_rect.width = robot_position_pixel.width;
       robot_initial_pose_rect.at(to_erase) = new_rect;
-    }else{
+    }
+    else
+    {
       robot_position_pixel.height = 125;
       robot_position_pixel.width = 125;
       l_tl.x = robot_position_pixel.x-robot_position_pixel.height/2;
@@ -198,7 +202,6 @@ void Camera::pose_feedback(const geometry_msgs::Pose::ConstPtr& msg)
       new_rect.width = robot_position_pixel.width;
       robot_initial_pose_rect.at(to_erase) = new_rect;
     }
-      
   }
 }
 
@@ -219,12 +222,11 @@ void Camera::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
     return;
   }
   
-  
-    m_stream_video = cv_ptr->image.clone();
+  m_stream_video = cv_ptr->image.clone();
 
-     // Update GUI Window
-     cv::waitKey(3);
-     search_ball_pos();
+  // Update GUI Window
+  cv::waitKey(3);
+  search_ball_pos();
 }
 
 
@@ -240,271 +242,270 @@ int  upper_ub_r[3] = {179,255,255};
 int  lb_y[3] = {20,50,160};
 int  ub_y[3] = {45,255,255}; 
 int dim_kernel_blue=4,dim_kernel_green=4,dim_kernel_red=4,dim_kernel_yellow=4;
+
 /////////////////////////////////////////////////////
 void Camera::search_ball_pos()
 { 
     
-     cv::Mat withCircle_blue,withCircle_green,withCircle_red,withCircle_yellow,l_bg,l_ry;
-//      withCircle_blue=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type);
-     withCircle_green=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
-     withCircle_red=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
-     withCircle_yellow=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
-     m_only_blue=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
-     m_only_green=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
-     m_only_red=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
-     m_only_yellow=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
-     m_stream_video.copyTo(withCircle_blue);
+  cv::Mat withCircle_blue,withCircle_green,withCircle_red,withCircle_yellow,l_bg,l_ry;
+  //withCircle_blue=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+  withCircle_green=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+  withCircle_red=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+  withCircle_yellow=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+  m_only_blue=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+  m_only_green=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+  m_only_red=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+  m_only_yellow=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
+  
+  m_stream_video.copyTo(withCircle_blue);
      
-     Lock l_lock(m_mutex);
-     // ROBOTS INITIAL POSE
-     for(int i  = 0;i<robot_number;i++)
-     {
-            
-      if(!initial_pose_setted[i])
-      {	
-	std::string windows_name = robot_name[i]+" initial_pose";
-	char* mouse_windows_name = new char[windows_name.size() + 1];
-	std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
-	mouse_windows_name[windows_name.size()] = '\0'; 
-	imshow(windows_name,m_stream_video);
-	cvSetMouseCallback(mouse_windows_name,mouse_callback,NULL);
-	if(callback_done)
-	{
-	  initial_pose_setted[i] = callback_done;
-	  callback_done = false;
-	}	
-      }else{    
-	    ros::Subscriber pose_sub = m_node.subscribe<geometry_msgs::Pose>("/"+robot_name.at(i)+"/localizer/camera/pose", 1, &Camera::pose_feedback, this);
-	    m_robot_feedback_pose_sub.push_back(pose_sub);
-	    std::string windows_name = robot_name[i] +" initial_pose";
-	    char* mouse_windows_name = new char[windows_name.size() + 1];
-	    std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
-	    mouse_windows_name[windows_name.size()] = '\0'; 
-	    cvDestroyWindow(mouse_windows_name);
-	    robot_number = robot_number-1;
-	    initial_pose_setted.erase(initial_pose_setted.begin()+i);
-	    robot_name.erase(robot_name.begin()+i);
-	}
-     }
-     
-     // Filtering
-     // Blue Ball HSV values 
-     namedWindow(BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name);
-//      createTrackbar("H lower",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_b[0],180,0,0);
-     createTrackbar("S lower",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_b[1],255,0,0);
-     createTrackbar("V lower",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_b[2],255,0,0);
-//      createTrackbar("H upper",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_b[0],180,0,0);
-     createTrackbar("S upper",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_b[1],255,0,0);
-     createTrackbar("V upper",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_b[2],255,0,0);
-     createTrackbar("Kernel size",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&dim_kernel_blue,20,0,0);
-     filtering(m_stream_video,m_only_blue,lb_b,ub_b,dim_kernel_blue+1);  
-     
-//      Green Ball HSV values
-     namedWindow(GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name);
-     createTrackbar("H lower",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_g[0],180,0,0);
-     createTrackbar("S lower",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_g[1],255,0,0);
-     createTrackbar("V lower",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_g[2],255,0,0);
-     createTrackbar("H upper",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_g[0],180,0,0);
-     createTrackbar("S upper",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_g[1],255,0,0);
-     createTrackbar("V upper",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_g[2],255,0,0);
-     createTrackbar("Kernel size",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&dim_kernel_green,20,0,0);
-     filtering(m_stream_video,m_only_green,lb_g,ub_g,dim_kernel_green+1);  
-     
-//      Red Ball HSV values (H had *0.5 scale factor)
-     cv::Mat l_only_lower_red, l_only_upper_red;
-     namedWindow(RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name);
-//      createTrackbar("H lower (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lower_lb_r[0],180,0,0);
-     createTrackbar("S lower (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lower_lb_r[1],255,0,0);
-     createTrackbar("V lower (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lower_lb_r[2],255,0,0);
-//      createTrackbar("H upper (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lower_ub_r[0],180,0,0);
-     createTrackbar("S upper (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lower_ub_r[1],255,0,0);
-     createTrackbar("V upper (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lower_ub_r[2],255,0,0);
-//      createTrackbar("H lower (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&upper_lb_r[0],180,0,0);
-     createTrackbar("S lower (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&upper_lb_r[1],255,0,0);
-     createTrackbar("V lower (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&upper_lb_r[2],255,0,0);
-//      createTrackbar("H upper (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&upper_ub_r[0],180,0,0);
-     createTrackbar("S upper (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&upper_ub_r[1],255,0,0);
-     createTrackbar("V upper (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&upper_ub_r[2],255,0,0);
-     createTrackbar("Kernel size",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&dim_kernel_red,20,0,0);
-     filtering(m_stream_video,l_only_lower_red,lower_lb_r,lower_ub_r,dim_kernel_red+1);  
-     filtering(m_stream_video,l_only_upper_red,upper_lb_r,upper_ub_r,dim_kernel_red+1);  
-     cv::addWeighted(l_only_lower_red,1.0,l_only_upper_red,1.0,0.0,m_only_red);
-          
-//      Yellow Ball HSV values
-     namedWindow(YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name);
-//      createTrackbar("H lower",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_y[0],180,0,0);
-     createTrackbar("S lower",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_y[1],255,0,0);
-     createTrackbar("V lower",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_y[2],255,0,0);
-//      createTrackbar("H upper",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_y[0],180,0,0);
-     createTrackbar("S upper",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_y[1],255,0,0);
-     createTrackbar("V upper",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_y[2],255,0,0);
-     createTrackbar("Kernel size",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&dim_kernel_yellow,20,0,0);
-     filtering(m_stream_video,m_only_yellow,lb_y,ub_y,dim_kernel_yellow+1);  
-     
-
-//      Lock l_lock(m_mutex);
-
-// //      THRESHOLDED IMG
-//      imshow(BLUE_THRESHOLD_WINDOWS+m_camera_name,m_only_blue);
-//      imshow(GREEN_THRESHOLD_WINDOWS+m_camera_name,m_only_green);
-//      imshow(RED_THRESHOLD_WINDOWS+m_camera_name,m_only_red);
-//      imshow(YELLOW_THRESHOLD_WINDOWS+m_camera_name,m_only_yellow);  
-     
-//      FIND BALLS ARRAY
-     m_blue_circles = charge_array(m_only_blue);
-     m_green_circles = charge_array(m_only_green);
-     m_red_circles = charge_array(m_only_red);
-     m_yellow_circles = charge_array(m_only_yellow);
-
-       //FROM CAM (pixel) TO WORLD (cm)
-//      m_blue_circles_W=cam_to_W(m_blue_circles);
-//      m_green_circles_W=cam_to_W(m_green_circles);
-//      m_red_circles_W=cam_to_W(m_red_circles);
-//      m_yellow_circles_W=cam_to_W(m_yellow_circles);
-      std::vector<ball_position> test_p,test_cm;
-      ball_position a,b;
-      if(robot_initial_pose_rect.size()>0)
+  Lock l_lock(m_mutex);
+  // ROBOTS INITIAL POSE
+  for(int i  = 0;i<robot_number;i++)
+  {
+    if(!initial_pose_setted[i])
+    {	
+      std::string windows_name = robot_name[i]+" initial_pose";
+      char* mouse_windows_name = new char[windows_name.size() + 1];
+      std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
+      mouse_windows_name[windows_name.size()] = '\0'; 
+      imshow(windows_name,m_stream_video);
+      cvSetMouseCallback(mouse_windows_name,mouse_callback,NULL);
+      if(callback_done)
       {
-	a.x = robot_initial_pose_rect.at(0).x+robot_initial_pose_rect.at(0).height/2;
-	a.y = robot_initial_pose_rect.at(0).y+robot_initial_pose_rect.at(0).height/2;
-	test_p.push_back(a);
-	test_cm = cam_to_W(test_p);
-	b = test_cm.at(0);      
-	ROS_INFO("x pixel -->%f",a.x);
-	ROS_INFO("y pixel -->%f",a.y);
-	ROS_INFO("x cm ---> %f",b.x);
-	ROS_INFO("y cm ---> %f",b.y);
+	initial_pose_setted[i] = callback_done;
+	callback_done = false;
       }
-
-     Point center;
-     center.x=320;
-     center.y=240;
-    
-     
-      for(size_t i = 0;i<m_blue_circles.size();i++)
-     {
-       cv::Rect rec;
-       ball_position a;
-       a = m_blue_circles.at(i);
-       rec.x = a.x;
-       rec.y = a.y;
-       rec.height = a.height;
-       rec.width = a.width;
-       rectangle(m_stream_video,rec,cv::Scalar(255, 255, 255),1,8,0);
-     }
-     for(size_t i = 0;i<m_green_circles.size();i++)
-     {
-       cv::Rect rec;
-       ball_position a;
-       a = m_green_circles.at(i);
-       rec.x = a.x;
-       rec.y = a.y;
-       rec.height = a.height;
-       rec.width = a.width;
-       rectangle(m_stream_video,rec,cv::Scalar(255, 255, 255),1,8,0);
-       
-     }
-     
-     for(size_t i = 0;i<m_red_circles.size();i++)
-     {
-       cv::Rect rec;
-       ball_position a;
-       a = m_red_circles.at(i);
-       rec.x = a.x;
-       rec.y = a.y;
-       rec.height = a.height;
-       rec.width = a.width;
-       rectangle(m_stream_video,rec,cv::Scalar(255, 255, 255),1,8,0);
     }
-     
-     for(size_t i = 0;i<m_yellow_circles.size();i++)
-     {
-       cv::Rect rec;
-       ball_position a;
-       a = m_yellow_circles.at(i);
-       rec.x = a.x;
-       rec.y = a.y;
-       rec.height = a.height;
-       rec.width = a.width;
-       rectangle(m_stream_video,rec,cv::Scalar(255, 255, 255),1,8,0);
-       
-     }
-     
-     //// SEARCH RECTANGLE
-     for(size_t i = 0;i<robot_initial_pose_rect.size();i++)
-     {
-       cv::Rect rec;
-       rec = robot_initial_pose_rect.at(i);
-       rectangle(m_stream_video,rec,cv::Scalar(0, 0, 0),1,8,0);
-       
-     }
-     cv::circle(m_stream_video,center,2,cv::Scalar(0, 0, 255),-1,8,0);
-     cv::circle(m_stream_video,center,10,cv::Scalar(0, 0, 0),1,8,0);
-     cv::imshow(SENSOR_CV_WINDOW+m_camera_name,m_stream_video);
-          
-     m_blue_circles.clear();
-     m_green_circles.clear();
-     m_red_circles.clear();
-     m_yellow_circles.clear();
+    else
+    {    
+      ros::Subscriber pose_sub = m_node.subscribe<geometry_msgs::Pose>("/"+robot_name.at(i)+"/localizer/camera/pose", 1, &Camera::pose_feedback, this);
+      m_robot_feedback_pose_sub.push_back(pose_sub);
+      std::string windows_name = robot_name[i] +" initial_pose";
+      char* mouse_windows_name = new char[windows_name.size() + 1];
+      std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
+      mouse_windows_name[windows_name.size()] = '\0'; 
+      cvDestroyWindow(mouse_windows_name);
+      robot_number = robot_number-1;
+      initial_pose_setted.erase(initial_pose_setted.begin()+i);
+      robot_name.erase(robot_name.begin()+i);
+    }
+  }
+
+  // Filtering
+  // Blue Ball HSV values 
+  namedWindow(BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name);
+  //      createTrackbar("H lower",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_b[0],180,0,0);
+  createTrackbar("S lower",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_b[1],255,0,0);
+  createTrackbar("V lower",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_b[2],255,0,0);
+  //      createTrackbar("H upper",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_b[0],180,0,0);
+  createTrackbar("S upper",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_b[1],255,0,0);
+  createTrackbar("V upper",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_b[2],255,0,0);
+  createTrackbar("Kernel size",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&dim_kernel_blue,20,0,0);
+  filtering(m_stream_video,m_only_blue,lb_b,ub_b,dim_kernel_blue+1);  
+
+  //      Green Ball HSV values
+  namedWindow(GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name);
+  createTrackbar("H lower",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_g[0],180,0,0);
+  createTrackbar("S lower",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_g[1],255,0,0);
+  createTrackbar("V lower",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_g[2],255,0,0);
+  createTrackbar("H upper",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_g[0],180,0,0);
+  createTrackbar("S upper",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_g[1],255,0,0);
+  createTrackbar("V upper",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_g[2],255,0,0);
+  createTrackbar("Kernel size",GREEN_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&dim_kernel_green,20,0,0);
+  filtering(m_stream_video,m_only_green,lb_g,ub_g,dim_kernel_green+1);  
+
+  //      Red Ball HSV values (H had *0.5 scale factor)
+  cv::Mat l_only_lower_red, l_only_upper_red;
+  namedWindow(RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name);
+  //      createTrackbar("H lower (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lower_lb_r[0],180,0,0);
+  createTrackbar("S lower (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lower_lb_r[1],255,0,0);
+  createTrackbar("V lower (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lower_lb_r[2],255,0,0);
+  //      createTrackbar("H upper (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lower_ub_r[0],180,0,0);
+  createTrackbar("S upper (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lower_ub_r[1],255,0,0);
+  createTrackbar("V upper (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lower_ub_r[2],255,0,0);
+  //      createTrackbar("H lower (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&upper_lb_r[0],180,0,0);
+  createTrackbar("S lower (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&upper_lb_r[1],255,0,0);
+  createTrackbar("V lower (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&upper_lb_r[2],255,0,0);
+  //      createTrackbar("H upper (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&upper_ub_r[0],180,0,0);
+  createTrackbar("S upper (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&upper_ub_r[1],255,0,0);
+  createTrackbar("V upper (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&upper_ub_r[2],255,0,0);
+  createTrackbar("Kernel size",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&dim_kernel_red,20,0,0);
+  filtering(m_stream_video,l_only_lower_red,lower_lb_r,lower_ub_r,dim_kernel_red+1);  
+  filtering(m_stream_video,l_only_upper_red,upper_lb_r,upper_ub_r,dim_kernel_red+1);  
+  cv::addWeighted(l_only_lower_red,1.0,l_only_upper_red,1.0,0.0,m_only_red);
+      
+  //      Yellow Ball HSV values
+  namedWindow(YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name);
+  //      createTrackbar("H lower",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_y[0],180,0,0);
+  createTrackbar("S lower",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_y[1],255,0,0);
+  createTrackbar("V lower",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&lb_y[2],255,0,0);
+  //      createTrackbar("H upper",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_y[0],180,0,0);
+  createTrackbar("S upper",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_y[1],255,0,0);
+  createTrackbar("V upper",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_y[2],255,0,0);
+  createTrackbar("Kernel size",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&dim_kernel_yellow,20,0,0);
+  filtering(m_stream_video,m_only_yellow,lb_y,ub_y,dim_kernel_yellow+1);  
+
+
+  //      Lock l_lock(m_mutex);
+
+  // //      THRESHOLDED IMG
+  //      imshow(BLUE_THRESHOLD_WINDOWS+m_camera_name,m_only_blue);
+  //      imshow(GREEN_THRESHOLD_WINDOWS+m_camera_name,m_only_green);
+  //      imshow(RED_THRESHOLD_WINDOWS+m_camera_name,m_only_red);
+  //      imshow(YELLOW_THRESHOLD_WINDOWS+m_camera_name,m_only_yellow);  
+
+  //      FIND BALLS ARRAY
+  m_blue_circles = charge_array(m_only_blue);
+  m_green_circles = charge_array(m_only_green);
+  m_red_circles = charge_array(m_only_red);
+  m_yellow_circles = charge_array(m_only_yellow);
+
+    //FROM CAM (pixel) TO WORLD (cm)
+  //      m_blue_circles_W=cam_to_W(m_blue_circles);
+  //      m_green_circles_W=cam_to_W(m_green_circles);
+  //      m_red_circles_W=cam_to_W(m_red_circles);
+  //      m_yellow_circles_W=cam_to_W(m_yellow_circles);
+  std::vector<ball_position> test_p,test_cm;
+  ball_position a,b;
+  if(robot_initial_pose_rect.size()>0)
+  {
+    a.x = robot_initial_pose_rect.at(0).x+robot_initial_pose_rect.at(0).height/2;
+    a.y = robot_initial_pose_rect.at(0).y+robot_initial_pose_rect.at(0).height/2;
+    test_p.push_back(a);
+    test_cm = cam_to_W(test_p);
+    b = test_cm.at(0);      
+    ROS_INFO("x pixel -->%f",a.x);
+    ROS_INFO("y pixel -->%f",a.y);
+    ROS_INFO("x cm ---> %f",b.x);
+    ROS_INFO("y cm ---> %f",b.y);
+  }
+
+  Point center;
+  center.x=320;
+  center.y=240;
+
+  for(size_t i = 0;i<m_blue_circles.size();i++)
+  {
+    cv::Rect rec;
+    ball_position a;
+    a = m_blue_circles.at(i);
+    rec.x = a.x;
+    rec.y = a.y;
+    rec.height = a.height;
+    rec.width = a.width;
+    rectangle(m_stream_video,rec,cv::Scalar(255, 255, 255),1,8,0);
+  }
+  for(size_t i = 0;i<m_green_circles.size();i++)
+  {
+    cv::Rect rec;
+    ball_position a;
+    a = m_green_circles.at(i);
+    rec.x = a.x;
+    rec.y = a.y;
+    rec.height = a.height;
+    rec.width = a.width;
+    rectangle(m_stream_video,rec,cv::Scalar(255, 255, 255),1,8,0);
+    
+  }
+
+  for(size_t i = 0;i<m_red_circles.size();i++)
+  {
+    cv::Rect rec;
+    ball_position a;
+    a = m_red_circles.at(i);
+    rec.x = a.x;
+    rec.y = a.y;
+    rec.height = a.height;
+    rec.width = a.width;
+    rectangle(m_stream_video,rec,cv::Scalar(255, 255, 255),1,8,0);
+  }
+
+  for(size_t i = 0;i<m_yellow_circles.size();i++)
+  {
+    cv::Rect rec;
+    ball_position a;
+    a = m_yellow_circles.at(i);
+    rec.x = a.x;
+    rec.y = a.y;
+    rec.height = a.height;
+    rec.width = a.width;
+    rectangle(m_stream_video,rec,cv::Scalar(255, 255, 255),1,8,0);
+  }
+
+  //// SEARCH RECTANGLE
+  for(size_t i = 0;i<robot_initial_pose_rect.size();i++)
+  {
+    cv::Rect rec;
+    rec = robot_initial_pose_rect.at(i);
+    rectangle(m_stream_video,rec,cv::Scalar(0, 0, 0),1,8,0);
+    
+  }
+  cv::circle(m_stream_video,center,2,cv::Scalar(0, 0, 255),-1,8,0);
+  cv::circle(m_stream_video,center,10,cv::Scalar(0, 0, 0),1,8,0);
+  cv::imshow(SENSOR_CV_WINDOW+m_camera_name,m_stream_video);
+      
+  m_blue_circles.clear();
+  m_green_circles.clear();
+  m_red_circles.clear();
+  m_yellow_circles.clear();
 }
        
-
+/////////////////////////////////////////////////////
 void Camera::filtering(cv::Mat &src,cv::Mat &dst,int  lb[],int  ub[],int dim_kernel)
 {
-     // Noise smoothing
-     cv::Mat blur;
-     cv::GaussianBlur(src,blur, cv::Size(5, 5), 3.0, 0);
+  // Noise smoothing
+  cv::Mat blur;
+  cv::GaussianBlur(src,blur, cv::Size(5, 5), 3.0, 0);
 
-     //  HSV conversion
-     cv::Mat frmHsv;
-     cv::cvtColor(blur, frmHsv, CV_BGR2HSV);
-  
+  //  HSV conversion
+  cv::Mat frmHsv;
+  cv::cvtColor(blur, frmHsv, CV_BGR2HSV);
 
-//       Color Thresholding
-     cv::Mat rangeRes = cv::Mat::zeros(src.size(), CV_8UC1);
-     cv::inRange(frmHsv, cv::Scalar(lb[0], lb[1], lb[2]),cv::Scalar(ub[0], ub[1], ub[2]),dst);
+  //       Color Thresholding
+  cv::Mat rangeRes = cv::Mat::zeros(src.size(), CV_8UC1);
+  cv::inRange(frmHsv, cv::Scalar(lb[0], lb[1], lb[2]),cv::Scalar(ub[0], ub[1], ub[2]),dst);
 
 //       EROSE DILATE
-      //morphological opening (remove small objects from the foreground)
-      erode(dst, dst, getStructuringElement(MORPH_RECT, Size(dim_kernel, dim_kernel)) );
-      dilate( dst, dst, getStructuringElement(MORPH_RECT, Size(dim_kernel, dim_kernel)) ); 
-
+  //morphological opening (remove small objects from the foreground)
+  erode(dst, dst, getStructuringElement(MORPH_RECT, Size(dim_kernel, dim_kernel)) );
+  dilate( dst, dst, getStructuringElement(MORPH_RECT, Size(dim_kernel, dim_kernel)) ); 
 }
 
-
+/////////////////////////////////////////////////////
 std::vector<ball_position> Camera::charge_array(cv::Mat img)
 {
-      vector<vector<cv::Point> > l_contours; 
-      ball_position l_ball;
-      std::vector<ball_position> l_array;
-      cv::findContours(img, l_contours, CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);   
-      for (size_t i = 0; i < l_contours.size(); i++)       
-      {          
-	cv::Rect bBox;   
-	bBox = cv::boundingRect(l_contours[i]);            
-	float ratio = (float) bBox.width / (float) bBox.height;          
-	if (ratio > 1.0f)
-            ratio = 1.0f / ratio;
-         // Searching for a bBox almost square
-	cv::Point2f possible_ball;
-	possible_ball.x = bBox.x;
-	possible_ball.y = bBox.y;
-	for(size_t j = 0;j<robot_initial_pose_rect.size();j++)
-	{
-         if (ratio > 0.6 && possible_ball.inside(robot_initial_pose_rect.at(j)) && bBox.area()<900 && bBox.area()>100) 
-         {
-	    l_ball.x = bBox.x;
-	    l_ball.y = bBox.y;
-	    l_ball.height = bBox.height;
-	    l_ball.width = bBox.width;
-	    l_array.push_back(l_ball);
-	 }
-	}
+  vector<vector<cv::Point> > l_contours; 
+  ball_position l_ball;
+  std::vector<ball_position> l_array;
+  cv::findContours(img, l_contours, CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);   
+  for (size_t i = 0; i < l_contours.size(); i++)       
+  {          
+    cv::Rect bBox;   
+    bBox = cv::boundingRect(l_contours[i]);            
+    float ratio = (float) bBox.width / (float) bBox.height;          
+    if (ratio > 1.0f)
+	ratio = 1.0f / ratio;
+      // Searching for a bBox almost square
+    cv::Point2f possible_ball;
+    possible_ball.x = bBox.x;
+    possible_ball.y = bBox.y;
+    for(size_t j = 0;j<robot_initial_pose_rect.size();j++)
+    {
+      if (ratio > 0.6 && possible_ball.inside(robot_initial_pose_rect.at(j)) && bBox.area()<900 && bBox.area()>100) 
+      {
+	l_ball.x = bBox.x;
+	l_ball.y = bBox.y;
+	l_ball.height = bBox.height;
+	l_ball.width = bBox.width;
+	l_array.push_back(l_ball);
       }
-      return l_array;
+    }
+  }
+  return l_array;
 }
 
-
+/////////////////////////////////////////////////////
 std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
 {
   std::vector<ball_position> l_out_array;
@@ -585,6 +586,7 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
    return l_out_array;
 }
 
+/////////////////////////////////////////////////////
 ball_position Camera::W_to_cam(ball_position& pos_in)
 {
   ball_position pos_cam_pixel;
@@ -651,24 +653,28 @@ ball_position Camera::W_to_cam(ball_position& pos_in)
   return pos_cam_pixel;
 }
 
+/////////////////////////////////////////////////////
 std::vector<ball_position> Camera::get_blue_array()
 {
   Lock l_lock(m_mutex);
   return m_blue_circles_W;
 }
 
+/////////////////////////////////////////////////////
 std::vector<ball_position> Camera::get_green_array()
 {
   Lock l_lock(m_mutex);
   return m_green_circles_W;
 }
 
+/////////////////////////////////////////////////////
 std::vector<ball_position> Camera::get_red_array()
 {
   Lock l_lock(m_mutex);
   return m_red_circles_W;
 }
 
+/////////////////////////////////////////////////////
 std::vector<ball_position> Camera::get_yellow_array()
 {
   Lock l_lock(m_mutex);

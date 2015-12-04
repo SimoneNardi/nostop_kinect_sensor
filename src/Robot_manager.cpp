@@ -4,36 +4,48 @@
 #include <string.h>
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Robot_manager.h"
+#include "nostop_agent/AddRobot.h"
 
 using namespace std;
 using namespace Robotics;
 using namespace Robotics::GameTheory;
 
-
+//////////////////////////////////////
 Robot_manager::Robot_manager()
 {
   ROS_INFO("ROBOT MANAGER ON!");
-  m_robot_in = m_manager_node.subscribe<std_msgs::String>("/localizer/kinect/add_robot", 1000, &Robot_manager::new_robot_id,this);
+  m_add_robot_topic = m_manager_node.subscribe<std_msgs::String>("/localizer/kinect/add_robot", 1000, &Robot_manager::new_robot_id_topic,this);
+  m_add_robot_service = m_manager_node.advertiseService("/localizer/add_robot", &Robot_manager::new_robot_id_service,this);
 }
 
-
-Robot_manager::~Robot_manager()	
+//////////////////////////////////////
+Robot_manager::~Robot_manager()
 {}
 
-void Robot_manager::new_robot_id(const std_msgs::String::ConstPtr& msg)
+//////////////////////////////////////
+bool Robot_manager::new_robot_id_service(
+  nostop_agent::AddRobot::Request  &req,
+  nostop_agent::AddRobot::Response &res)
+{
+  m_robot_array.push_back( std::make_shared<Robot>(req.name) );
+  return true;
+}
+
+//////////////////////////////////////
+void Robot_manager::new_robot_id_topic(const std_msgs::String::ConstPtr& msg)
 {	
     m_robot_array.push_back( std::make_shared<Robot>(msg->data) );
 }
 
+//////////////////////////////////////
 void Robot_manager::array_assignment(
   std::vector<ball_position>& blue_array, 
   std::vector<ball_position>& green_array,
   std::vector<ball_position>& red_array,
   std::vector<ball_position>& yellow_array)
 {
-  if (m_robot_array.size() == 0 )
-  {}
-  else{
+  if (m_robot_array.size() != 0 )
+  {
     for(size_t i=0;i<m_robot_array.size();i++)
     {
       std::vector<ball_position> l_front_array;
@@ -55,9 +67,7 @@ void Robot_manager::array_assignment(
 	{
 	  l_front_array = yellow_array;
 	}
-      
-      
-      
+            
       if (m_robot_array[i]->color_b() == "blue")
 	{
 	  l_back_array = blue_array;

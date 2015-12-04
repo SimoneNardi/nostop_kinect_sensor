@@ -13,6 +13,7 @@
 
 #include <vector>
 #include "ball_position.h"
+#include "nostop_agent/AddRobot.h"
 
 namespace Robotics 
 {
@@ -24,7 +25,8 @@ namespace Robotics
 		class Robot_manager
 		{
 		  
-		  ros::Subscriber m_robot_in;
+		  ros::Subscriber m_add_robot_topic;
+		  ros::ServiceServer m_add_robot_service;
 
 		  std::vector< std::shared_ptr<Robot> > m_robot_array;
 		  
@@ -34,7 +36,10 @@ namespace Robotics
 		public:
 			Robot_manager();
 			~Robot_manager();
-			void new_robot_id(const std_msgs::String::ConstPtr& msg);
+			void new_robot_id_topic(const std_msgs::String::ConstPtr& msg);
+			bool new_robot_id_service(
+				nostop_agent::AddRobot::Request  &req,
+				nostop_agent::AddRobot::Response &res);
 			void array_assignment(std::vector<ball_position>& blue_array, 
 						std::vector<ball_position>& green_array,
 						std::vector<ball_position>& red_array,
