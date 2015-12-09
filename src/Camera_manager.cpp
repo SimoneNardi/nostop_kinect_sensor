@@ -25,12 +25,13 @@ Camera_manager::~Camera_manager()
 void Camera_manager::new_camera(const nostop_kinect_sensor::Camera_data::ConstPtr& msg)
 {	
     std::string camera_name,image_topic,calibration_topic;
-    std::vector<float> pos_camera;
-    float pitch, omega,gamma,R;
     camera_name.assign( msg->name);
     image_topic.assign(msg->topic_name);
     calibration_topic.assign(msg->calibration_topic);
-    m_camera_array.push_back( std::make_shared<Camera>(camera_name,image_topic,calibration_topic) );
+    float ifovx,ifovy;
+    ifovx = msg->ifovx;
+    ifovy = msg->ifovy;
+    m_camera_array.push_back( std::make_shared<Camera>(camera_name,image_topic,calibration_topic,ifovx,ifovy) );
     
 }
 

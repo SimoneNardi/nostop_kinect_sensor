@@ -71,7 +71,7 @@ namespace Robotics
 		  //POINT TRASFORMATION
 		  float m_xCamera,m_yCamera,m_zCamera,m_R,m_omegaz,m_gammax,m_roll,m_h_robot;
 		  geometry_msgs::PointStamped m_camera_point;
-
+		  float m_iFOVx,m_iFOVy;
 		  // BALLS ARRAY
 		  std::vector<ball_position>  m_blue_circles;
 		  std::vector<ball_position>  m_green_circles;
@@ -85,7 +85,7 @@ namespace Robotics
 
 		  
 		public:
-			Camera(std::string name_,std::string topic_name,std::string calibration_topic);
+			Camera(std::string name_,std::string topic_name,std::string calibration_topic,float ifovx,float ifovy);
 			
 			~Camera();
 			void subscribe();

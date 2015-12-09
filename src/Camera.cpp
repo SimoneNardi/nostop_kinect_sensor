@@ -38,13 +38,15 @@ static const float ball_radius = 7.0;
 
  
 /////////////////////////////////////////////
-Camera::Camera(std::string name_,std::string image_topic_name,std::string calibration_topic)
+Camera::Camera(std::string name_,std::string image_topic_name,std::string calibration_topic,float ifovx,float ifovy)
 : m_available(false)
 , m_it(m_node)
 , m_camera_name(name_)
 , m_topic_name(image_topic_name)
 , m_R(1)
 , m_roll(0)
+, m_iFOVx(ifovx)
+, m_iFOVy(ifovy)
 {
   ROS_INFO("CAMERA %s ON!",m_camera_name.c_str());
   m_calibration_sub = m_node.subscribe(calibration_topic,1,&Camera::camera_calibration,this);
@@ -72,8 +74,8 @@ void Camera::camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg
   m_xCamera = msg->data[2];
   m_yCamera = msg->data[3];
   m_zCamera = msg->data[4];
-  m_omegaz = msg->data[5];
-  m_gammax = msg->data[6];
+  m_omegaz = msg->data[5]*M_PI/180;
+  m_gammax = msg->data[6]*M_PI/180;
   m_h_robot = msg->data[7];
 }
 
@@ -107,9 +109,8 @@ void mouse_callback(int event, int x, int y, int flags, void* param)
 {
 	if (event == CV_EVENT_LBUTTONDBLCLK) { 
 		cv::Rect pose;
-		Point l_tl;
-		pose.height = 1;//TODO
-		pose.width = 1;
+		pose.height = 120;
+		pose.width = 120;
 		pose.x = x-pose.width/2;
 		pose.y = y-pose.height/2;
 		robot_initial_pose_rect.push_back(pose);
@@ -265,7 +266,7 @@ void Camera::search_ball_pos()
   {
     if(!initial_pose_setted[i])
     {	
-      std::string windows_name = robot_name[i]+" initial_pose";
+      std::string windows_name = robot_name[i] +" "+m_camera_name +" initial_pose";
       char* mouse_windows_name = new char[windows_name.size() + 1];
       std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
       mouse_windows_name[windows_name.size()] = '\0'; 
@@ -281,7 +282,7 @@ void Camera::search_ball_pos()
     {    
       ros::Subscriber pose_sub = m_node.subscribe<geometry_msgs::Pose>("/"+robot_name.at(i)+"/localizer/camera/pose", 1, &Camera::pose_feedback, this);
       m_robot_feedback_pose_sub.push_back(pose_sub);
-      std::string windows_name = robot_name[i] +" initial_pose";
+      std::string windows_name = robot_name[i] +" "+m_camera_name +" initial_pose";
       char* mouse_windows_name = new char[windows_name.size() + 1];
       std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
       mouse_windows_name[windows_name.size()] = '\0'; 
@@ -361,25 +362,11 @@ void Camera::search_ball_pos()
   m_red_circles = charge_array(m_only_red);
   m_yellow_circles = charge_array(m_only_yellow);
 
-    //FROM CAM (pixel) TO WORLD (cm)
-  //      m_blue_circles_W=cam_to_W(m_blue_circles);
-  //      m_green_circles_W=cam_to_W(m_green_circles);
-  //      m_red_circles_W=cam_to_W(m_red_circles);
-  //      m_yellow_circles_W=cam_to_W(m_yellow_circles);
-  std::vector<ball_position> test_p,test_cm;
-  ball_position a,b;
-  if(robot_initial_pose_rect.size()>0)
-  {
-    a.x = robot_initial_pose_rect.at(0).x+robot_initial_pose_rect.at(0).height/2;
-    a.y = robot_initial_pose_rect.at(0).y+robot_initial_pose_rect.at(0).height/2;
-    test_p.push_back(a);
-    test_cm = cam_to_W(test_p);
-    b = test_cm.at(0);      
-    ROS_INFO("x pixel -->%f",a.x);
-    ROS_INFO("y pixel -->%f",a.y);
-    ROS_INFO("x cm ---> %f",b.x);
-    ROS_INFO("y cm ---> %f",b.y);
-  }
+//     FROM CAM (pixel) TO WORLD (cm)
+  m_blue_circles_W = cam_to_W(m_blue_circles);
+  m_green_circles_W = cam_to_W(m_green_circles);
+  m_red_circles_W = cam_to_W(m_red_circles);
+  m_yellow_circles_W = cam_to_W(m_yellow_circles);
 
   Point center;
   center.x=320;
@@ -511,8 +498,8 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
   std::vector<ball_position> l_out_array;
   float pos_cam[3],pos_world[3],o01[3];
   ball_position l_pos_pix,l_pos_cm,l_world_cm;
-  float iFOV_x = (48*M_PI/180)/640;
-  float iFOV_y = (32*M_PI/180)/480;
+  float iFOVx = (m_iFOVx*M_PI/180)/640;
+  float iFOVy = (m_iFOVy*M_PI/180)/480;
   float azimuth,elevation;
   float psi;
   float distance_from_center_x,distance_from_center_y;
@@ -523,14 +510,14 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       l_pos_pix.y = array[i].y;
       l_pos_pix.width = array[i].width;
       l_pos_pix.height = array[i].height;
-      float R_z[3][3],R_x[3][3],Rtot[3][3];
+      float Rtot[3][3];
       float x_SR_centered,y_SR_centered,x_roll_corrected,y_roll_corrected;
       x_SR_centered =l_pos_pix.x-320.5;
       y_SR_centered = l_pos_pix.y-240.5;
       x_roll_corrected = x_SR_centered*cos(m_roll)-y_SR_centered*sin(m_roll);
       y_roll_corrected = x_SR_centered*sin(m_roll)+y_SR_centered*cos(m_roll);
-      azimuth = x_roll_corrected*iFOV_x;
-      elevation = -y_roll_corrected*iFOV_y;
+      azimuth = x_roll_corrected*iFOVx;
+      elevation = -y_roll_corrected*iFOVy;
       // SR IN CENTER OF VIEW
       distance_from_center_y = tan(M_PI/2-pitch+elevation)*m_zCamera-m_R;
       distance_from_center_x = tan(azimuth)*(m_R+distance_from_center_y);
@@ -547,36 +534,24 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       o01[0] = m_xCamera;
       o01[1] = m_yCamera;
       o01[2] = 0;
-      R_z[1][1] = cos(m_omegaz);
-      R_z[1][2] = -sin(m_omegaz);
-      R_z[1][3] = 0;
-      R_z[2][1] = sin(m_omegaz);
-      R_z[2][2] = cos(m_omegaz);
-      R_z[2][3] = 0;
-      R_z[3][1] = 0;
-      R_z[3][2] = 0;
-      R_z[3][3] = 1;
-      R_x[1][1] = 1;
-      R_x[1][2] = 0;
-      R_x[1][3] = 0;
-      R_x[2][1] = 0;
-      R_x[2][2] = cos(m_gammax);
-      R_x[2][3] = -sin(m_gammax);
-      R_x[3][1] = 0;
-      R_x[3][2] = sin(m_gammax);
-      R_x[3][3] = cos(m_gammax);
+//         Rz * Rx ( current axis ) 
       Rtot[1][1] = cos(m_omegaz);
-      Rtot[1][2] = -sin(m_omegaz);
-      Rtot[1][3] = 0;
-      Rtot[2][1] = sin(m_omegaz)*cos(m_gammax);
+      Rtot[1][2] = -cos(m_gammax)*sin(m_omegaz);
+      Rtot[1][3] = sin(m_gammax)*sin(m_omegaz);
+      Rtot[2][1] = sin(m_omegaz);
       Rtot[2][2] = cos(m_gammax)*cos(m_omegaz);
-      Rtot[2][3] = -sin(m_gammax);
-      Rtot[3][1] = sin(m_gammax)*sin(m_omegaz);
-      Rtot[3][2] = sin(m_gammax)*cos(m_omegaz);
+      Rtot[2][3] = -sin(m_gammax)*cos(m_omegaz);
+      Rtot[3][1] = 0;
+      Rtot[3][2] = sin(m_gammax);
       Rtot[3][3] = cos(m_gammax);
-      pos_world[0] = Rtot[1][1]*pos_cam[0]+Rtot[1][2]*pos_cam[1]+Rtot[1][3]*pos_cam[2]+o01[0];
-      pos_world[1] = Rtot[2][1]*pos_cam[0]+Rtot[2][2]*pos_cam[1]+Rtot[2][3]*pos_cam[2]+o01[1];
-      pos_world[2] = Rtot[3][1]*pos_cam[0]+Rtot[3][2]*pos_cam[1]+Rtot[3][3]*pos_cam[2]+o01[2];
+      // ROTATION
+      pos_world[0] = Rtot[1][1]*pos_cam[0]+Rtot[1][2]*pos_cam[1]+Rtot[1][3]*pos_cam[2];
+      pos_world[1] = Rtot[2][1]*pos_cam[0]+Rtot[2][2]*pos_cam[1]+Rtot[2][3]*pos_cam[2];
+      pos_world[2] = Rtot[3][1]*pos_cam[0]+Rtot[3][2]*pos_cam[1]+Rtot[3][3]*pos_cam[2];
+      // TRASLATION
+      pos_world[0] = pos_world[0]+o01[0];
+      pos_world[1] = pos_world[1]+o01[1];
+      pos_world[2] = pos_world[2]+o01[2];
       l_world_cm.x = pos_world[0];
       l_world_cm.y = pos_world[1];
       l_world_cm.height = l_pos_cm.height;
@@ -591,8 +566,8 @@ ball_position Camera::W_to_cam(ball_position& pos_in)
 {
   ball_position pos_cam_pixel;
   float pos_cam_cm[3],pos_world[3],o01[3];
-  float iFOV_x = (48*M_PI/180)/640;
-  float iFOV_y = (32*M_PI/180)/480;
+  float iFOVx = (m_iFOVx*M_PI/180)/640;
+  float iFOVy = (m_iFOVy*M_PI/180)/480;
   float azimuth,elevation;
   float psi;
   float distance_from_center_x,distance_from_center_y;
@@ -605,32 +580,15 @@ ball_position Camera::W_to_cam(ball_position& pos_in)
   o01[0] = m_xCamera;
   o01[1] = m_yCamera;
   o01[2] = 0;
-  R_z[1][1] = cos(m_omegaz);
-  R_z[1][2] = -sin(m_omegaz);
-  R_z[1][3] = 0;
-  R_z[2][1] = sin(m_omegaz);
-  R_z[2][2] = cos(m_omegaz);
-  R_z[2][3] = 0;
-  R_z[3][1] = 0;
-  R_z[3][2] = 0;
-  R_z[3][3] = 1;
-  R_x[1][1] = 1;
-  R_x[1][2] = 0;
-  R_x[1][3] = 0;
-  R_x[2][1] = 0;
-  R_x[2][2] = cos(m_gammax);
-  R_x[2][3] = -sin(m_gammax);
-  R_x[3][1] = 0;
-  R_x[3][2] = sin(m_gammax);
-  R_x[3][3] = cos(m_gammax);
+  // Rz * Rx ( used the transposed one )
   Rtot[1][1] = cos(m_omegaz);
-  Rtot[1][2] = -sin(m_omegaz);
-  Rtot[1][3] = 0;
-  Rtot[2][1] = sin(m_omegaz)*cos(m_gammax);
+  Rtot[1][2] = -cos(m_gammax)*sin(m_omegaz);
+  Rtot[1][3] = sin(m_gammax)*sin(m_omegaz);
+  Rtot[2][1] = sin(m_omegaz);
   Rtot[2][2] = cos(m_gammax)*cos(m_omegaz);
-  Rtot[2][3] = -sin(m_gammax);
-  Rtot[3][1] = sin(m_gammax)*sin(m_omegaz);
-  Rtot[3][2] = sin(m_gammax)*cos(m_omegaz);
+  Rtot[2][3] = -sin(m_gammax)*cos(m_omegaz);
+  Rtot[3][1] = 0;
+  Rtot[3][2] = sin(m_gammax);
   Rtot[3][3] = cos(m_gammax);
   pos_world[0] = pos_world[0]-o01[0];
   pos_world[1] = pos_world[1]-o01[1];
@@ -644,8 +602,8 @@ ball_position Camera::W_to_cam(ball_position& pos_in)
   distance_from_center_x = -(pos_cam_cm[1]+m_R);
   azimuth = atan(distance_from_center_y/(m_R+distance_from_center_x)) ;
   elevation = atan((distance_from_center_x+m_R)/m_zCamera)-M_PI/2+pitch;
-  y_roll_corrected = -elevation/iFOV_y;
-  x_roll_corrected = azimuth/iFOV_x;
+  y_roll_corrected = -elevation/iFOVy;
+  x_roll_corrected = azimuth/iFOVx;
   x_SR_centered = x_roll_corrected*cos(m_roll)+y_roll_corrected*sin(m_roll);
   y_SR_centered = -x_roll_corrected*sin(m_roll)+y_roll_corrected*cos(m_roll);
   pos_cam_pixel.x = x_SR_centered+320.5;

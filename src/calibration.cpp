@@ -9,13 +9,12 @@
 #include <dynamic_reconfigure/server.h>
 #include <nostop_kinect_sensor/Camera_calibrationConfig.h>
 
-
+#include <stdlib.h>
 cv::Point2f xy;
 std::vector<cv::Point2f> vertex;
 cv::Point2f A_toimage;
 std_msgs::Float64MultiArray message;
 bool to_publish;
-float R,xC,yC,zC,omega,gam,h_robot;
 char* camera_name;
  
 void mouse_callback(int event, int x, int y, int flags, void* param)
@@ -96,6 +95,7 @@ void subscriber_callback(const sensor_msgs::ImageConstPtr &msg)
 
 void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &config, uint32_t level) 
  {
+   float R,xC,yC,zC,omega,gam,h_robot;
   R = config.R_distance;
   message.data[1] = R;
   xC = config.xC;
@@ -117,6 +117,7 @@ int main(int argc, char *argv[])
 	ROS_INFO("Calibration %s : ON",argv[1]);
 	ros::init(argc, argv, argv[1]);
 	camera_name = argv[1];
+	std::string cam_name = argv[1];
 	message.data.resize(8);
 	ros::NodeHandle calibrator;
 	ros::Publisher calibrator_pub;
@@ -135,10 +136,8 @@ int main(int argc, char *argv[])
 	{
 	    if(to_publish)
 	      {	  
-		 message.data[1] = R;
                  calibrator_pub.publish(message);
-		 std::string name = camera_name;
-	         ROS_INFO("%s published calibration values",name.c_str());
+	         ROS_INFO("%s published calibration values",cam_name.c_str());
 	         to_publish=false;
 	      }
 	      ros::spinOnce();
