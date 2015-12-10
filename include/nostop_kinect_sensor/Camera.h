@@ -82,6 +82,9 @@ namespace Robotics
 		  std::vector<ball_position>  m_red_circles_W;
 		  std::vector<ball_position>  m_yellow_circles_W;
 
+		  // Robot
+		  std::vector<bool> initial_pose_setted;
+		  std::vector<std::string> robot_name;
 		  int robot_number;
 		  
 		public:

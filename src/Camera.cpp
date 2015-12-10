@@ -87,9 +87,7 @@ void Camera::subscribe()
 	m_robot_init_pose_sub = m_node.subscribe<std_msgs::String>("/localizer/kinect/add_robot", 1000, &Camera::init_robot_pose,this);  
 }
  
-std::vector<bool> initial_pose_setted;
 std::vector<cv::Rect> robot_initial_pose_rect;
-std::vector<std::string> robot_name;
 bool callback_done;
 
 ////////////////////////////////////////////////////////////////
