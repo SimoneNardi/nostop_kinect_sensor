@@ -82,7 +82,7 @@ namespace Robotics
 		  std::vector<ball_position>  m_red_circles_W;
 		  std::vector<ball_position>  m_yellow_circles_W;
 
-
+		  int robot_number;
 		  
 		public:
 			Camera(std::string name_,std::string topic_name,std::string calibration_topic,float ifovx,float ifovy);

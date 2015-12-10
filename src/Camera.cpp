@@ -90,7 +90,6 @@ void Camera::subscribe()
 std::vector<bool> initial_pose_setted;
 std::vector<cv::Rect> robot_initial_pose_rect;
 std::vector<std::string> robot_name;
-int robot_number=0;
 bool callback_done;
 
 ////////////////////////////////////////////////////////////////
@@ -266,7 +265,7 @@ void Camera::search_ball_pos()
   {
     if(!initial_pose_setted[i])
     {	
-      std::string windows_name = robot_name[i] +" "+m_camera_name +" initial_pose";
+      std::string windows_name = robot_name.at(i)+" "+m_camera_name +" initial_pose";
       char* mouse_windows_name = new char[windows_name.size() + 1];
       std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
       mouse_windows_name[windows_name.size()] = '\0'; 
@@ -282,7 +281,7 @@ void Camera::search_ball_pos()
     {    
       ros::Subscriber pose_sub = m_node.subscribe<geometry_msgs::Pose>("/"+robot_name.at(i)+"/localizer/camera/pose", 1, &Camera::pose_feedback, this);
       m_robot_feedback_pose_sub.push_back(pose_sub);
-      std::string windows_name = robot_name[i] +" "+m_camera_name +" initial_pose";
+      std::string windows_name = robot_name.at(i) +" "+m_camera_name +" initial_pose";
       char* mouse_windows_name = new char[windows_name.size() + 1];
       std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
       mouse_windows_name[windows_name.size()] = '\0'; 

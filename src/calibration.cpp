@@ -8,7 +8,7 @@
 #include <std_msgs/Float64MultiArray.h>
 #include <dynamic_reconfigure/server.h>
 #include <nostop_kinect_sensor/Camera_calibrationConfig.h>
-
+#include <cv.h>
 #include <stdlib.h>
 cv::Point2f xy;
 std::vector<cv::Point2f> vertex;
@@ -95,7 +95,7 @@ void subscriber_callback(const sensor_msgs::ImageConstPtr &msg)
 
 void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &config, uint32_t level) 
  {
-   float R,xC,yC,zC,omega,gam,h_robot;
+  float R,xC,yC,zC,omega,gam,h_robot;
   R = config.R_distance;
   message.data[1] = R;
   xC = config.xC;
