@@ -93,9 +93,23 @@ void subscriber_callback(const sensor_msgs::ImageConstPtr &msg)
 
 }
 
+
+
+float rot_Z(float xc,float yc,float xw,float yw)
+{
+  float num,den,omega;
+  yw = -yw; //TEST gamma_xC = 180 fixed value
+  num = xc*yw-xw*yc;
+  den = pow(xw,2)+pow(yw,2);
+  omega = asin(num/den);
+  return omega;
+}
+
+
 void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &config, uint32_t level) 
  {
-  float R,xC,yC,zC,omega,gam,h_robot;
+//   float R,xC,yC,zC,omega,gam,h_robot;
+  float R,xC,yC,zC,xW,yW,omega_z,gam,h_robot;
   R = config.R_distance;
   message.data[1] = R;
   xC = config.xC;
@@ -104,14 +118,23 @@ void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &confi
   message.data[3] = yC;
   zC = config.zC;
   message.data[4] = zC;
-  omega = config.omega_zC;
-  message.data[5] = omega;
+  //   omega = config.omega_zC;
+//   message.data[5] = omega;
+//   gam = config.gamma_xC;  
+//   message.data[6] = gam;
+//   h_robot = config.h_robot;
+//   message.data[7] = h_robot;
+  //TEST
+  xW = config.xW;
+  yW = config.yW;
+  omega_z = rot_Z(xC,yC,xW,yW);
+  message.data[5] = omega_z;
   gam = config.gamma_xC;  
   message.data[6] = gam;
-  h_robot = config.h_robot;
-  message.data[7] = h_robot;
   to_publish = true;
 }
+
+
 int main(int argc, char *argv[])
 {
 	ROS_INFO("Calibration %s : ON",argv[1]);
