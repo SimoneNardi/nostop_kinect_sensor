@@ -3,7 +3,7 @@
 <launch>
   <node name="philips_cam" pkg="usb_cam" type="usb_cam_node" output="screen">
    <remap from="/philips_cam/image_raw" to="/usb/philips/cam_img"/>
-    <param name="video_device" value="/dev/video1" />
+    <param name="video_device" value="/dev/video0" />
     <param name="image_width" value="640" />
     <param name="image_height" value="480" />
     <param name="camera_name" value="philips" />
@@ -18,8 +18,8 @@
 </node>
 
 <arg name="camera_name" default="philips" />
-<arg name="iFOVx_angle" default = "65"/>
-<arg name="iFOVy_angle" default = "52"/>
+<arg name="iFOVx_angle" default = "75"/><!--65-->
+<arg name="iFOVy_angle" default = "60"/><!--52-->
   <node pkg="nostop_kinect_sensor" type="script_cam.sh" 
     args="$(arg camera_name) $(arg image_topic) $(arg calibration_topic_name)  $(arg iFOVx_angle) $(arg iFOVy_angle)" 
     name="camera_node_philips" output="screen">

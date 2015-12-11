@@ -119,6 +119,9 @@ set(calibration_SOURCES
 
 )
 
+set(cam_view_angle_SOURCES
+	src/cam_view_angle.cpp
+)
 # add_executable(Sensor ${sensor_SOURCES})
 # target_link_libraries(Sensor ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon )#${PCL_LIBRARIES})
 # add_dependencies(Sensor nostop_kinect_sensor_gencpp)
@@ -133,6 +136,10 @@ add_executable(calibration ${calibration_SOURCES})
 add_dependencies(calibration nostop_kinect_sensor_gencpp  nostop_kinect_sensor_gencfg )
 target_link_libraries(calibration ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning)#${PCL_LIBRARIES})
 
+add_executable(cam_view_angle ${cam_view_angle_SOURCES})
+add_dependencies(cam_view_angle nostop_kinect_sensor_gencpp)
+target_link_libraries(cam_view_angle ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning)#${PCL_LIBRARIES})
+
 
 #############
 ## Install ##
@@ -146,6 +153,11 @@ target_link_libraries(calibration ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math l
  
 
  install(TARGETS acquisition_node
+ EXPORT nostop_kinect_sensor
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ )
+
+install(TARGETS cam_view_angle
  EXPORT nostop_kinect_sensor
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )

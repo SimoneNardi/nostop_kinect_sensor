@@ -1,0 +1,20 @@
+<!-- Camera view angle -->
+
+<!-- TO SET BEFORE EXPERIMENT -->
+<launch>
+  <node name="cam_view" pkg="usb_cam" type="usb_cam_node" output="screen">
+  <remap from="/cam_view/image_raw" to="/usb/cam_img"/>
+    <param name="video_device" value="/dev/video0" />
+    <param name="image_width" value="640" />
+    <param name="image_height" value="480" />
+    <param name="camera_name" value="cam_view" />
+  </node>   
+  
+    
+<arg name="image_topic" default="/usb/cam_img" />
+<node name="view_angle" pkg="nostop_kinect_sensor" type="script_view_angle.sh" 
+    args="$(arg image_topic)"
+     output="screen">
+</node>
+
+</launch>
