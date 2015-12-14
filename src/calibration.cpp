@@ -122,8 +122,6 @@ void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &confi
 //   message.data[5] = omega;
 //   gam = config.gamma_xC;  
 //   message.data[6] = gam;
-//   h_robot = config.h_robot;
-//   message.data[7] = h_robot;
   //TEST
   xW = config.xW;
   yW = config.yW;
@@ -132,6 +130,8 @@ void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &confi
   gam = config.gamma_xC;  
   message.data[6] = gam;
   to_publish = true;
+  h_robot = config.h_robot;
+  message.data[7] = h_robot;
 }
 
 

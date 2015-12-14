@@ -3,7 +3,7 @@
 <launch>
   <node name="logitech_cam" pkg="usb_cam" type="usb_cam_node" output="screen">
    <remap from="/logitech_cam/image_raw" to="/usb/logitech/cam_img"/>
-    <param name="video_device" value="/dev/video1" />
+    <param name="video_device" value="/dev/video0" />
     <param name="image_width" value="640" />
     <param name="image_height" value="480" />
     <param name="camera_name" value="logitech" />
@@ -18,7 +18,7 @@
 </node>
 
 <arg name="camera_name" default="logitech" />
-<arg name="iFOVx_angle" default = "48"/>
+<arg name="iFOVx_angle" default = "60"/>
 <arg name="iFOVy_angle" default = "32"/>
   <node pkg="nostop_kinect_sensor" type="script_cam.sh" 
     args="$(arg camera_name) $(arg image_topic) $(arg calibration_topic_name) $(arg iFOVx_angle) $(arg iFOVy_angle) " 

@@ -106,8 +106,8 @@ void mouse_callback(int event, int x, int y, int flags, void* param)
 {
 	if (event == CV_EVENT_LBUTTONDBLCLK) { 
 		cv::Rect pose;
-		pose.height = 120;
-		pose.width = 120;
+		pose.height = 180;
+		pose.width = 180;
 		pose.x = x-pose.width/2;
 		pose.y = y-pose.height/2;
 		robot_initial_pose_rect.push_back(pose);
@@ -427,6 +427,8 @@ void Camera::search_ball_pos()
   }
   cv::circle(m_stream_video,center,2,cv::Scalar(0, 0, 255),-1,8,0);
   cv::circle(m_stream_video,center,10,cv::Scalar(0, 0, 0),1,8,0);
+  createTrackbar("iFOVx",SENSOR_CV_WINDOW+m_camera_name,&m_iFOVx,255,0,0);
+  createTrackbar("iFOVy",SENSOR_CV_WINDOW+m_camera_name,&m_iFOVy,255,0,0);
   cv::imshow(SENSOR_CV_WINDOW+m_camera_name,m_stream_video);
       
   m_blue_circles.clear();
@@ -476,7 +478,7 @@ std::vector<ball_position> Camera::charge_array(cv::Mat img)
     possible_ball.y = bBox.y;
     for(size_t j = 0;j<robot_initial_pose_rect.size();j++)
     {
-      if (ratio > 0.6 && possible_ball.inside(robot_initial_pose_rect.at(j)) && bBox.area()<900 && bBox.area()>100) 
+      if (ratio > 0.6 && possible_ball.inside(robot_initial_pose_rect.at(j)) && bBox.area()<1900 && bBox.area()>100) 
       {
 	l_ball.x = bBox.x;
 	l_ball.y = bBox.y;
@@ -523,8 +525,15 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       l_pos_cm.y = -(m_R+distance_from_center_y);
       l_pos_cm.height=3*ball_radius;
       l_pos_cm.width=3*ball_radius;
-      psi = atan(m_zCamera/l_pos_cm.y);
-      l_pos_cm.y= l_pos_cm.y-m_h_robot/tan(psi);
+     // psi = atan(m_zCamera/l_pos_cm.y);
+      psi = atan(l_pos_cm.y/m_zCamera);
+      //l_pos_cm.y= l_pos_cm.y-m_h_robot/tan(psi)
+      l_pos_cm.y= l_pos_cm.y-m_h_robot*tan(psi);
+      
+      //TEST 
+      float c = m_h_robot*tan(psi)*abs(distance_from_center_x)/(m_R+abs(distance_from_center_y));
+      l_pos_cm.x = l_pos_cm.x-c;
+      
       pos_cam[0] = l_pos_cm.x;
       pos_cam[1] = l_pos_cm.y;
       pos_cam[2] = 0;
@@ -593,8 +602,10 @@ ball_position Camera::W_to_cam(ball_position& pos_in)
   pos_cam_cm[0] = Rtot[1][1]*pos_world[0]+Rtot[2][1]*pos_world[1]+Rtot[3][1]*pos_world[2];
   pos_cam_cm[1] = Rtot[1][2]*pos_world[0]+Rtot[2][2]*pos_world[1]+Rtot[3][2]*pos_world[2];
   pos_cam_cm[2] = Rtot[1][3]*pos_world[0]+Rtot[2][3]*pos_world[1]+Rtot[3][3]*pos_world[2];
-  psi = atan(m_zCamera/pos_cam_cm[1]);
-  pos_cam_cm[1]= pos_cam_cm[1]+m_h_robot/tan(psi);
+  //psi = atan(m_zCamera/pos_cam_cm[1]);
+  psi = atan(pos_cam_cm[1]/m_zCamera);
+  //pos_cam_cm[1]= pos_cam_cm[1]+m_h_robot/tan(psi);
+  pos_cam_cm[1]= pos_cam_cm[1]+m_h_robot*tan(psi);
   distance_from_center_y = pos_cam_cm[0];
   distance_from_center_x = -(pos_cam_cm[1]+m_R);
   azimuth = atan(distance_from_center_y/(m_R+distance_from_center_x)) ;
