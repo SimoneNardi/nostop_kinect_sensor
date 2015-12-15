@@ -525,14 +525,24 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       l_pos_cm.y = -(m_R+distance_from_center_y);
       l_pos_cm.height=3*ball_radius;
       l_pos_cm.width=3*ball_radius;
-     // psi = atan(m_zCamera/l_pos_cm.y);
+     //psi = atan(m_zCamera/l_pos_cm.y);
       psi = atan(l_pos_cm.y/m_zCamera);
-      //l_pos_cm.y= l_pos_cm.y-m_h_robot/tan(psi)
+     //l_pos_cm.y= l_pos_cm.y-m_h_robot/tan(psi);
       l_pos_cm.y= l_pos_cm.y-m_h_robot*tan(psi);
       
-      //TEST 
-      float c = m_h_robot*tan(psi)*abs(distance_from_center_x)/(m_R+abs(distance_from_center_y));
-      l_pos_cm.x = l_pos_cm.x-c;
+      //TEST TO DO
+//      float c = m_h_robot*tan(psi)*abs(distance_from_center_x)/(m_R+abs(distance_from_center_y));
+//       l_pos_cm.x = l_pos_cm.x-c;
+      
+      
+//       if (l_pos_cm.x > 0)
+//       {
+// 	l_pos_cm.x = l_pos_cm.x-c;
+//       } else {
+// 	l_pos_cm.x = l_pos_cm.x+c;
+//       }
+//       
+
       
       pos_cam[0] = l_pos_cm.x;
       pos_cam[1] = l_pos_cm.y;
