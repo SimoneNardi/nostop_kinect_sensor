@@ -34,7 +34,7 @@ static const std::string BLUE_THRESHOLD_WINDOWS = "Blue threshold ";
 static const std::string GREEN_THRESHOLD_WINDOWS = "Green threshold ";
 static const std::string RED_THRESHOLD_WINDOWS = "Red threshold ";
 static const std::string YELLOW_THRESHOLD_WINDOWS = "Yellow threshold ";
-static const float ball_radius = 7.0;
+static const float ball_radius = 3.5;
 
  
 /////////////////////////////////////////////
@@ -374,8 +374,8 @@ void Camera::search_ball_pos()
     cv::Rect rec;
     ball_position a;
     a = m_blue_circles.at(i);
-    rec.x = a.x;
-    rec.y = a.y;
+    rec.x = a.x-a.height/2;
+    rec.y = a.y-a.width/2;
     rec.height = a.height;
     rec.width = a.width;
     rectangle(m_stream_video,rec,cv::Scalar(255, 255, 255),1,8,0);
@@ -398,8 +398,8 @@ void Camera::search_ball_pos()
     cv::Rect rec;
     ball_position a;
     a = m_red_circles.at(i);
-    rec.x = a.x;
-    rec.y = a.y;
+    rec.x = a.x-a.height/2;
+    rec.y = a.y-a.width/2;
     rec.height = a.height;
     rec.width = a.width;
     rectangle(m_stream_video,rec,cv::Scalar(255, 255, 255),1,8,0);
@@ -410,7 +410,7 @@ void Camera::search_ball_pos()
     cv::Rect rec;
     ball_position a;
     a = m_yellow_circles.at(i);
-    rec.x = a.x;
+    rec.x = a.x ;
     rec.y = a.y;
     rec.height = a.height;
     rec.width = a.width;
@@ -480,10 +480,14 @@ std::vector<ball_position> Camera::charge_array(cv::Mat img)
     {
       if (ratio > 0.6 && possible_ball.inside(robot_initial_pose_rect.at(j)) && bBox.area()<1900 && bBox.area()>100) 
       {
-	l_ball.x = bBox.x;
-	l_ball.y = bBox.y;
+	l_ball.x = bBox.x+bBox.width/2;
+	l_ball.y = bBox.y+bBox.height/2;
+// 	l_ball.x = bBox.x;
+// 	l_ball.y = bBox.y;
 	l_ball.height = bBox.height;
 	l_ball.width = bBox.width;
+        //ROS_INFO("height--> %d, width --> %d",l_ball.height,l_ball.width);
+
 	l_array.push_back(l_ball);
       }
     }
@@ -515,16 +519,26 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       y_SR_centered = l_pos_pix.y-240.5;
       x_roll_corrected = x_SR_centered*cos(m_roll)-y_SR_centered*sin(m_roll);
       y_roll_corrected = x_SR_centered*sin(m_roll)+y_SR_centered*cos(m_roll);
+      //TEST
+      //ROS_INFO("x--> %f, y --> %f",x_roll_corrected,y_roll_corrected);
+      cv::Point paolo;
+      paolo.x = l_pos_pix.x;
+      paolo.y = l_pos_pix.y;
+      cv::circle(m_stream_video,paolo,2,cv::Scalar(0, 0, 0),-1,8,0);
       azimuth = x_roll_corrected*iFOVx;
       elevation = -y_roll_corrected*iFOVy;
       // SR IN CENTER OF VIEW
       distance_from_center_y = tan(M_PI/2-pitch+elevation)*m_zCamera-m_R;
       distance_from_center_x = tan(azimuth)*(m_R+distance_from_center_y);
+      //ROS_INFO("x--> %f, y --> %f",distance_from_center_x,distance_from_center_y);
       // SR UNDER CAMERA 
       l_pos_cm.x = distance_from_center_x;
       l_pos_cm.y = -(m_R+distance_from_center_y);
-      l_pos_cm.height=3*ball_radius;
-      l_pos_cm.width=3*ball_radius;
+      l_pos_cm.height=2*ball_radius;
+      l_pos_cm.width=2*ball_radius;
+      
+       //ROS_INFO("x--> %f, y --> %f",l_pos_cm.x,l_pos_cm.y);
+
      //psi = atan(m_zCamera/l_pos_cm.y);
       psi = atan(l_pos_cm.y/m_zCamera);
      //l_pos_cm.y= l_pos_cm.y-m_h_robot/tan(psi);
