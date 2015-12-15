@@ -137,7 +137,8 @@ void Robot::publish_pose(ball_position front_pos,ball_position back_pos, float y
     pose_gps.longitude = pose.position.x/7800000;
     pose_gps.latitude = pose.position.y/11100000;
     pose_gps.altitude = 0;
-    pose_gps.header.frame_id = "map";
+    pose_gps.header.frame_id = m_name+"/base_link";
+    pose_gps.header.stamp = ros::Time::now();
     m_robot_pose_pub.publish<sensor_msgs::NavSatFix>(pose_gps);
     
 }
