@@ -385,8 +385,8 @@ void Camera::search_ball_pos()
     cv::Rect rec;
     ball_position a;
     a = m_green_circles.at(i);
-    rec.x = a.x;
-    rec.y = a.y;
+    rec.x = a.x-a.height/2;
+    rec.y = a.y-a.width/2;
     rec.height = a.height;
     rec.width = a.width;
     rectangle(m_stream_video,rec,cv::Scalar(255, 255, 255),1,8,0);
@@ -410,8 +410,8 @@ void Camera::search_ball_pos()
     cv::Rect rec;
     ball_position a;
     a = m_yellow_circles.at(i);
-    rec.x = a.x ;
-    rec.y = a.y;
+    rec.x = a.x-a.height/2;
+    rec.y = a.y-a.width/2;
     rec.height = a.height;
     rec.width = a.width;
     rectangle(m_stream_video,rec,cv::Scalar(255, 255, 255),1,8,0);
@@ -474,16 +474,14 @@ std::vector<ball_position> Camera::charge_array(cv::Mat img)
 	ratio = 1.0f / ratio;
       // Searching for a bBox almost square
     cv::Point2f possible_ball;
-    possible_ball.x = bBox.x;
-    possible_ball.y = bBox.y;
+    possible_ball.x = bBox.x+bBox.width/2;
+    possible_ball.y = bBox.y+bBox.height/2;
     for(size_t j = 0;j<robot_initial_pose_rect.size();j++)
     {
       if (ratio > 0.6 && possible_ball.inside(robot_initial_pose_rect.at(j)) && bBox.area()<1900 && bBox.area()>100) 
       {
-	l_ball.x = bBox.x+bBox.width/2;
-	l_ball.y = bBox.y+bBox.height/2;
-// 	l_ball.x = bBox.x;
-// 	l_ball.y = bBox.y;
+	l_ball.x = possible_ball.x;
+	l_ball.y = possible_ball.y;
 	l_ball.height = bBox.height;
 	l_ball.width = bBox.width;
         //ROS_INFO("height--> %d, width --> %d",l_ball.height,l_ball.width);

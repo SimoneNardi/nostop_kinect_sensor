@@ -50,6 +50,7 @@ void Robot::pubID()
 void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vector<ball_position>& back_array)
 {	
   float distance;
+  found = false;
   if(!found)
   {
     for (size_t i = 0;i < front_array.size();i++)
@@ -57,13 +58,15 @@ void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vecto
      for(size_t j = 0;j < back_array.size();j++)
      {
 	distance = sqrt(pow((front_array[i].x-back_array[j].x),2)+pow((front_array[i].y-back_array[j].y),2));
-	if(distance < 2*(front_array[i].width+back_array[j].width))
+	if(distance < 2.5*(front_array[i].width+back_array[j].width))
 	{
 	  m_front_pos = front_array[i];
 	  m_back_pos = back_array[j]; 
 	  found = true;
 	  m_f_rect = Front_ptr->kalman_update(m_front_pos);
 	  m_b_rect = Back_ptr->kalman_update(m_back_pos);
+	  m_heading = atan2((m_back_pos.y-m_front_pos.y),(m_back_pos.x-m_front_pos.x))+M_PI;
+	  publish_pose(m_front_pos,m_back_pos,m_heading);
 	}
 	else
 	{
@@ -84,13 +87,14 @@ void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vecto
 	back.x = back_array[j].x;
 	back.y = back_array[j].y;
 	distance = sqrt(pow((front.x-back.x),2)+pow((front.y-back.y),2));
-	if(distance < 2*(front_array[i].width+back_array[j].width) && m_f_rect.contains(front) && m_b_rect.contains(back))
+	if(distance < 2.5*(front_array[i].width+back_array[j].width) && m_f_rect.contains(front) && m_b_rect.contains(back))
 	{
 	  m_front_pos = front_array[i];
 	  m_back_pos = back_array[j]; 
 	  found = true;
 	  m_f_rect = Front_ptr->kalman_update(m_front_pos);
 	  m_b_rect = Back_ptr->kalman_update(m_back_pos);
+	  
 	}
 	else
 	{
@@ -100,13 +104,13 @@ void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vecto
 	    found = false;
 	  }
 	  else
-	  {
+	  {//TODO
 	    m_f_rect = Front_ptr->kalman_update(m_front_pos);
 	    m_b_rect = Back_ptr->kalman_update(m_back_pos);
-	    m_front_pos.x = m_f_rect.x;
-	    m_front_pos.y = m_f_rect.y;
-	    m_back_pos.x = m_b_rect.x;
-	    m_back_pos.y = m_b_rect.y;
+	    m_front_pos.x = m_f_rect.x+m_f_rect.width/2;
+	    m_front_pos.y = m_f_rect.y+m_f_rect.width/2;
+	    m_back_pos.x = m_b_rect.x+m_f_rect.width/2;
+	    m_back_pos.y = m_b_rect.y+m_f_rect.width/2;
 	    m_notFoundCount++;
 	  }
 	}

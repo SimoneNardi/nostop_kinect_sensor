@@ -88,8 +88,8 @@ cv::Rect Ball_tracker::kalman_update(ball_position& position)
    center.x = m_state.at<float>(0);          
    center.y = m_state.at<float>(1);
       
-    m_meas.at<float>(0) = position.x + position.width / 2;
-    m_meas.at<float>(1) = position.y + position.height / 2;
+    m_meas.at<float>(0) = position.x;// + position.width / 2;
+    m_meas.at<float>(1) = position.y;// + position.height / 2;
     m_meas.at<float>(2) = (float)position.width;
     m_meas.at<float>(3) = (float)position.height;
     m_kf.correct(m_meas); // Kalman Correction
