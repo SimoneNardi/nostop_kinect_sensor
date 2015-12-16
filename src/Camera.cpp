@@ -530,8 +530,13 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       elevation = -y_roll_corrected*iFOVy;
       // SR IN CENTER OF VIEW
       distance_from_center_y = m_R-tan(M_PI/2-pitch+elevation)*m_zCamera;
-      distance_from_center_x = tan(azimuth)*(m_R-distance_from_center_y);
+      //distance_from_center_x = tan(azimuth)*(m_R-distance_from_center_y);
+      float si = sqrt(pow(m_zCamera,2)+pow(m_R-distance_from_center_y,2));
+      float si2= m_zCamera/cos(M_PI/2-pitch+elevation);
       
+      distance_from_center_x = si2*tan(azimuth);
+      
+      ROS_INFO("si--> %f, si2 --> %f",si,si2);
        
 //       float alpha=atan2(x_roll_corrected,y_roll_corrected);
 //       distance_from_center_x = distance_from_center_y*tan(alpha)*sin(M_PI/2-pitch);
