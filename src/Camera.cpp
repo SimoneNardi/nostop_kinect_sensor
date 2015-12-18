@@ -45,8 +45,8 @@ Camera::Camera(std::string name_,std::string image_topic_name,std::string calibr
 , m_topic_name(image_topic_name)
 , m_R(1)
 , m_roll(0)
-, m_iFOVx(ifovx)
-, m_iFOVy(ifovy)
+, m_focal_angle_x(ifovx)
+, m_focal_angle_y(ifovy)
 {
   ROS_INFO("CAMERA %s ON!",m_camera_name.c_str());
   m_calibration_sub = m_node.subscribe(calibration_topic,1,&Camera::camera_calibration,this);
@@ -427,8 +427,8 @@ void Camera::search_ball_pos()
   }
   cv::circle(m_stream_video,center,2,cv::Scalar(0, 0, 255),-1,8,0);
   cv::circle(m_stream_video,center,10,cv::Scalar(0, 0, 0),1,8,0);
-  createTrackbar("iFOVx",SENSOR_CV_WINDOW+m_camera_name,&m_iFOVx,255,0,0);
-  createTrackbar("iFOVy",SENSOR_CV_WINDOW+m_camera_name,&m_iFOVy,255,0,0);
+  createTrackbar("iFOVx",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_x,255,0,0);
+  createTrackbar("iFOVy",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_y,255,0,0);
   cv::imshow(SENSOR_CV_WINDOW+m_camera_name,m_stream_video);
       
   m_blue_circles.clear();
@@ -501,13 +501,13 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
   float Rtot[3][3];
   float x_SR_centered,y_SR_centered,x_roll_corrected,y_roll_corrected;
   ball_position l_pos_pix,l_pos_cm,l_world_cm;
-  float iFOVx = (m_iFOVx*M_PI/180)/640;
-  float iFOVy = (m_iFOVy*M_PI/180)/480;
+  float iFOVx = (m_focal_angle_x*M_PI/180)/640;
+  float iFOVy = (m_focal_angle_y*M_PI/180)/480;
   float azimuth,elevation;
-  float psi;
+  float phi;
   float distance_from_center_x,distance_from_center_y;
   float pitch = -atan(m_R/m_zCamera)+M_PI/2;
-  float gamma,phi,ipotenuse;
+  float psi,rho,ipotenuse;
    for (size_t i = 0;i<array.size();i++)
    {
       l_pos_pix.x = array[i].x;
@@ -516,8 +516,8 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       l_pos_pix.height = array[i].height;
       //ROS_INFO("height--> %d",l_pos_pix.height);
       //ROS_INFO("x ball pixel--> %f, y ball pixel--> %f",l_pos_pix.x,l_pos_pix.y); //LO FA BENE      
-      x_SR_centered =l_pos_pix.x-320.5;
-      y_SR_centered = l_pos_pix.y-240.5;
+      x_SR_centered =l_pos_pix.x-320;
+      y_SR_centered = l_pos_pix.y-240;
       x_roll_corrected = x_SR_centered*cos(m_roll)-y_SR_centered*sin(m_roll);
       y_roll_corrected = x_SR_centered*sin(m_roll)+y_SR_centered*cos(m_roll);
 
@@ -527,32 +527,44 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       cv::circle(m_stream_video,point,2,cv::Scalar(0, 0, 0),-1,8,0);
       
       azimuth = x_roll_corrected*iFOVx;
-      elevation = y_roll_corrected*iFOVy;
+      elevation = abs(y_roll_corrected)*iFOVy;
       // SR IN CENTER OF VIEW
-      gamma = M_PI/2-pitch;
-      phi = M_PI/2-elevation-gamma;
       ipotenuse = sqrt(pow(m_zCamera,2)+pow(m_R,2));
-      distance_from_center_y = sin(elevation)*ipotenuse/sin(phi);
-      distance_from_center_x = tan(azimuth)*(m_R-distance_from_center_y);
-      ROS_INFO("x--> %f, y --> %f",distance_from_center_x,distance_from_center_y);
-
+      if(y_roll_corrected>0)
+      {
+	rho = M_PI-elevation-pitch; 
+	distance_from_center_y = (sin(elevation)/sin(rho))*ipotenuse;
+	phi = atan((m_R-distance_from_center_y)/m_zCamera);
+	distance_from_center_y = distance_from_center_y+m_h_robot*tan(phi);
+      }else{
+	psi = pitch-elevation;
+	distance_from_center_y = -(sin(elevation)/sin(psi))*ipotenuse;
+	phi = atan((m_R-distance_from_center_y)/m_zCamera);
+	distance_from_center_y = distance_from_center_y+m_h_robot*tan(phi);
+      }
+//       distance_from_center_x = tan(azimuth)*(m_R-distance_from_center_y);
+      //ROS_INFO("dfcx--> %f, dfcy --> %f",distance_from_center_x,distance_from_center_y);
+//       distance_from_center_x  = tan(azimuth)*sqrt(pow(m_zCamera,2)+pow(m_R-distance_from_center_y,2));
+     if (x_roll_corrected>0)
+      {
+	distance_from_center_x  = tan(azimuth)*sqrt(pow(m_zCamera,2)+pow(m_R-distance_from_center_y,2))+m_h_robot*tan(phi);
+	}else{
+	distance_from_center_x  = tan(azimuth)*sqrt(pow(m_zCamera,2)+pow(m_R-distance_from_center_y,2))-m_h_robot*tan(phi);
+	}
       
       // SR UNDER CAMERA 
       l_pos_cm.x = distance_from_center_x;
-      l_pos_cm.y = -m_R+distance_from_center_y;
+      l_pos_cm.y = -(m_R-distance_from_center_y);
       l_pos_cm.height=2*ball_radius;
       l_pos_cm.width=2*ball_radius;
-      psi = atan(l_pos_cm.y/m_zCamera);
-      l_pos_cm.y= l_pos_cm.y-m_h_robot*tan(psi);
-      float c = abs(m_h_robot*tan(psi)*distance_from_center_x)/(m_R-distance_from_center_y);
-
-        if (distance_from_center_x > 0)
-      {
-	l_pos_cm.x = l_pos_cm.x+c;
-      } else {
-	l_pos_cm.x = l_pos_cm.x-c;
-      }
-       
+      
+//	float c = abs(m_h_robot*tan(phi)*distance_from_center_x)/(m_R-distance_from_center_y);
+ //       if (distance_from_center_x > 0)
+//      {
+//	l_pos_cm.x = l_pos_cm.x+c;
+ //     } else {
+//	l_pos_cm.x = l_pos_cm.x-c;
+ //     }   
       ROS_INFO("x--> %f, y --> %f",l_pos_cm.x,l_pos_cm.y);
       pos_cam[0] = l_pos_cm.x;
       pos_cam[1] = l_pos_cm.y;
@@ -592,8 +604,8 @@ ball_position Camera::W_to_cam(ball_position& pos_in)
 {
   ball_position pos_cam_pixel;
   float pos_cam_cm[3],pos_world[3],o01[3];
-  float iFOVx = (m_iFOVx*M_PI/180)/640;
-  float iFOVy = (m_iFOVy*M_PI/180)/480;
+  float iFOVx = (m_focal_angle_x*M_PI/180)/640;
+  float iFOVy = (m_focal_angle_y*M_PI/180)/480;
   float azimuth,elevation;
   float psi;
   float distance_from_center_x,distance_from_center_y;
