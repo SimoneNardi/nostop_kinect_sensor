@@ -498,6 +498,8 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
 {
   std::vector<ball_position> l_out_array;
   float pos_cam[3],pos_world[3],o01[3];
+  float Rtot[3][3];
+  float x_SR_centered,y_SR_centered,x_roll_corrected,y_roll_corrected;
   ball_position l_pos_pix,l_pos_cm,l_world_cm;
   float iFOVx = (m_iFOVx*M_PI/180)/640;
   float iFOVy = (m_iFOVy*M_PI/180)/480;
@@ -505,6 +507,7 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
   float psi;
   float distance_from_center_x,distance_from_center_y;
   float pitch = -atan(m_R/m_zCamera)+M_PI/2;
+  float gamma,phi,ipotenuse;
    for (size_t i = 0;i<array.size();i++)
    {
       l_pos_pix.x = array[i].x;
@@ -512,14 +515,11 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       l_pos_pix.width = array[i].width;
       l_pos_pix.height = array[i].height;
       //ROS_INFO("height--> %d",l_pos_pix.height);
-      //ROS_INFO("x ball pixel--> %f, y ball pixel--> %f",l_pos_pix.x,l_pos_pix.y); //LO FA BENE
-      float Rtot[3][3];
-      float x_SR_centered,y_SR_centered,x_roll_corrected,y_roll_corrected;
+      //ROS_INFO("x ball pixel--> %f, y ball pixel--> %f",l_pos_pix.x,l_pos_pix.y); //LO FA BENE      
       x_SR_centered =l_pos_pix.x-320.5;
       y_SR_centered = l_pos_pix.y-240.5;
       x_roll_corrected = x_SR_centered*cos(m_roll)-y_SR_centered*sin(m_roll);
       y_roll_corrected = x_SR_centered*sin(m_roll)+y_SR_centered*cos(m_roll);
-            ROS_INFO("x pix al centro--> %f, y pix al centro--> %f",x_roll_corrected,y_roll_corrected);
 
       cv::Point point;
       point.x = l_pos_pix.x;
@@ -527,20 +527,14 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       cv::circle(m_stream_video,point,2,cv::Scalar(0, 0, 0),-1,8,0);
       
       azimuth = x_roll_corrected*iFOVx;
-      elevation = -y_roll_corrected*iFOVy;
+      elevation = y_roll_corrected*iFOVy;
       // SR IN CENTER OF VIEW
-      distance_from_center_y = m_R-tan(M_PI/2-pitch+elevation)*m_zCamera;
-      //distance_from_center_x = tan(azimuth)*(m_R-distance_from_center_y);
-      float si = sqrt(pow(m_zCamera,2)+pow(m_R-distance_from_center_y,2));
-      float si2= m_zCamera/cos(M_PI/2-pitch+elevation);
-      
-      distance_from_center_x = si2*tan(azimuth);
-      
-      ROS_INFO("si--> %f, si2 --> %f",si,si2);
-       
-//       float alpha=atan2(x_roll_corrected,y_roll_corrected);
-//       distance_from_center_x = distance_from_center_y*tan(alpha)*sin(M_PI/2-pitch);
-//       distance_from_center_x = distance_from_center_x/sin(M_PI/2-pitch);
+      gamma = M_PI/2-pitch;
+      phi = M_PI/2-elevation-gamma;
+      ipotenuse = sqrt(pow(m_zCamera,2)+pow(m_R,2));
+      distance_from_center_y = sin(elevation)*ipotenuse/sin(phi);
+      distance_from_center_x = tan(azimuth)*(m_R-distance_from_center_y);
+      ROS_INFO("x--> %f, y --> %f",distance_from_center_x,distance_from_center_y);
 
       
       // SR UNDER CAMERA 
