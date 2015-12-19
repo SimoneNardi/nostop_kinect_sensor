@@ -513,9 +513,7 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       l_pos_pix.x = array[i].x;
       l_pos_pix.y = array[i].y;
       l_pos_pix.width = array[i].width;
-      l_pos_pix.height = array[i].height;
-      //ROS_INFO("height--> %d",l_pos_pix.height);
-      //ROS_INFO("x ball pixel--> %f, y ball pixel--> %f",l_pos_pix.x,l_pos_pix.y); //LO FA BENE      
+      l_pos_pix.height = array[i].height;    
       x_SR_centered =l_pos_pix.x-320;
       y_SR_centered = l_pos_pix.y-240;
       x_roll_corrected = x_SR_centered*cos(m_roll)-y_SR_centered*sin(m_roll);
@@ -526,30 +524,34 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       point.y = l_pos_pix.y;
       cv::circle(m_stream_video,point,2,cv::Scalar(0, 0, 0),-1,8,0);
       
+      // ANGLES
       azimuth = x_roll_corrected*iFOVx;
       elevation = abs(y_roll_corrected)*iFOVy;
-      // SR IN CENTER OF VIEW
+      // // SR IN CENTER OF VIEW
+      // y correction
       ipotenuse = sqrt(pow(m_zCamera,2)+pow(m_R,2));
       if(y_roll_corrected>0)
       {
 	rho = M_PI-elevation-pitch; 
 	distance_from_center_y = (sin(elevation)/sin(rho))*ipotenuse;
-	phi = atan((m_R-distance_from_center_y)/m_zCamera);
-	distance_from_center_y = distance_from_center_y+m_h_robot*tan(phi);
+	// h robot correction
+	psi = atan((m_R-distance_from_center_y)/m_zCamera);
+	distance_from_center_y = distance_from_center_y+m_h_robot*tan(psi);
       }else{
-	psi = pitch-elevation;
-	distance_from_center_y = -(sin(elevation)/sin(psi))*ipotenuse;
-	phi = atan((m_R-distance_from_center_y)/m_zCamera);
-	distance_from_center_y = distance_from_center_y+m_h_robot*tan(phi);
+	phi = pitch-elevation;
+	distance_from_center_y = -(sin(elevation)/sin(phi))*ipotenuse;
+	// h robot correction
+	psi = atan((m_R-distance_from_center_y)/m_zCamera);
+	distance_from_center_y = distance_from_center_y+m_h_robot*tan(psi);
       }
-//       distance_from_center_x = tan(azimuth)*(m_R-distance_from_center_y);
-      //ROS_INFO("dfcx--> %f, dfcy --> %f",distance_from_center_x,distance_from_center_y);
-//       distance_from_center_x  = tan(azimuth)*sqrt(pow(m_zCamera,2)+pow(m_R-distance_from_center_y,2));
-     if (x_roll_corrected>0)
+      // x correction TODO
+     if (distance_from_center_y>0)
       {
-	distance_from_center_x  = tan(azimuth)*sqrt(pow(m_zCamera,2)+pow(m_R-distance_from_center_y,2))+m_h_robot*tan(phi);
+	distance_from_center_x = tan(azimuth)*sqrt(pow(m_zCamera,2)+pow(m_R-distance_from_center_y,2));
+	// h robot correctio
+	distance_from_center_x  = +m_h_robot*tan(psi);
 	}else{
-	distance_from_center_x  = tan(azimuth)*sqrt(pow(m_zCamera,2)+pow(m_R-distance_from_center_y,2))-m_h_robot*tan(phi);
+	distance_from_center_x  = tan(azimuth)*sqrt(pow(m_zCamera,2)+pow(m_R-distance_from_center_y,2))-m_h_robot*tan(psi);
 	}
       
       // SR UNDER CAMERA 
@@ -558,13 +560,6 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       l_pos_cm.height=2*ball_radius;
       l_pos_cm.width=2*ball_radius;
       
-//	float c = abs(m_h_robot*tan(phi)*distance_from_center_x)/(m_R-distance_from_center_y);
- //       if (distance_from_center_x > 0)
-//      {
-//	l_pos_cm.x = l_pos_cm.x+c;
- //     } else {
-//	l_pos_cm.x = l_pos_cm.x-c;
- //     }   
       ROS_INFO("x--> %f, y --> %f",l_pos_cm.x,l_pos_cm.y);
       pos_cam[0] = l_pos_cm.x;
       pos_cam[1] = l_pos_cm.y;
