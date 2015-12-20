@@ -544,15 +544,20 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
 	psi = atan((m_R-distance_from_center_y)/m_zCamera);
 	distance_from_center_y = distance_from_center_y+m_h_robot*tan(psi);
       }
-      // x correction TODO
+      // x correction //TEST
+      float gam = M_PI/2-pitch;
+      float w = M_PI-elevation-pitch-gam;
      if (distance_from_center_y>0)
       {
-	distance_from_center_x = tan(azimuth)*sqrt(pow(m_zCamera,2)+pow(m_R-distance_from_center_y,2));
-	// h robot correctio
-	distance_from_center_x  = +m_h_robot*tan(psi);
-	}else{
-	distance_from_center_x  = tan(azimuth)*sqrt(pow(m_zCamera,2)+pow(m_R-distance_from_center_y,2))-m_h_robot*tan(psi);
-	}
+	float rx = (sin(gam+M_PI/2)/sin(phi))*ipotenuse;
+	rx = rx-sqrt(pow(m_h_robot,2)+pow(m_h_robot*tan(psi),2));
+	distance_from_center_x = rx*tan(azimuth);
+      }else{
+	float b = distance_from_center_y*sin(gam)/sin(w);
+	float rx = (sin(gam+M_PI/2)/sin(phi))*ipotenuse;
+	rx = rx-sqrt(pow(m_h_robot,2)+pow(m_h_robot*tan(psi),2))-b;
+	distance_from_center_x = rx*tan(azimuth);
+      }	
       
       // SR UNDER CAMERA 
       l_pos_cm.x = distance_from_center_x;
