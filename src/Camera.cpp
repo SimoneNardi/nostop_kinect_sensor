@@ -507,7 +507,7 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
   float phi;
   float distance_from_center_x,distance_from_center_y;
   float pitch = -atan(m_R/m_zCamera)+M_PI/2;
-  float psi,rho,ipotenuse;
+  float psi1,psi2,rho,ipotenuse,rx;
    for (size_t i = 0;i<array.size();i++)
    {
       l_pos_pix.x = array[i].x;
@@ -526,39 +526,37 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       
       // ANGLES
       azimuth = x_roll_corrected*iFOVx;
-      elevation = abs(y_roll_corrected)*iFOVy;
-      // // SR IN CENTER OF VIEW
-      // y correction
+      elevation = abs(y_roll_corrected)*iFOVy;      
       ipotenuse = sqrt(pow(m_zCamera,2)+pow(m_R,2));
+      // // SR IN CENTER OF VIEW
+
       if(y_roll_corrected>0)
       {
+	// y correction
 	rho = M_PI-elevation-pitch; 
 	distance_from_center_y = (sin(elevation)/sin(rho))*ipotenuse;
 	// h robot correction
-	psi = atan((m_R-distance_from_center_y)/m_zCamera);
-	distance_from_center_y = distance_from_center_y+m_h_robot*tan(psi);
+	psi2 = atan((m_R-distance_from_center_y)/m_zCamera);
+	distance_from_center_y = distance_from_center_y+m_h_robot*tan(psi2);
+	// x correction
+	rx = (sin(pitch)/sin(rho))*ipotenuse;
+	// h robot correction in x
+	rx = rx-sqrt(pow(m_h_robot,2)+pow(m_h_robot*tan(psi2),2));
+	distance_from_center_x = rx*tan(azimuth);
       }else{
+	// y correction
 	phi = pitch-elevation;
 	distance_from_center_y = -(sin(elevation)/sin(phi))*ipotenuse;
-	// h robot correction
-	psi = atan((m_R-distance_from_center_y)/m_zCamera);
-	distance_from_center_y = distance_from_center_y+m_h_robot*tan(psi);
+	// h robot correction in y
+	psi1 = atan((m_R-distance_from_center_y)/m_zCamera);
+	distance_from_center_y = distance_from_center_y+m_h_robot*tan(psi1);
+	// x correction
+	rx = (sin(M_PI-pitch)/sin(phi))*ipotenuse;
+	// h robot correction in x
+	rx = rx-sqrt(pow(m_h_robot,2)+pow(m_h_robot*tan(psi1),2));
+	distance_from_center_x = rx*tan(azimuth);
       }
-      // x correction //TEST
-      float gam = M_PI/2-pitch;
-      float w = M_PI-elevation-pitch-gam;
-     if (distance_from_center_y>0)
-      {
-	float rx = (sin(gam+M_PI/2)/sin(phi))*ipotenuse;
-	rx = rx-sqrt(pow(m_h_robot,2)+pow(m_h_robot*tan(psi),2));
-	distance_from_center_x = rx*tan(azimuth);
-      }else{
-	float b = distance_from_center_y*sin(gam)/sin(w);
-	float rx = (sin(gam+M_PI/2)/sin(phi))*ipotenuse;
-	rx = rx-sqrt(pow(m_h_robot,2)+pow(m_h_robot*tan(psi),2))-b;
-	distance_from_center_x = rx*tan(azimuth);
-      }	
-      
+
       // SR UNDER CAMERA 
       l_pos_cm.x = distance_from_center_x;
       l_pos_cm.y = -(m_R-distance_from_center_y);
