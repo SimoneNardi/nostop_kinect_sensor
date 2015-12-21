@@ -555,7 +555,7 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
 	// h robot correction in x
 	rx = rx-sqrt(pow(m_h_robot,2)+pow(m_h_robot*tan(psi1),2));
 	distance_from_center_x = rx*tan(azimuth);
-      }
+      } 
 
       // SR UNDER CAMERA 
       l_pos_cm.x = distance_from_center_x;
