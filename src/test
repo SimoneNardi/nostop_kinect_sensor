@@ -1,0 +1,46 @@
+//       //TEST
+//       float cm_pix = 2*ball_radius/((l_pos_pix.width+l_pos_pix.height)/2);
+//       l_pos_cm.x = cm_pix*x_SR_centered;
+//       l_pos_cm.y = cm_pix*y_SR_centered;
+//       float y_test = l_pos_cm.y;
+//       // SR UNDER CAMERA 
+//       l_pos_cm.y = -(m_R-l_pos_cm.y);
+//       l_pos_cm.height=2*ball_radius;
+//       l_pos_cm.width=2*ball_radius;
+//       psi = atan(l_pos_cm.y/m_zCamera);
+//       l_pos_cm.y= l_pos_cm.y-m_h_robot*tan(psi);
+//      float c = abs(m_h_robot*tan(psi)*l_pos_cm.x)/(m_R+y_test);
+//      ROS_INFO("c--> %f",c);
+//      
+// 
+//         if (l_pos_cm.x > 0)
+//       {
+// 	l_pos_cm.x = l_pos_cm.x+c;
+//       } else {
+// 	l_pos_cm.x = l_pos_cm.x-c;
+//       }
+      
+// //       TEST FINALE
+//       azimuth = x_roll_corrected*iFOVx;
+//       elevation = -y_roll_corrected*iFOVy;
+//       // SR IN CENTER OF VIEW
+//       float cm_pix = 2*ball_radius/((l_pos_pix.width+l_pos_pix.height)/2);
+//       distance_from_center_y = tan(M_PI/2-pitch+elevation)*m_zCamera-m_R;
+//       distance_from_center_x = cm_pix*x_SR_centered;
+//       
+//       // SR UNDER CAMERA 
+//       l_pos_cm.x = distance_from_center_x;
+//       l_pos_cm.y = -(m_R+distance_from_center_y);
+//       l_pos_cm.height=2*ball_radius;
+//       l_pos_cm.width=2*ball_radius;
+//       psi = atan(l_pos_cm.y/m_zCamera);
+//       l_pos_cm.y= l_pos_cm.y-m_h_robot*tan(psi);
+//      float c = abs(m_h_robot*tan(psi)*distance_from_center_x)/(m_R+distance_from_center_y);
+//      //ROS_INFO("c--> %f",c);
+//            if (distance_from_center_x > 0)
+//       {
+// 	l_pos_cm.x = l_pos_cm.x+c;
+//       } else {
+// 	l_pos_cm.x = l_pos_cm.x-c;
+//       }
+//       
