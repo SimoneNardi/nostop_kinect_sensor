@@ -18,7 +18,7 @@
 </node>
 
 <arg name="camera_name" default="philips" />
-<arg name="iFOVx_angle" default = "75"/><!--65-->
+<arg name="iFOVx_angle" default = "70"/><!--65-->
 <arg name="iFOVy_angle" default = "55"/>
   <node pkg="nostop_kinect_sensor" type="script_cam.sh" 
     args="$(arg camera_name) $(arg image_topic) $(arg calibration_topic_name)  $(arg iFOVx_angle) $(arg iFOVy_angle)" 

@@ -137,7 +137,7 @@ void Robot::publish_pose(ball_position front_pos,ball_position back_pos, float y
     pose.orientation.y = sin(phi/2)*cos(theta/2)*cos(psi/2)-cos(phi/2)*sin(theta/2)*sin(psi/2); 
     pose.orientation.z = cos(phi/2)*sin(theta/2)*cos(psi/2)+sin(phi/2)*cos(theta/2)*sin(psi/2);
     pose.orientation.w = cos(phi/2)*cos(theta/2)*sin(psi/2)-sin(phi/2)*sin(theta/2)*cos(psi/2);
-    //ROS_INFO("x--> %f, y --> %f",pose.position.x,pose.position.y);
+    ROS_INFO("x--> %f, y --> %f",pose.position.x,pose.position.y);
     pose_gps.longitude = pose.position.x/7800000;
     pose_gps.latitude = pose.position.y/11100000;
     pose_gps.altitude = 0;

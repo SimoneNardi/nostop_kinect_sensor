@@ -563,7 +563,7 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       l_pos_cm.height=2*ball_radius;
       l_pos_cm.width=2*ball_radius;
       
-      ROS_INFO("x--> %f, y --> %f",l_pos_cm.x,l_pos_cm.y);
+      //ROS_INFO("x--> %f, y --> %f",l_pos_cm.x,l_pos_cm.y);
       pos_cam[0] = l_pos_cm.x;
       pos_cam[1] = l_pos_cm.y;
       pos_cam[2] = 0;
