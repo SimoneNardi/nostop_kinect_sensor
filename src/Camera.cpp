@@ -17,7 +17,7 @@
 #include "ros/ros.h"
 #include <std_msgs/Float64MultiArray.h>
 #include <dynamic_reconfigure/server.h>
-#include <geometry_msgs/Pose.h>
+#include <nav_msgs/Odometry.h>
 #include <math.h>
 #include <iostream>
  
@@ -34,8 +34,10 @@ static const std::string BLUE_THRESHOLD_WINDOWS = "Blue threshold ";
 static const std::string GREEN_THRESHOLD_WINDOWS = "Green threshold ";
 static const std::string RED_THRESHOLD_WINDOWS = "Red threshold ";
 static const std::string YELLOW_THRESHOLD_WINDOWS = "Yellow threshold ";
-static const float ball_radius = 3.5;
-
+static const float g_ball_radius = 3.5;
+std::vector<cv::Rect> g_robot_initial_pose_rect;
+std::vector<std::string> g_robot_name;
+bool g_callback_done;
  
 /////////////////////////////////////////////
 Camera::Camera(std::string name_,std::string image_topic_name,std::string calibration_topic,float ifovx,float ifovy)
@@ -87,8 +89,7 @@ void Camera::subscribe()
 	m_robot_init_pose_sub = m_node.subscribe<std_msgs::String>("/localizer/kinect/add_robot", 1000, &Camera::init_robot_pose,this);  
 }
  
-std::vector<cv::Rect> robot_initial_pose_rect;
-bool callback_done;
+
 
 ////////////////////////////////////////////////////////////////
 void Camera::init_robot_pose(const std_msgs::String::ConstPtr& msg)
@@ -96,9 +97,9 @@ void Camera::init_robot_pose(const std_msgs::String::ConstPtr& msg)
     std::string name = msg->data;
     bool setted = false;
     Lock l_lock(m_mutex);
-    robot_name.push_back(name);
-    initial_pose_setted.push_back(setted);
-    robot_number = robot_number+1;
+    m_robot_name.push_back(name);
+    m_initial_pose_setted.push_back(setted);
+    m_robot_number = m_robot_number+1;
 }
 
 /////////////////////////////////////////////
@@ -110,18 +111,37 @@ void mouse_callback(int event, int x, int y, int flags, void* param)
 		pose.width = 480;
 		pose.x = x-pose.width/2;
 		pose.y = y-pose.height/2;
-		robot_initial_pose_rect.push_back(pose);
-		callback_done = true;
+		g_robot_initial_pose_rect.push_back(pose);
+		g_callback_done = true;
 	}
 }
 
-////////////////////////////////////////////////////////////////
-void Camera::pose_feedback(const geometry_msgs::Pose::ConstPtr& msg)
+ball_position odometry_to_srW(std::string& frame_id,ball_position& robot_odometry)
 {
+  ball_position robot_position;
+  for(size_t i = 0; i<g_robot_name.size();i++)
+  {
+    std::string robot_name = frame_id.substr(0,frame_id.find("/"));
+    if(g_robot_name.at(i).c_str()==robot_name)// OK ONLY IF EACH ROBOT HAS DIFFERENT NAME
+    {
+      //TODO
+    }
+  }
+  return robot_position;
+}
+////////////////////////////////////////////////////////////////
+void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
+{
+  
   std::vector<ball_position> corners_pixel,corners_cm_w;
   ball_position corn;
   float x_min,x_max,y_min,y_max;
   ball_position robot_position_cm,robot_position_pixel;
+  std::string frame_id = msg->header.frame_id.c_str();
+  ball_position robot_odometry;
+  robot_odometry.x = msg->pose.pose.position.x;
+  robot_odometry.y = msg->pose.pose.position.y;
+  robot_position_cm = odometry_to_srW(frame_id,robot_odometry);
   corn.x = 0;
   corn.y = 0;
   corners_pixel.push_back(corn);
@@ -135,8 +155,6 @@ void Camera::pose_feedback(const geometry_msgs::Pose::ConstPtr& msg)
   corn.y = 480;
   corners_pixel.push_back(corn);
   corners_cm_w = cam_to_W(corners_pixel);
-  robot_position_cm.x = msg->position.x;
-  robot_position_cm.y = msg->position.y;
   x_min = min(corners_cm_w.at(0).x,corners_cm_w.at(1).x);
   x_max = max(corners_cm_w.at(0).x,corners_cm_w.at(1).x);
   y_min = min(corners_cm_w.at(0).y,corners_cm_w.at(1).y);
@@ -156,15 +174,15 @@ void Camera::pose_feedback(const geometry_msgs::Pose::ConstPtr& msg)
     int to_erase;
     cv::Rect new_rect;
     robot_position_pixel = W_to_cam(robot_position_cm);
-    if (robot_initial_pose_rect.size()>0)
+    if (g_robot_initial_pose_rect.size()>0)
     {
-      diff = sqrt((robot_position_pixel.x-robot_initial_pose_rect.at(0).x)*(robot_position_pixel.x-robot_initial_pose_rect.at(0).x)+
-      (robot_position_pixel.y-robot_initial_pose_rect.at(0).y)*(robot_position_pixel.y-robot_initial_pose_rect.at(0).y));
+      diff = sqrt((robot_position_pixel.x-g_robot_initial_pose_rect.at(0).x)*(robot_position_pixel.x-g_robot_initial_pose_rect.at(0).x)+
+      (robot_position_pixel.y-g_robot_initial_pose_rect.at(0).y)*(robot_position_pixel.y-g_robot_initial_pose_rect.at(0).y));
       to_erase = 0;
-      for(size_t i = 1;i<robot_initial_pose_rect.size();i++)
+      for(size_t i = 1;i<g_robot_initial_pose_rect.size();i++)
       {
-	if(sqrt((robot_position_pixel.x-robot_initial_pose_rect.at(i).x)*(robot_position_pixel.x-robot_initial_pose_rect.at(i).x)+
-	  (robot_position_pixel.y-robot_initial_pose_rect.at(i).y)*(robot_position_pixel.y-robot_initial_pose_rect.at(i).y))<diff)
+	if(sqrt((robot_position_pixel.x-g_robot_initial_pose_rect.at(i).x)*(robot_position_pixel.x-g_robot_initial_pose_rect.at(i).x)+
+	  (robot_position_pixel.y-g_robot_initial_pose_rect.at(i).y)*(robot_position_pixel.y-g_robot_initial_pose_rect.at(i).y))<diff)
 	{
 	  to_erase = i;
 	}
@@ -184,7 +202,7 @@ void Camera::pose_feedback(const geometry_msgs::Pose::ConstPtr& msg)
       new_rect.y = l_tl.y;
       new_rect.height = robot_position_pixel.height;
       new_rect.width = robot_position_pixel.width;
-      robot_initial_pose_rect.at(to_erase) = new_rect;
+      g_robot_initial_pose_rect.at(to_erase) = new_rect;
     }
     else
     {
@@ -198,7 +216,7 @@ void Camera::pose_feedback(const geometry_msgs::Pose::ConstPtr& msg)
       new_rect.y = l_tl.y;
       new_rect.height = robot_position_pixel.height;
       new_rect.width = robot_position_pixel.width;
-      robot_initial_pose_rect.at(to_erase) = new_rect;
+      g_robot_initial_pose_rect.at(to_erase) = new_rect;
     }
   }
 }
@@ -259,34 +277,39 @@ void Camera::search_ball_pos()
      
   Lock l_lock(m_mutex);
   // ROBOTS INITIAL POSE
-  for(int i  = 0;i<robot_number;i++)
+  for(int i  = 0;i<m_robot_number;i++)
   {
-    if(!initial_pose_setted[i])
+    if(!m_initial_pose_setted[i])
     {	
-      std::string windows_name = robot_name.at(i)+" "+m_camera_name +" initial_pose";
+      std::string windows_name = m_robot_name.at(i)+" "+m_camera_name +" initial_pose";
       char* mouse_windows_name = new char[windows_name.size() + 1];
       std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
       mouse_windows_name[windows_name.size()] = '\0'; 
       imshow(windows_name,m_stream_video);
       cvSetMouseCallback(mouse_windows_name,mouse_callback,NULL);
-      if(callback_done)
+      if(g_callback_done)
       {
-	initial_pose_setted[i] = callback_done;
-	callback_done = false;
+	m_initial_pose_setted[i] = g_callback_done;
+	g_callback_done = false;
       }
     }
     else
-    {    
-      ros::Subscriber pose_sub = m_node.subscribe<geometry_msgs::Pose>("/"+robot_name.at(i)+"/localizer/odometry/final", 1, &Camera::pose_feedback, this);
+    {  
+      cv::Point2f odom_SR;
+      odom_SR.x = g_robot_initial_pose_rect.at(i).x;
+      odom_SR.y = g_robot_initial_pose_rect.at(i).y;
+      m_initial_pose_odom_SR.push_back(odom_SR);
+      ros::Subscriber pose_sub = m_node.subscribe<nav_msgs::Odometry>("/"+m_robot_name.at(i)+"/localizer/odometry/final", 1, &Camera::pose_feedback, this);
       m_robot_feedback_pose_sub.push_back(pose_sub);
-      std::string windows_name = robot_name.at(i) +" "+m_camera_name +" initial_pose";
+      g_robot_name.push_back(m_robot_name.at(i).c_str());
+      std::string windows_name = m_robot_name.at(i) +" "+m_camera_name +" initial_pose";
       char* mouse_windows_name = new char[windows_name.size() + 1];
       std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
       mouse_windows_name[windows_name.size()] = '\0'; 
       cvDestroyWindow(mouse_windows_name);
-      robot_number = robot_number-1;
-      initial_pose_setted.erase(initial_pose_setted.begin()+i);
-      robot_name.erase(robot_name.begin()+i);
+      m_robot_number = m_robot_number-1;
+      m_initial_pose_setted.erase(m_initial_pose_setted.begin()+i);
+      m_robot_name.erase(m_robot_name.begin()+i);
     }
   }
 
@@ -418,10 +441,10 @@ void Camera::search_ball_pos()
   }
 
   //// SEARCH RECTANGLE
-  for(size_t i = 0;i<robot_initial_pose_rect.size();i++)
+  for(size_t i = 0;i<g_robot_initial_pose_rect.size();i++)
   {
     cv::Rect rec;
-    rec = robot_initial_pose_rect.at(i);
+    rec = g_robot_initial_pose_rect.at(i);
     rectangle(m_stream_video,rec,cv::Scalar(0, 0, 0),1,8,0);
     
   }
@@ -476,9 +499,9 @@ std::vector<ball_position> Camera::charge_array(cv::Mat img)
     cv::Point2f possible_ball;
     possible_ball.x = bBox.x+bBox.width/2;
     possible_ball.y = bBox.y+bBox.height/2;
-    for(size_t j = 0;j<robot_initial_pose_rect.size();j++)
+    for(size_t j = 0;j<g_robot_initial_pose_rect.size();j++)
     {
-      if (ratio > 0.6 && possible_ball.inside(robot_initial_pose_rect.at(j)) && bBox.area()<1900 && bBox.area()>100) 
+      if (ratio > 0.6 && possible_ball.inside(g_robot_initial_pose_rect.at(j)) && bBox.area()<1900 && bBox.area()>100) 
       {
 	l_ball.x = possible_ball.x;
 	l_ball.y = possible_ball.y;
@@ -560,8 +583,8 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
       // SR UNDER CAMERA 
       l_pos_cm.x = distance_from_center_x;
       l_pos_cm.y = -(m_R-distance_from_center_y);
-      l_pos_cm.height=2*ball_radius;
-      l_pos_cm.width=2*ball_radius;
+      l_pos_cm.height=2*g_ball_radius;
+      l_pos_cm.width=2*g_ball_radius;
       
       //ROS_INFO("x--> %f, y --> %f",l_pos_cm.x,l_pos_cm.y);
       pos_cam[0] = l_pos_cm.x;

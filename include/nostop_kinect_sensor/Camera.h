@@ -25,8 +25,8 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <geometry_msgs/PointStamped.h>
-#include <geometry_msgs/Pose.h>
 #include <std_msgs/Float64MultiArray.h>
+#include <nav_msgs/Odometry.h>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -85,9 +85,10 @@ namespace Robotics
 		  std::vector<ball_position>  m_yellow_circles_W;
 
 		  // Robot
-		  std::vector<bool> initial_pose_setted;
-		  std::vector<std::string> robot_name;
-		  int robot_number;
+		  std::vector<bool> m_initial_pose_setted;
+		  std::vector<cv::Point2f> m_initial_pose_odom_SR;// OwOr vector
+		  std::vector<std::string> m_robot_name;
+		  int m_robot_number;
 		  
 		public:
 			Camera(std::string name_,std::string topic_name,std::string calibration_topic,float ifovx,float ifovy);
@@ -98,7 +99,7 @@ namespace Robotics
 			void video_acquisition(const sensor_msgs::ImageConstPtr& msg);
 			void search_ball_pos();
 			void init_robot_pose(const std_msgs::String::ConstPtr& msg);
-			void pose_feedback(const geometry_msgs::Pose::ConstPtr& msg);
+			void pose_feedback(const nav_msgs::Odometry::ConstPtr& msg);
 			ball_position W_to_cam(ball_position& in);
 			void filtering(cv::Mat &src,cv::Mat &dst,int  lb[],int ub[],int dim_kernel);
 			std::vector<ball_position> charge_array(cv::Mat img);
