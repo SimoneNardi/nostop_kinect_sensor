@@ -40,7 +40,16 @@
 namespace Robotics 
 {
 	namespace GameTheory
-	{
+	{	  
+		typedef struct RobotConfigurationI
+		{
+		  int pose_setted;
+		  cv::Point2f initial_point_odom_SR;
+		  cv::Rect initial_pose_rect;
+		  std::string name;
+		  std::string camera_name;
+		} RobotConfiguration;
+	  
 		class Guard;
 		class Ball_tracker;
 		class Robot_manager;
@@ -83,16 +92,9 @@ namespace Robotics
 		  std::vector<ball_position>  m_green_circles_W;
 		  std::vector<ball_position>  m_red_circles_W;
 		  std::vector<ball_position>  m_yellow_circles_W;
-
-		  // Robot
-		  std::vector<bool> m_initial_pose_setted;
-		  std::vector<cv::Point2f> m_initial_pose_odom_SR;// OwOr vector
-		  std::vector<std::string> m_robot_name;
-		  int m_robot_number;
-		  
+ 
 		public:
 			Camera(std::string name_,std::string topic_name,std::string calibration_topic,float ifovx,float ifovy);
-			
 			~Camera();
 			void subscribe();
 			void camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg);

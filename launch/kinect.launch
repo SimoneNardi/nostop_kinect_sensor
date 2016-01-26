@@ -128,8 +128,10 @@
 </node>
 
 <arg name="camera_name" default="kinect" />
+<arg name="iFOVx_angle" default = "60"/>
+<arg name="iFOVy_angle" default = "32"/>
   <node pkg="nostop_kinect_sensor" type="script_cam.sh" 
-    args="$(arg camera_name) $(arg image_topic) $(arg calibration_topic_name)" 
+    args="$(arg camera_name) $(arg image_topic) $(arg calibration_topic_name) $(arg iFOVx_angle) $(arg iFOVy_angle)" 
     name="camera_node" output="screen">
   </node>
   

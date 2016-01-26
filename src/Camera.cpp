@@ -35,9 +35,9 @@ static const std::string GREEN_THRESHOLD_WINDOWS = "Green threshold ";
 static const std::string RED_THRESHOLD_WINDOWS = "Red threshold ";
 static const std::string YELLOW_THRESHOLD_WINDOWS = "Yellow threshold ";
 static const float g_ball_radius = 3.5;
-std::vector<cv::Rect> g_robot_initial_pose_rect;
-std::vector<std::string> g_robot_name;
-bool g_callback_done;
+
+// Robot
+std::vector<RobotConfiguration> g_robot_initial_configuration;
  
 /////////////////////////////////////////////
 Camera::Camera(std::string name_,std::string image_topic_name,std::string calibration_topic,float ifovx,float ifovy)
@@ -93,36 +93,38 @@ void Camera::subscribe()
 
 ////////////////////////////////////////////////////////////////
 void Camera::init_robot_pose(const std_msgs::String::ConstPtr& msg)
-{	
-    std::string name = msg->data;
-    bool setted = false;
+{
     Lock l_lock(m_mutex);
-    m_robot_name.push_back(name);
-    m_initial_pose_setted.push_back(setted);
-    m_robot_number = m_robot_number+1;
+    RobotConfiguration l_config;
+    l_config.pose_setted = 0;
+    l_config.name= msg->data;
+    l_config.camera_name = m_camera_name;
+    g_robot_initial_configuration.push_back(l_config);
 }
 
 /////////////////////////////////////////////
 void mouse_callback(int event, int x, int y, int flags, void* param)
 {
-	if (event == CV_EVENT_LBUTTONDBLCLK) { 
+	if (event == CV_EVENT_LBUTTONDBLCLK) 
+	{
+	        RobotConfiguration *l_robot = (RobotConfiguration*) param;
 		cv::Rect pose;
-		pose.height = 480;//TODO
-		pose.width = 480;
+		pose.height = 200;//TODO
+		pose.width = 200;
 		pose.x = x-pose.width/2;
 		pose.y = y-pose.height/2;
-		g_robot_initial_pose_rect.push_back(pose);
-		g_callback_done = true;
+		l_robot->initial_pose_rect = pose;
+		l_robot->pose_setted = 1;
 	}
 }
 
 ball_position odometry_to_srW(std::string& frame_id,ball_position& robot_odometry)
 {
   ball_position robot_position;
-  for(size_t i = 0; i<g_robot_name.size();i++)
+  for(size_t i = 0; i < g_robot_initial_configuration.size(); ++i)
   {
     std::string robot_name = frame_id.substr(0,frame_id.find("/"));
-    if(g_robot_name.at(i).c_str()==robot_name)// OK ONLY IF EACH ROBOT HAS DIFFERENT NAME
+    if(g_robot_initial_configuration[i].name.c_str()==robot_name)// OK ONLY IF EACH ROBOT HAS DIFFERENT NAME
     {
       //TODO
     }
@@ -171,52 +173,57 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
   if (robot_position_cm.x<x_max && robot_position_cm.x>x_min && robot_position_cm.y<y_max && robot_position_cm.y>y_min )
   {
     float diff;
-    int to_erase;
+    int to_update = -1;
     cv::Rect new_rect;
     robot_position_pixel = W_to_cam(robot_position_cm);
-    if (g_robot_initial_pose_rect.size()>0)
+    
+    diff = std::numeric_limits< float >::infinity();
+    for(size_t i = 0; g_robot_initial_configuration.size(); ++i)
     {
-      diff = sqrt((robot_position_pixel.x-g_robot_initial_pose_rect.at(0).x)*(robot_position_pixel.x-g_robot_initial_pose_rect.at(0).x)+
-      (robot_position_pixel.y-g_robot_initial_pose_rect.at(0).y)*(robot_position_pixel.y-g_robot_initial_pose_rect.at(0).y));
-      to_erase = 0;
-      for(size_t i = 1;i<g_robot_initial_pose_rect.size();i++)
+      if(g_robot_initial_configuration[i].pose_setted != 2)
+	continue;
+      
+      float local_diff = sqrt( 
+	pow( robot_position_pixel.x - g_robot_initial_configuration[i].initial_pose_rect.x, 2) + 
+	pow( robot_position_pixel.y - g_robot_initial_configuration[i].initial_pose_rect.y, 2) );
+      if(local_diff < diff)
       {
-	if(sqrt((robot_position_pixel.x-g_robot_initial_pose_rect.at(i).x)*(robot_position_pixel.x-g_robot_initial_pose_rect.at(i).x)+
-	  (robot_position_pixel.y-g_robot_initial_pose_rect.at(i).y)*(robot_position_pixel.y-g_robot_initial_pose_rect.at(i).y))<diff)
-	{
-	  to_erase = i;
-	}
+	diff = local_diff;
+	to_update = i;
       }
     }
     
-    cv::Point l_tl,l_br;
-    if (robot_position_pixel.y>240)
+    if(to_update >=0)
     {
-      robot_position_pixel.height = 150;
-      robot_position_pixel.width = 150;
-      l_tl.x = robot_position_pixel.x-robot_position_pixel.height/2;
-      l_tl.y = robot_position_pixel.y-robot_position_pixel.width/2;
-      l_br.x = l_tl.x+robot_position_pixel.height;
-      l_br.y = l_tl.y+robot_position_pixel.width;
-      new_rect.x = l_tl.x;
-      new_rect.y = l_tl.y;
-      new_rect.height = robot_position_pixel.height;
-      new_rect.width = robot_position_pixel.width;
-      g_robot_initial_pose_rect.at(to_erase) = new_rect;
-    }
-    else
-    {
-      robot_position_pixel.height = 125;
-      robot_position_pixel.width = 125;
-      l_tl.x = robot_position_pixel.x-robot_position_pixel.height/2;
-      l_tl.y = robot_position_pixel.y-robot_position_pixel.width/2;
-      l_br.x = l_tl.x+robot_position_pixel.height;
-      l_br.y = l_tl.y+robot_position_pixel.width;
-      new_rect.x = l_tl.x;
-      new_rect.y = l_tl.y;
-      new_rect.height = robot_position_pixel.height;
-      new_rect.width = robot_position_pixel.width;
-      g_robot_initial_pose_rect.at(to_erase) = new_rect;
+      cv::Point l_tl,l_br;
+      if (robot_position_pixel.y>240)
+      {
+	robot_position_pixel.height = 150;
+	robot_position_pixel.width = 150;
+	l_tl.x = robot_position_pixel.x-robot_position_pixel.height/2;
+	l_tl.y = robot_position_pixel.y-robot_position_pixel.width/2;
+	l_br.x = l_tl.x+robot_position_pixel.height;
+	l_br.y = l_tl.y+robot_position_pixel.width;
+	new_rect.x = l_tl.x;
+	new_rect.y = l_tl.y;
+	new_rect.height = robot_position_pixel.height;
+	new_rect.width = robot_position_pixel.width;
+	g_robot_initial_configuration[to_update].initial_pose_rect = new_rect;
+      }
+      else
+      {
+	robot_position_pixel.height = 125;
+	robot_position_pixel.width = 125;
+	l_tl.x = robot_position_pixel.x-robot_position_pixel.height/2;
+	l_tl.y = robot_position_pixel.y-robot_position_pixel.width/2;
+	l_br.x = l_tl.x+robot_position_pixel.height;
+	l_br.y = l_tl.y+robot_position_pixel.width;
+	new_rect.x = l_tl.x;
+	new_rect.y = l_tl.y;
+	new_rect.height = robot_position_pixel.height;
+	new_rect.width = robot_position_pixel.width;
+	g_robot_initial_configuration[to_update].initial_pose_rect = new_rect;
+      }
     }
   }
 }
@@ -262,7 +269,6 @@ int dim_kernel_blue=4,dim_kernel_green=4,dim_kernel_red=4,dim_kernel_yellow=4;
 /////////////////////////////////////////////////////
 void Camera::search_ball_pos()
 { 
-    
   cv::Mat withCircle_blue,withCircle_green,withCircle_red,withCircle_yellow,l_bg,l_ry;
   //withCircle_blue=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
   withCircle_green=Mat::zeros(m_stream_video.rows,m_stream_video.cols, m_stream_video.type());
@@ -277,39 +283,50 @@ void Camera::search_ball_pos()
      
   Lock l_lock(m_mutex);
   // ROBOTS INITIAL POSE
-  for(int i  = 0;i<m_robot_number;i++)
+  for(size_t i = 0; i<g_robot_initial_configuration.size(); ++i)
   {
-    if(!m_initial_pose_setted[i])
-    {	
-      std::string windows_name = m_robot_name.at(i)+" "+m_camera_name +" initial_pose";
+    if( g_robot_initial_configuration[i].pose_setted == 0 &&
+	g_robot_initial_configuration[i].camera_name == m_camera_name)
+    {
+      std::string windows_name = g_robot_initial_configuration[i].name + " " + m_camera_name + " initial_pose";
       char* mouse_windows_name = new char[windows_name.size() + 1];
       std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
       mouse_windows_name[windows_name.size()] = '\0'; 
       imshow(windows_name,m_stream_video);
-      cvSetMouseCallback(mouse_windows_name,mouse_callback,NULL);
-      if(g_callback_done)
-      {
-	m_initial_pose_setted[i] = g_callback_done;
-	g_callback_done = false;
-      }
+      cvSetMouseCallback(mouse_windows_name,mouse_callback, &(g_robot_initial_configuration[i]) );
     }
-    else
+    else if( g_robot_initial_configuration[i].pose_setted == 1 )
     {  
       cv::Point2f odom_SR;
-      odom_SR.x = g_robot_initial_pose_rect.at(i).x;
-      odom_SR.y = g_robot_initial_pose_rect.at(i).y;
-      m_initial_pose_odom_SR.push_back(odom_SR);
-      ros::Subscriber pose_sub = m_node.subscribe<nav_msgs::Odometry>("/"+m_robot_name.at(i)+"/localizer/odometry/final", 1, &Camera::pose_feedback, this);
+      odom_SR.x = g_robot_initial_configuration[i].initial_pose_rect.x;
+      odom_SR.y = g_robot_initial_configuration[i].initial_pose_rect.y;
+      
+      g_robot_initial_configuration[i].initial_point_odom_SR = odom_SR;
+      
+      ros::Subscriber pose_sub = m_node.subscribe<nav_msgs::Odometry>("/" + g_robot_initial_configuration[i].name + "/localizer/odometry/final", 1, &Camera::pose_feedback, this);
       m_robot_feedback_pose_sub.push_back(pose_sub);
-      g_robot_name.push_back(m_robot_name.at(i).c_str());
-      std::string windows_name = m_robot_name.at(i) +" "+m_camera_name +" initial_pose";
+      
+      std::string windows_name = g_robot_initial_configuration[i].name + " " + g_robot_initial_configuration[i].camera_name + " initial_pose";
       char* mouse_windows_name = new char[windows_name.size() + 1];
       std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
       mouse_windows_name[windows_name.size()] = '\0'; 
       cvDestroyWindow(mouse_windows_name);
-      m_robot_number = m_robot_number-1;
-      m_initial_pose_setted.erase(m_initial_pose_setted.begin()+i);
-      m_robot_name.erase(m_robot_name.begin()+i);
+      g_robot_initial_configuration[i].pose_setted = 2;
+      
+      for(size_t j = 0; j < g_robot_initial_configuration.size(); ++j)
+      {	
+	if( g_robot_initial_configuration[i].name == g_robot_initial_configuration[j].name &&
+	  g_robot_initial_configuration[j].pose_setted != 2)
+	{
+	  g_robot_initial_configuration[j].pose_setted = 3;
+	  std::string windows_name = g_robot_initial_configuration[j].name + " " 
+				    + g_robot_initial_configuration[j].camera_name + " initial_pose";
+	  char* mouse_windows_name = new char[windows_name.size() + 1];
+	  std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
+	  mouse_windows_name[windows_name.size()] = '\0'; 
+	  cvDestroyWindow(mouse_windows_name);
+	} 
+      }      
     }
   }
 
@@ -441,13 +458,12 @@ void Camera::search_ball_pos()
   }
 
   //// SEARCH RECTANGLE
-  for(size_t i = 0;i<g_robot_initial_pose_rect.size();i++)
+  for(size_t i = 0;i<g_robot_initial_configuration.size();i++)
   {
-    cv::Rect rec;
-    rec = g_robot_initial_pose_rect.at(i);
-    rectangle(m_stream_video,rec,cv::Scalar(0, 0, 0),1,8,0);
-    
+    if(g_robot_initial_configuration[i].pose_setted == 2)
+      rectangle(m_stream_video,g_robot_initial_configuration[i].initial_pose_rect,cv::Scalar(0, 0, 0),1,8,0);
   }
+  
   cv::circle(m_stream_video,center,2,cv::Scalar(0, 0, 255),-1,8,0);
   cv::circle(m_stream_video,center,10,cv::Scalar(0, 0, 0),1,8,0);
   createTrackbar("iFOVx",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_x,255,0,0);
@@ -499,9 +515,13 @@ std::vector<ball_position> Camera::charge_array(cv::Mat img)
     cv::Point2f possible_ball;
     possible_ball.x = bBox.x+bBox.width/2;
     possible_ball.y = bBox.y+bBox.height/2;
-    for(size_t j = 0;j<g_robot_initial_pose_rect.size();j++)
+    for(size_t j = 0;j<g_robot_initial_configuration.size();j++)
     {
-      if (ratio > 0.6 && possible_ball.inside(g_robot_initial_pose_rect.at(j)) && bBox.area()<1900 && bBox.area()>100) 
+      if (ratio > 0.6 && 
+	g_robot_initial_configuration[i].pose_setted == 2 && 
+	possible_ball.inside(g_robot_initial_configuration[j].initial_pose_rect) && 
+	bBox.area()<1900 && 
+	bBox.area()>100) 
       {
 	l_ball.x = possible_ball.x;
 	l_ball.y = possible_ball.y;
