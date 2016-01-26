@@ -96,21 +96,26 @@ namespace Robotics
 		public:
 			Camera(std::string name_,std::string topic_name,std::string calibration_topic,float ifovx,float ifovy);
 			~Camera();
-			void subscribe();
+			void initialize_mouse();//TODO
+			
 			void camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg);
-			void video_acquisition(const sensor_msgs::ImageConstPtr& msg);
-			void search_ball_pos();
-			void init_robot_pose(const std_msgs::String::ConstPtr& msg);
-			void pose_feedback(const nav_msgs::Odometry::ConstPtr& msg);
-			ball_position W_to_cam(ball_position& in);
-			void filtering(cv::Mat &src,cv::Mat &dst,int  lb[],int ub[],int dim_kernel);
-			std::vector<ball_position> charge_array(cv::Mat img);
 			std::vector<ball_position> cam_to_W(std::vector<ball_position>& array);
+			std::vector<ball_position> charge_array(cv::Mat img);
+			void filtering(cv::Mat &src,cv::Mat &dst,int  lb[],int ub[],int dim_kernel);
+			void final_image_showing();
 			std::vector<ball_position> get_blue_array();
 			std::vector<ball_position> get_green_array();
 			std::vector<ball_position> get_red_array();
 			std::vector<ball_position> get_yellow_array();
-		};
+			void init_robot_pose(const std_msgs::String::ConstPtr& msg);
+			ball_position odometry_to_srW(std::string& frame_id,ball_position& robot_odometry);
+			void pose_feedback(const nav_msgs::Odometry::ConstPtr& msg);
+			void search_ball_pos();
+			void subscribe();
+			void video_acquisition(const sensor_msgs::ImageConstPtr& msg);
+			void thresholded_images_settings();
+			ball_position W_to_cam(ball_position& in);
+			};
 
 	}
 }
