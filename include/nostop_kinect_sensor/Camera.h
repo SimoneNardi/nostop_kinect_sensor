@@ -44,8 +44,11 @@ namespace Robotics
 		typedef struct RobotConfigurationI
 		{
 			int pose_setted;
-			cv::Point2f initial_point_odom_SR;
-			cv::Rect initial_pose_rect;
+			cv::Point2f head_point;
+			cv::Point2f tail_point;
+			cv::Point2f odom_SR_origin_pix;
+			cv::Point2f odom_SR_origin_cm;
+			cv::Rect pose_rect;
 			std::string name;
 		} RobotConfiguration;
 	  
@@ -110,7 +113,8 @@ namespace Robotics
 			std::vector<ball_position> get_red_array();
 			cv::Mat get_stream_video();
 			std::vector<ball_position> get_yellow_array();
-			ball_position odometry_to_srW(std::string& frame_id,nav_msgs::Odometry& robot_odometry);
+			ball_position odometry_to_srW(ball_position& robot_odometry,RobotConfiguration& robot_config);
+			ball_position origin_pix2origin_world(ball_position& origin_SR_pix);
 			void pose_feedback(const nav_msgs::Odometry::ConstPtr& msg);
 			void robot_topic_pose_subscribe(RobotConfiguration& robot_pose);
 			void search_ball_pos();

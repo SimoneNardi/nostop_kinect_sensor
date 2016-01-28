@@ -227,7 +227,7 @@ std::vector<ball_position> Camera::charge_array(cv::Mat img)
 		{
 			if (ratio > 0.6 && 
 			    m_robot_array[i].pose_setted == 2 && 
-			    possible_ball.inside(m_robot_array[j].initial_pose_rect) && 
+			    possible_ball.inside(m_robot_array[j].pose_rect) && 
 			    bBox.area()<1900 && 
 			    bBox.area()>100) 
 			{
@@ -327,7 +327,7 @@ void Camera::final_image_showing()
 	for(size_t i = 0;i<m_robot_array.size();++i)
 	{
 		if(m_robot_array[i].pose_setted == 2)
-			rectangle(m_stream_video,m_robot_array[i].initial_pose_rect,cv::Scalar(0, 0, 0),1,8,0);
+			rectangle(m_stream_video,m_robot_array[i].pose_rect,cv::Scalar(0, 0, 0),1,8,0);
 	}
 	cv::circle(m_stream_video,center,2,cv::Scalar(0, 0, 255),-1,8,0);
 	cv::circle(m_stream_video,center,10,cv::Scalar(0, 0, 0),1,8,0);
@@ -387,22 +387,25 @@ std::vector<ball_position> Camera::get_yellow_array()
 
 
 // ODOMETRY TO WORLD (TODO HERE???) Different for each robot
-ball_position Camera::odometry_to_srW(std::string& frame_id,nav_msgs::Odometry& robot_odometry,float& heading)
+ball_position Camera::odometry_to_srW(ball_position& robot_odometry, RobotConfiguration& robot_config)
 {
 	ball_position robot_position;
-	for(size_t i = 0; i < m_robot_array.size(); ++i)
-	{
-		std::string robot_name = frame_id.substr(0,frame_id.find("/"));
-		if(m_robot_array[i].name.c_str()==robot_name)// OK ONLY IF EACH ROBOT HAS DIFFERENT NAME
-		{
-		   robot_position.x = cos(-heading)*robot_odometry.x - sin(-heading)*robot_odometry.y + x1; 
-  		   robot_position.y = sin(-heading)*robot_odometry.x + cos(-heading)*robot_odometry.y + y1;
-		    //.......
-		}
-	}
+	float heading = atan2((robot_config.tail_point.y-robot_config.head_point.y),(robot_config.tail_point.x-robot_config.head_point.x))+M_PI;
+	robot_position.x = cos(-heading)*robot_odometry.x - sin(-heading)*robot_odometry.y + robot_config.odom_SR_origin_cm.x; 
+	robot_position.y = sin(-heading)*robot_odometry.x + cos(-heading)*robot_odometry.y + robot_config.odom_SR_origin_cm.y;
 	return robot_position;
 }
 
+ 
+ 
+ 
+ball_position Camera::origin_pix2origin_world(ball_position& origin_SR_pix)
+{
+  std::vector<ball_position> SR_cm,SR_pix;
+  SR_pix.push_back(origin_SR_pix);
+  SR_cm = cam_to_W(SR_pix);
+  return SR_cm.at(0);
+}
  
 
 // FEEDBACK OF EKF NODE 
@@ -412,11 +415,18 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 	ball_position corn;
 	float x_min,x_max,y_min,y_max;
 	ball_position robot_position_cm,robot_position_pixel;
-	std::string frame_id = msg->header.frame_id.c_str();
-	ball_position robot_odometry;
+	ball_position robot_odometry,SRodom2W;
+	std::string l_robot_name = msg->header.frame_id;
+	l_robot_name = l_robot_name.substr(0,l_robot_name.find("/"));
 	robot_odometry.x = msg->pose.pose.position.x;
 	robot_odometry.y = msg->pose.pose.position.y;
-	robot_position_cm = odometry_to_srW(frame_id,robot_odometry);
+	for(size_t i = 0;i<m_robot_array.size();++i)
+	{
+	  if(m_robot_array.at(i).name == l_robot_name)
+	  {
+	    SRodom2W = odometry_to_srW(robot_odometry,m_robot_array.at(i));
+	  }
+	}
 	corn.x = 0;
 	corn.y = 0;
 	corners_pixel.push_back(corn);
@@ -442,8 +452,11 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 		y_max = max(y_max,corners_cm_w.at(i).y);
 	}
   
-	Lock l_lock(m_mutex);
-	if (robot_position_cm.x<x_max && robot_position_cm.x>x_min && robot_position_cm.y<y_max && robot_position_cm.y>y_min )
+	Lock l_lock(m_mutex);	
+	if (robot_position_cm.x<x_max && 
+	    robot_position_cm.x>x_min && 
+	    robot_position_cm.y<y_max && 
+	    robot_position_cm.y>y_min )
 	{
 		float diff;
 		int to_update = -1;
@@ -456,8 +469,8 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 				continue;
 	      
 			float local_diff = sqrt( 
-			pow( robot_position_pixel.x - m_robot_array[i].initial_pose_rect.x, 2) + 
-			pow( robot_position_pixel.y - m_robot_array[i].initial_pose_rect.y, 2) );
+			pow( robot_position_pixel.x - m_robot_array[i].pose_rect.x, 2) + 
+			pow( robot_position_pixel.y - m_robot_array[i].pose_rect.y, 2) );
 			if(local_diff < diff)
 			{
 				diff = local_diff;
@@ -480,7 +493,7 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 				new_rect.y = l_tl.y;
 				new_rect.height = robot_position_pixel.height;
 				new_rect.width = robot_position_pixel.width;
-				m_robot_array[to_update].initial_pose_rect = new_rect;
+				m_robot_array[to_update].pose_rect = new_rect;
 			}else{
 				robot_position_pixel.height = 125;
 				robot_position_pixel.width = 125;
@@ -492,7 +505,7 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 				new_rect.y = l_tl.y;
 				new_rect.height = robot_position_pixel.height;
 				new_rect.width = robot_position_pixel.width;
-				m_robot_array[to_update].initial_pose_rect = new_rect;
+				m_robot_array[to_update].pose_rect = new_rect;
 			}
 		}
 	}
