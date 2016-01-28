@@ -386,8 +386,8 @@ std::vector<ball_position> Camera::get_yellow_array()
 
 
 
-// ODOMETRY TO WORLD (TODO HERE???)
-ball_position Camera::odometry_to_srW(std::string& frame_id,ball_position& robot_odometry)
+// ODOMETRY TO WORLD (TODO HERE???) Different for each robot
+ball_position Camera::odometry_to_srW(std::string& frame_id,nav_msgs::Odometry& robot_odometry,float& heading)
 {
 	ball_position robot_position;
 	for(size_t i = 0; i < m_robot_array.size(); ++i)
@@ -395,6 +395,8 @@ ball_position Camera::odometry_to_srW(std::string& frame_id,ball_position& robot
 		std::string robot_name = frame_id.substr(0,frame_id.find("/"));
 		if(m_robot_array[i].name.c_str()==robot_name)// OK ONLY IF EACH ROBOT HAS DIFFERENT NAME
 		{
+		   robot_position.x = cos(-heading)*robot_odometry.x - sin(-heading)*robot_odometry.y + x1; 
+  		   robot_position.y = sin(-heading)*robot_odometry.x + cos(-heading)*robot_odometry.y + y1;
 		    //.......
 		}
 	}

@@ -110,7 +110,7 @@ namespace Robotics
 			std::vector<ball_position> get_red_array();
 			cv::Mat get_stream_video();
 			std::vector<ball_position> get_yellow_array();
-			ball_position odometry_to_srW(std::string& frame_id,ball_position& robot_odometry);
+			ball_position odometry_to_srW(std::string& frame_id,nav_msgs::Odometry& robot_odometry);
 			void pose_feedback(const nav_msgs::Odometry::ConstPtr& msg);
 			void robot_topic_pose_subscribe(RobotConfiguration& robot_pose);
 			void search_ball_pos();
