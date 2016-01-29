@@ -142,7 +142,7 @@ void Camera_manager::initialize_mouse() // CASE AGAINST IF?
 						m_robot_initial_configuration[i].odom_SR_origin_cm.y = SR_cm.y;
 						m_robot_initial_configuration[i].pose_setted = 3;
 					}
-					
+					break;
 					
 				case 3:
 				{	
