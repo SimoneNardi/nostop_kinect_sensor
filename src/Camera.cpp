@@ -226,7 +226,7 @@ std::vector<ball_position> Camera::charge_array(cv::Mat img)
 		for(size_t j = 0;j<m_robot_array.size();j++)
 		{
 			if (ratio > 0.6 && 
-			    m_robot_array[i].pose_setted == 2 && 
+			    m_robot_array[i].pose_setted == 3 && 
 			    possible_ball.inside(m_robot_array[j].pose_rect) && 
 			    bBox.area()<1900 && 
 			    bBox.area()>100) 
@@ -516,7 +516,8 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 
 void Camera::robot_topic_pose_subscribe(RobotConfiguration& robot_pose)
 {
-	ros::Subscriber pose_sub = m_node.subscribe<nav_msgs::Odometry>("/" + robot_pose.name + "/localizer/odometry/final", 1, &Camera::pose_feedback, this);
+	//ros::Subscriber pose_sub = m_node.subscribe<nav_msgs::Odometry>("/" + robot_pose.name + "/localizer/odometry/final", 1, &Camera::pose_feedback, this);
+        ros::Subscriber pose_sub = m_node.subscribe<nav_msgs::Odometry>("/odom", 1, &Camera::pose_feedback, this);
 	m_robot_feedback_pose_sub.push_back(pose_sub);  
 	m_robot_array.push_back(robot_pose);
 }
@@ -565,14 +566,15 @@ void Camera::search_ball_pos()
 	m_red_circles_W = cam_to_W(m_red_circles);
 	m_yellow_circles_W = cam_to_W(m_yellow_circles);
 
+		
+	// SHOW IMAGE
+	final_image_showing();
 
 	m_blue_circles.clear();
 	m_green_circles.clear();
 	m_red_circles.clear();
 	m_yellow_circles.clear();
-	
-	// SHOW IMAGE
-	final_image_showing();
+
 }
 
 
