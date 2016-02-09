@@ -201,3 +201,13 @@ void Camera_manager::pack_passage()
 	m_red_ball_W.clear();
 	m_yellow_ball_W.clear();
   }
+
+  
+  
+void Camera_manager::reset()
+{
+  for(size_t i = 0;i<m_camera_array.size();++i)
+  {
+    m_camera_array[i]-> reset_vector();
+  }
+}

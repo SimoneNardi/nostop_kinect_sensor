@@ -11,10 +11,17 @@ int main(int argc, char **argv)
 	
 	Robotics::GameTheory::Camera_manager l_Camera_manager;
 	ros::NodeHandle n;
-
+	ros::Time begin = ros::Time::now();
+	ros::Time now;
 	while(ros::ok())
 	{
 	  ros::spinOnce();
+	  now = ros::Time::now();
+	  if (now.sec - begin.sec > 1)
+	  {
+	    l_Camera_manager.reset();
+	    begin.sec = now.sec;
+	  }
 	  l_Camera_manager.pack_passage();
 	}
 	

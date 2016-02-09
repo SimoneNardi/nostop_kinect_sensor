@@ -116,6 +116,7 @@ namespace Robotics
 			ball_position odometry_to_srW(ball_position& robot_odometry,RobotConfiguration& robot_config);
 			ball_position origin_pix2origin_world(ball_position& origin_SR_pix);
 			void pose_feedback(const nav_msgs::Odometry::ConstPtr& msg);
+			void reset_vector();
 			void robot_topic_pose_subscribe(RobotConfiguration& robot_pose);
 			void search_ball_pos();
 			void subscribe();
