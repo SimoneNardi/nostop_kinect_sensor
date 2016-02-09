@@ -102,7 +102,7 @@ namespace Robotics
 		public:
 			Camera(std::string name_,std::string topic_name,
 			       std::string calibration_topic,float ifovx,float ifovy);
-			~Camera();			
+			~Camera();
 			void camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg);
 			std::vector<ball_position> cam_to_W(std::vector<ball_position>& array);
 			std::vector<ball_position> charge_array(cv::Mat img);

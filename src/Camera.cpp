@@ -415,16 +415,16 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 	ball_position corn;
 	float x_min,x_max,y_min,y_max;
 	ball_position robot_position_cm,robot_position_pixel;
-	ball_position robot_odometry,SRodom2W;
+	ball_position robot_odometry,robot_position_cm_corrected;
 	std::string l_robot_name = msg->header.frame_id;
 	l_robot_name = l_robot_name.substr(0,l_robot_name.find("/"));
-	robot_odometry.x = msg->pose.pose.position.x;
-	robot_odometry.y = msg->pose.pose.position.y;
+	robot_odometry.x = msg->pose.pose.position.x*100;
+	robot_odometry.y = msg->pose.pose.position.y*100;
 	for(size_t i = 0;i<m_robot_array.size();++i)
 	{
 	  if(m_robot_array.at(i).name == l_robot_name)
 	  {
-	    SRodom2W = odometry_to_srW(robot_odometry,m_robot_array.at(i));
+	    robot_position_cm_corrected = odometry_to_srW(robot_odometry,m_robot_array.at(i));//TODO
 	  }
 	}
 	corn.x = 0;
@@ -452,11 +452,11 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 		y_max = max(y_max,corners_cm_w.at(i).y);
 	}
   
-	Lock l_lock(m_mutex);	
-	if (robot_position_cm.x<x_max && 
-	    robot_position_cm.x>x_min && 
-	    robot_position_cm.y<y_max && 
-	    robot_position_cm.y>y_min )
+	Lock l_lock(m_mutex);
+	if (robot_position_cm_corrected.x<x_max && 
+	    robot_position_cm_corrected.x>x_min && 
+	    robot_position_cm_corrected.y<y_max && 
+	    robot_position_cm_corrected.y>y_min )
 	{
 		float diff;
 		int to_update = -1;
