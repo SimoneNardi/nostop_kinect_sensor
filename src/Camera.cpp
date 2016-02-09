@@ -326,7 +326,7 @@ void Camera::final_image_showing()
   // SEARCH RECTANGLE
 	for(size_t i = 0;i<m_robot_array.size();++i)
 	{
-		if(m_robot_array[i].pose_setted == 2)
+		if(m_robot_array[i].pose_setted == 3)
 			rectangle(m_stream_video,m_robot_array[i].pose_rect,cv::Scalar(0, 0, 0),1,8,0);
 	}
 	cv::circle(m_stream_video,center,2,cv::Scalar(0, 0, 255),-1,8,0);

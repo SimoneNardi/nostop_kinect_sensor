@@ -117,11 +117,7 @@ void Camera_manager::initialize_mouse() // CASE AGAINST IF?
 					
 				case 1:
 				{
-					std::string windows_name = m_robot_initial_configuration[i].name + " " + m_camera_on[j].camera_name + " initial_pose";
-					char* mouse_windows_name = new char[windows_name.size() + 1];
-					std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
-					mouse_windows_name[windows_name.size()] = '\0'; 
-					cvDestroyWindow(mouse_windows_name);
+					cvDestroyAllWindows();
 					m_robot_initial_configuration[i].pose_setted = 2;
 					break;
 				}
