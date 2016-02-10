@@ -47,7 +47,7 @@ namespace Robotics
 			cv::Point2f head_point;
 			cv::Point2f tail_point;
 			cv::Point2f odom_SR_origin_pix;
-			cv::Point2f odom_SR_origin_cm;
+			cv::Point2i odom_SR_origin_cm;
 			cv::Rect pose_rect;
 			std::string name;
 		} RobotConfiguration;
@@ -77,12 +77,6 @@ namespace Robotics
 			//ROBOT
 			std::vector<RobotConfiguration> m_robot_array;
 			
-			//FILTERING
-			cv::Mat m_only_blue;
-			cv::Mat m_only_green;
-			cv::Mat m_only_red;
-			cv::Mat m_only_yellow;
-			
 			//POINT TRASFORMATION
 			float m_xCamera,m_yCamera,m_zCamera,m_R,m_omegaz,m_gammax,m_roll,m_h_robot;
 			geometry_msgs::PointStamped m_camera_point;
@@ -90,10 +84,6 @@ namespace Robotics
 			int m_focal_angle_x,m_focal_angle_y;
 			
 			// BALLS ARRAY
-			std::vector<ball_position>  m_blue_circles;
-			std::vector<ball_position>  m_green_circles;
-			std::vector<ball_position>  m_red_circles;
-			std::vector<ball_position>  m_yellow_circles;
 			std::vector<ball_position>  m_blue_circles_W;
 			std::vector<ball_position>  m_green_circles_W;
 			std::vector<ball_position>  m_red_circles_W;
