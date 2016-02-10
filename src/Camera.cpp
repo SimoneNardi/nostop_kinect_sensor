@@ -103,8 +103,8 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
 		l_pos_pix.y = array[i].y;
 		l_pos_pix.width = array[i].width;
 		l_pos_pix.height = array[i].height;    
-		x_SR_centered =l_pos_pix.x-320;
-		y_SR_centered = l_pos_pix.y-240;
+		x_SR_centered =l_pos_pix.x-320.5;
+		y_SR_centered = l_pos_pix.y-240.5;
 		x_roll_corrected = x_SR_centered*cos(m_roll)-y_SR_centered*sin(m_roll);
 		y_roll_corrected = x_SR_centered*sin(m_roll)+y_SR_centered*cos(m_roll);
 
@@ -169,20 +169,24 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
 		Rtot[3][1] = 0;
 		Rtot[3][2] = sin(m_gammax);
 		Rtot[3][3] = cos(m_gammax);
+		//ROS_INFO("R11--> %f, R12 --> %f,R13--> %f,R21--> %f,R22--> %f,R23--> %f,R31--> %f,R32--> %f,R33--> %f",Rtot[1][1],Rtot[1][2],Rtot[1][3],Rtot[2][1],Rtot[2][2],Rtot[2][3],Rtot[3][1],Rtot[3][2],Rtot[3][3]);
+                //ROS_INFO("omegaz--> %f", m_omegaz);
+		
 		// ROTATION
 		pos_world[0] = Rtot[1][1]*pos_cam[0]+Rtot[1][2]*pos_cam[1]+Rtot[1][3]*pos_cam[2];
 		pos_world[1] = Rtot[2][1]*pos_cam[0]+Rtot[2][2]*pos_cam[1]+Rtot[2][3]*pos_cam[2];
 		pos_world[2] = Rtot[3][1]*pos_cam[0]+Rtot[3][2]*pos_cam[1]+Rtot[3][3]*pos_cam[2];
+		//ROS_INFO("x--> %f, y --> %f",pos_world[0],pos_world[1]);
+
 		// TRASLATION
-		pos_world[0] = pos_world[0]+o01[0];
-		pos_world[1] = pos_world[1]+o01[1];
-		pos_world[2] = pos_world[2]+o01[2];
-		l_world_cm.x = pos_world[0];
-		l_world_cm.y = pos_world[1];
+		l_world_cm.x = pos_world[0]+o01[0];
+		l_world_cm.y = pos_world[1]+o01[1];
 		l_world_cm.height = l_pos_cm.height;
 		l_world_cm.width = l_pos_cm.width;
 		l_out_array.push_back(l_world_cm);
+		//ROS_INFO("x-->%f, y-->%f",l_world_cm.x,l_world_cm.y);
 	}
+	
 	return l_out_array;
 }
 
@@ -199,6 +203,7 @@ void Camera::camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg
 	m_yCamera = msg->data[3];
 	m_zCamera = msg->data[4];
 	m_omegaz = msg->data[5];// radians
+	ROS_INFO("omegaz--->%f",m_omegaz);
 	m_gammax = msg->data[6]*M_PI/180;
 	m_h_robot = msg->data[7];
 }
@@ -240,8 +245,7 @@ std::vector<ball_position> Camera::charge_array(cv::Mat img)
 			}
 		}
 	}
-	int i = l_array.size();
-	ROS_INFO("%d",i);
+
 	return l_array;
 }
 
@@ -392,9 +396,22 @@ std::vector<ball_position> Camera::get_yellow_array()
 ball_position Camera::odometry_to_srW(ball_position& robot_odometry, RobotConfiguration& robot_config)
 {
 	ball_position robot_position;
-	float heading = atan2((robot_config.tail_point.y-robot_config.head_point.y),(robot_config.tail_point.x-robot_config.head_point.x))+M_PI;
-	robot_position.x = cos(-heading)*robot_odometry.x - sin(-heading)*robot_odometry.y + robot_config.odom_SR_origin_cm.x; 
-	robot_position.y = sin(-heading)*robot_odometry.x + cos(-heading)*robot_odometry.y + robot_config.odom_SR_origin_cm.y;
+	std::vector<ball_position> heading_test, ht;
+	ball_position test, test2;
+	test.x= robot_config.head_point.x;
+	test.y=robot_config.head_point.y;
+	heading_test.push_back(test);
+	test2.x=robot_config.tail_point.x;
+	test2.y=robot_config.tail_point.y;
+	heading_test.push_back(test2);
+	
+	
+	ht = cam_to_W(heading_test);
+	float heading = atan2((ht.at(1).y-ht.at(0).y),(ht.at(1).x-ht.at(0).x))+M_PI;
+	ROS_INFO("heading %f", heading*180/M_PI);
+	//float heading = atan2((robot_config.tail_point.y-robot_config.head_point.y),(robot_config.tail_point.x-robot_config.head_point.x))+M_PI;
+	robot_position.x = cos(heading)*robot_odometry.x - sin(heading)*robot_odometry.y + robot_config.odom_SR_origin_cm.x; 
+	robot_position.y = sin(heading)*robot_odometry.x + cos(heading)*robot_odometry.y + robot_config.odom_SR_origin_cm.y;
 	return robot_position;
 }
 
@@ -424,6 +441,7 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 	robot_odometry.y = msg->pose.pose.position.y*100;
 	for(size_t i = 0;i<m_robot_array.size();++i)
 	{
+	  l_robot_name = "red_blue";
 	  if(m_robot_array.at(i).name == l_robot_name)
 	  {
 	    robot_position_cm_corrected = odometry_to_srW(robot_odometry,m_robot_array.at(i));//TODO
@@ -453,7 +471,7 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 		y_min = min(y_min,corners_cm_w.at(i).y);
 		y_max = max(y_max,corners_cm_w.at(i).y);
 	}
-  
+
 	Lock l_lock(m_mutex);
 	if (robot_position_cm_corrected.x<x_max && 
 	    robot_position_cm_corrected.x>x_min && 
@@ -487,12 +505,14 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 			{
 				robot_position_pixel.height = 150;
 				robot_position_pixel.width = 150;
-				l_tl.x = robot_position_pixel.x-robot_position_pixel.height/2;
-				l_tl.y = robot_position_pixel.y-robot_position_pixel.width/2;
+ 				l_tl.x = robot_position_pixel.x-robot_position_pixel.height/2;
+ 				l_tl.y = robot_position_pixel.y-robot_position_pixel.width/2;
+// 				l_tl.x = robot_position_pixel.x+robot_position_pixel.height/2;
+// 				l_tl.y = robot_position_pixel.y+robot_position_pixel.width/2;
 				l_br.x = l_tl.x+robot_position_pixel.height;
 				l_br.y = l_tl.y+robot_position_pixel.width;
-				new_rect.x = l_tl.x;
-				new_rect.y = l_tl.y;
+ 				new_rect.x = l_tl.x;
+ 				new_rect.y = l_tl.y;
 				new_rect.height = robot_position_pixel.height;
 				new_rect.width = robot_position_pixel.width;
 				m_robot_array[to_update].pose_rect = new_rect;
@@ -500,28 +520,19 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 				robot_position_pixel.height = 125;
 				robot_position_pixel.width = 125;
 				l_tl.x = robot_position_pixel.x-robot_position_pixel.height/2;
-				l_tl.y = robot_position_pixel.y-robot_position_pixel.width/2;
+ 				l_tl.y = robot_position_pixel.y-robot_position_pixel.width/2;
+// 				l_tl.x = robot_position_pixel.x+robot_position_pixel.height/2;
+// 				l_tl.y = robot_position_pixel.y+robot_position_pixel.width/2;
 				l_br.x = l_tl.x+robot_position_pixel.height;
 				l_br.y = l_tl.y+robot_position_pixel.width;
-				new_rect.x = l_tl.x;
-				new_rect.y = l_tl.y;
+ 				new_rect.x = l_tl.x;
+ 				new_rect.y = l_tl.y;
 				new_rect.height = robot_position_pixel.height;
 				new_rect.width = robot_position_pixel.width;
 				m_robot_array[to_update].pose_rect = new_rect;
 			}
 		}
 	}
-}
-
-
-
-void Camera::reset_vector()
-{
-  Lock l_lock(m_mutex);
-  m_blue_circles_W.clear();
-  m_green_circles_W.clear();
-  m_red_circles_W.clear();
-  m_yellow_circles_W.clear();
 }
 
 
@@ -553,8 +564,6 @@ void Camera::search_ball_pos()
 	std::vector<ball_position> l_blue_circles,l_green_circles,l_red_circles,l_yellow_circles;
 	m_stream_video.copyTo(withCircle_blue);
 	  
-	Lock l_lock(m_mutex);
-
 	// THRESHOLDED IMAGES
 	thresholded_images_settings();
 	
@@ -569,27 +578,20 @@ void Camera::search_ball_pos()
 
 	//  CHARGE ARRAY WITH FIND BALLS 
 	l_blue_circles = charge_array(l_only_blue);
-// 	l_green_circles = charge_array(l_only_green);
-// 	l_red_circles = charge_array(l_only_red);
-// 	l_yellow_circles = charge_array(l_only_yellow);
+ 	l_green_circles = charge_array(l_only_green);
+ 	l_red_circles = charge_array(l_only_red);
+ 	l_yellow_circles = charge_array(l_only_yellow);
 
-	
-	int i = m_blue_circles_W.size();
-	ROS_INFO("W       %d",i);
-	int j = l_blue_circles.size();
-	ROS_INFO("l       %d",j);
 	
       //     FROM CAM (pixel) TO WORLD (cm)
 	m_blue_circles_W = cam_to_W(l_blue_circles);
-// 	m_green_circles_W = cam_to_W(l_green_circles);
-// 	m_red_circles_W = cam_to_W(l_red_circles);
-// 	m_yellow_circles_W = cam_to_W(l_yellow_circles);
+ 	m_green_circles_W = cam_to_W(l_green_circles);
+ 	m_red_circles_W = cam_to_W(l_red_circles);
+	m_yellow_circles_W = cam_to_W(l_yellow_circles);
 
 	// SHOW IMAGE
 	final_image_showing();
 
-
-	sleep(0.005);
 }
 
 

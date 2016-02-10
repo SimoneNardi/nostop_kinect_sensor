@@ -143,7 +143,7 @@ void Camera_manager::initialize_mouse() // CASE AGAINST IF?
 				case 3:
 				{	
 					m_camera_array.at(j)->robot_topic_pose_subscribe(m_robot_initial_configuration[i]);
-					m_robot_initial_configuration[i].pose_setted = 3;
+					m_robot_initial_configuration[i].pose_setted = 4;
 					break;
 				}  
 					
@@ -201,13 +201,3 @@ void Camera_manager::pack_passage()
 	m_red_ball_W.clear();
 	m_yellow_ball_W.clear();
   }
-
-  
-  
-void Camera_manager::reset()
-{
-  for(size_t i = 0;i<m_camera_array.size();++i)
-  {
-    m_camera_array[i]-> reset_vector();
-  }
-}

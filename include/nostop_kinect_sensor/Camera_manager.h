@@ -63,7 +63,6 @@ namespace Robotics
 			void initialize_mouse();
 			void new_camera(const nostop_kinect_sensor::Camera_data::ConstPtr& msg);
  			void pack_passage();
-			void reset();
 		};
 
 	}
