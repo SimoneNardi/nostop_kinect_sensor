@@ -34,7 +34,10 @@ bool Robot_manager::new_robot_id_service(
 //////////////////////////////////////
 void Robot_manager::new_robot_id_topic(const std_msgs::String::ConstPtr& msg)
 {	
-    m_robot_array.push_back( std::make_shared<Robot>(msg->data) );
+    std::string l_robot_name = msg->data;
+    std::size_t found = l_robot_name.find_last_of("_");
+    l_robot_name = l_robot_name.substr(0,found);
+    m_robot_array.push_back( std::make_shared<Robot>(l_robot_name) );
 }
 
 //////////////////////////////////////

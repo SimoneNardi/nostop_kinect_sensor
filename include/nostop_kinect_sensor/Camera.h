@@ -46,9 +46,11 @@ namespace Robotics
 			int pose_setted;
 			cv::Point2f head_point;
 			cv::Point2f tail_point;
+			cv::Point2f central_point;
 			cv::Point2f odom_SR_origin_pix;
 			cv::Point2i odom_SR_origin_cm;
 			cv::Rect pose_rect;
+			bool is_magnetometer;
 			std::string name;
 		} RobotConfiguration;
 	  
