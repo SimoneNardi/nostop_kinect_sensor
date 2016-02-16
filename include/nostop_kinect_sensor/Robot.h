@@ -22,7 +22,6 @@ namespace Robotics
 	  class Robot
 		{
 		  ros::NodeHandle m_robot;
-		  ros::Publisher m_robot_pub;
 		  ros::Publisher m_robot_pose_pub;
 		  std::string m_name;
 		  std::string m_front_marker_color;
@@ -42,7 +41,6 @@ namespace Robotics
 		  
 		public:
 
-		      void pubID();
 		      void publish_pose(ball_position front_pos,ball_position back_pos,float yaw);
 		      void select_robot_pose(std::vector<ball_position>& front_array,std::vector<ball_position>& back_array);
 		      std::string color_f();

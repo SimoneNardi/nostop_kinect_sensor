@@ -27,7 +27,6 @@ Robot::Robot(std::string name_):
 { 
   m_front_marker_color = m_name.substr(0,m_name.find("_"));
   m_back_marker_color = m_name.substr(m_name.find("_")+1,m_name.length());
-  m_robot_pub = m_robot.advertise<std_msgs::String>("/localizer/kinect/add_robot",1);
   m_robot_pose_pub = m_robot.advertise<sensor_msgs::NavSatFix>("/"+m_name+"/localizer/gps/fix",1);
   Front_ptr = std::make_shared<Ball_tracker>();
   Back_ptr = std::make_shared<Ball_tracker>();
@@ -39,14 +38,6 @@ Robot::~Robot()
 {}
 
 //////////////////////////////////////
-void Robot::pubID()
-{
-  std_msgs::String robot_name;
-  robot_name.data = m_name.c_str();
-  m_robot_pub.publish(robot_name);
-}
-
- //////////////////////////////////////
 void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vector<ball_position>& back_array)
 {	
   float distance;
