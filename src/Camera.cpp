@@ -500,10 +500,7 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)//TODO
 
 void Camera::robot_topic_pose_subscribe(RobotConfiguration& robot_pose)
 {
-	std::string robot_name;
-// 	robot_name = robot_pose.name.substr(robot_pose.name.begin(),robot_pose.name.find("_")).c_str();
-	//ros::Subscriber pose_sub = m_node.subscribe<nav_msgs::Odometry>("/" + robot_pose.name + "/localizer/odometry/final", 1, &Camera::pose_feedback, this);
-        ros::Subscriber pose_sub = m_node.subscribe<nav_msgs::Odometry>("/odom", 1, &Camera::pose_feedback, this);
+	ros::Subscriber pose_sub = m_node.subscribe<nav_msgs::Odometry>("/" + robot_pose.name + "/localizer/odometry/final", 1, &Camera::pose_feedback, this);
 	m_robot_feedback_pose_sub.push_back(pose_sub);  
 	m_robot_array.push_back(robot_pose);
 }

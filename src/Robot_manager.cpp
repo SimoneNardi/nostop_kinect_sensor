@@ -14,7 +14,7 @@ using namespace Robotics::GameTheory;
 Robot_manager::Robot_manager()
 {
   ROS_INFO("ROBOT MANAGER ON!");
-  m_add_robot_topic = m_manager_node.subscribe<std_msgs::String>("/localizer/kinect/add_robot", 1000, &Robot_manager::new_robot_id_topic,this);
+  m_add_robot_topic = m_manager_node.subscribe<std_msgs::String>("/localizer/kinect/add_robot", 10, &Robot_manager::new_robot_id_topic,this);
   m_add_robot_service = m_manager_node.advertiseService("/localizer/add_robot", &Robot_manager::new_robot_id_service,this);
 }
 

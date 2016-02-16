@@ -11,11 +11,12 @@ int main(int argc, char **argv)
 	
 	Robotics::GameTheory::Camera_manager l_Camera_manager;
 	ros::NodeHandle n;
-	
+
 	while(ros::ok())
 	{
-	  ros::spinOnce();
 	  l_Camera_manager.pack_passage();
+	  ros::spinOnce();
+	  
 	}
 	
      

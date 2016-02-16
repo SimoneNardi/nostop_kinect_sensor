@@ -16,7 +16,7 @@ Camera_manager::Camera_manager()
 {
 	ROS_INFO("COLLECTOR ON!");
 	m_camera_in = m_node.subscribe<nostop_kinect_sensor::Camera_data>("/camera_in", 1000, &Camera_manager::new_camera,this);
-	m_add_robot_topic = m_node.subscribe<std_msgs::String>("/localizer/kinect/add_robot", 1000, &Camera_manager::new_robot_id_topic,this);
+	m_add_robot_topic = m_node.subscribe<std_msgs::String>("/localizer/kinect/add_robot", 10, &Camera_manager::new_robot_id_topic,this);
 	m_manager = std::make_shared<Robot_manager>();
 }
 
@@ -45,11 +45,15 @@ void Camera_manager::new_robot_id_topic(const std_msgs::String::ConstPtr& msg)
 	RobotConfiguration l_robot;
 	l_robot.name =  msg->data;
 	l_robot.is_magnetometer = false;
-	if(l_robot.name.substr(l_robot.name.find_last_of("_"),l_robot.name.size()) == "ON")
+	if(l_robot.name.substr(l_robot.name.find_last_of("_")+1,l_robot.name.size()) == "ON")
 	{
-	  l_robot.is_magnetometer = true;
+		l_robot.is_magnetometer = true;
+		l_robot.name = l_robot.name.substr(0,l_robot.name.find_last_of("_"));
+		ROS_INFO("Robot %s has magnetometer!",l_robot.name.c_str());
+	}else{
+		l_robot.name = l_robot.name.substr(0,l_robot.name.find_last_of("_"));
+		ROS_INFO("Robot %s hasn't magnetometer!",l_robot.name.c_str());
 	}
-	l_robot.name = l_robot.name.substr(0,l_robot.name.find_last_of("_"));
 	l_robot.pose_setted = -1;
 	m_robot_initial_configuration.push_back(l_robot);
 }
@@ -141,7 +145,7 @@ void Camera_manager::initialize_mouse() // CASE AGAINST IF?
 				case 0:
 				{
 					m_camera_on[j].image = m_camera_array.at(j)->get_stream_video();
-					std::string windows_name = m_robot_initial_configuration[i].name + " " + m_camera_on[j].camera_name  + " initial_pose";
+					std::string windows_name =  m_robot_initial_configuration[i].name + " " + m_camera_on[j].camera_name  + " initial_pose (without magnetometer)";
 					char* mouse_windows_name = new char[windows_name.size() + 1];
 					std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
 					mouse_windows_name[windows_name.size()] = '\0'; 
