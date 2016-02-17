@@ -26,7 +26,6 @@ namespace Robotics
 		  std::string m_name;
 		  std::string m_front_marker_color;
 		  std::string m_back_marker_color;
-		  
 		  // MARKER POSITION
 		  ball_position m_front_pos;
 		  ball_position m_back_pos;
