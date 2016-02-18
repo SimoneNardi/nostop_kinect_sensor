@@ -438,11 +438,11 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)//TODO
 		int to_update = -1;
 		cv::Rect new_rect;
 		robot_position_pixel = W_to_cam(robot_position_cm_corrected);
-		ROS_INFO("x pix--> %f, y pix--> %f",robot_position_pixel.x,robot_position_pixel.y);
+// 		ROS_INFO("x pix--> %f, y pix--> %f",robot_position_pixel.x,robot_position_pixel.y);
 		int a,b;
 		a = m_robot_array.at(robot_number).odom_SR_origin_pix.x;
 		b = m_robot_array.at(robot_number).odom_SR_origin_pix.y;
-		ROS_INFO("x2 pix-> %d, y2 pix-> %d",a,b);
+// 		ROS_INFO("x2 pix-> %d, y2 pix-> %d",a,b);
 		diff = std::numeric_limits< float >::infinity();
 		for(size_t j = 0; j<m_robot_array.size(); ++j)
 		{
