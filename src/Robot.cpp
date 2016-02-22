@@ -2,6 +2,7 @@
 #include "Robot_manager.h"
 #include "ros/ros.h"
 #include <geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <nav_msgs/Odometry.h>
 #include "tf/transform_broadcaster.h"
 #include <tf/transform_listener.h>
@@ -27,7 +28,8 @@ Robot::Robot(std::string name_):
 { 
   m_front_marker_color = m_name.substr(0,m_name.find("_"));
   m_back_marker_color = m_name.substr(m_name.find("_")+1,m_name.length());
-  m_robot_pose_pub = m_robot.advertise<sensor_msgs::NavSatFix>("/"+m_name+"/localizer/gps/fix",1);
+//   m_robot_pose_pub = m_robot.advertise<sensor_msgs::NavSatFix>("/"+m_name+"/localizer/gps/fix",1);
+  m_robot_pose_pub = m_robot.advertise<geometry_msgs::PoseWithCovarianceStamped>("/red_blue/pose",1);
   Front_ptr = std::make_shared<Ball_tracker>();
   Back_ptr = std::make_shared<Ball_tracker>();
   ROS_INFO("ROBOT %s ON!", m_name.c_str());
@@ -122,23 +124,31 @@ void Robot::publish_pose(ball_position front_pos,ball_position back_pos, float y
     float phi = 0;//ROLL
     float theta = 0;//PITCH
     float psi = yaw;
-    geometry_msgs::Pose pose;
-    sensor_msgs::NavSatFix pose_gps;
-    pose.position.x = (front_pos.x+back_pos.x)/2;
-    pose.position.y = (front_pos.y+back_pos.y)/2;
-    pose.position.z = 0; 
-    pose.orientation.x = cos(phi/2)*cos(theta/2)*cos(psi/2)+sin(phi/2)*sin(theta/2)*sin(psi/2); 
-    pose.orientation.y = sin(phi/2)*cos(theta/2)*cos(psi/2)-cos(phi/2)*sin(theta/2)*sin(psi/2); 
-    pose.orientation.z = cos(phi/2)*sin(theta/2)*cos(psi/2)+sin(phi/2)*cos(theta/2)*sin(psi/2);
-    pose.orientation.w = cos(phi/2)*cos(theta/2)*sin(psi/2)-sin(phi/2)*sin(theta/2)*cos(psi/2);
-   		
+    geometry_msgs::PoseWithCovarianceStamped pose;
+//     sensor_msgs::NavSatFix pose_gps;
+    //TEST 
+    pose.pose.pose.position.x = (front_pos.x+back_pos.x)/2;
+    pose.pose.pose.position.y = (front_pos.y+back_pos.y)/2;
+    pose.header.frame_id = "red_blue/odom";
+    pose.header.stamp = ros::Time::now();
+    for(int i = 0;i<36;++i)
+    {
+      pose.pose.covariance.at(i) = 0.1;
+    }
+    m_robot_pose_pub.publish<geometry_msgs::PoseWithCovarianceStamped>(pose);
+//     pose.position.z = 0; 
+//     pose.orientation.x = cos(phi/2)*cos(theta/2)*cos(psi/2)+sin(phi/2)*sin(theta/2)*sin(psi/2); 
+//     pose.orientation.y = sin(phi/2)*cos(theta/2)*cos(psi/2)-cos(phi/2)*sin(theta/2)*sin(psi/2); 
+//     pose.orientation.z = cos(phi/2)*sin(theta/2)*cos(psi/2)+sin(phi/2)*cos(theta/2)*sin(psi/2);
+//     pose.orientation.w = cos(phi/2)*cos(theta/2)*sin(psi/2)-sin(phi/2)*sin(theta/2)*cos(psi/2);
+    
 //     ROS_INFO("x--> %f, y --> %f",pose.position.x,pose.position.y);
-    pose_gps.longitude = pose.position.x/7800000;
-    pose_gps.latitude = pose.position.y/11100000;
-    pose_gps.altitude = 0;
-    pose_gps.header.frame_id = m_name+"/base_link";
-    pose_gps.header.stamp = ros::Time::now();
-    m_robot_pose_pub.publish<sensor_msgs::NavSatFix>(pose_gps);
+//     pose_gps.longitude = 360*pose.position.x/(4.0075*pow(10,9)); // 1 degree ~= 40075km/360deg 
+//     pose_gps.latitude = 360*pose.position.y/(1.11*pow(10,7));// 1 degree ~= 111 km
+//     pose_gps.altitude = 0;
+//     pose_gps.header.frame_id = m_name+"/base_link";
+//     pose_gps.header.stamp = ros::Time::now();
+//     m_robot_pose_pub.publish<sensor_msgs::NavSatFix>(pose_gps);
     
 }
 

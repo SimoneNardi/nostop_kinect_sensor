@@ -382,7 +382,7 @@ ball_position Camera::origin_pix2origin_world(ball_position& origin_SR_pix)
  
 
 // FEEDBACK OF EKF NODE 
-void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)//TODO
+void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 {
 	std::vector<ball_position> corners_pixel,corners_cm_w;
 	ball_position corn;
@@ -394,9 +394,9 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)//TODO
 	l_robot_name = l_robot_name.substr(0,l_robot_name.find("/"));
 	robot_odometry.x = msg->pose.pose.position.x*100;
 	robot_odometry.y = msg->pose.pose.position.y*100;
+	ROS_INFO("robot odometry xy--> %f,%f", robot_odometry.x,robot_odometry.y);
 	for(size_t i = 0;i<m_robot_array.size();++i)
 	{
-	  l_robot_name = "red_blue";
 	  if(m_robot_array.at(i).name == l_robot_name)
 	  {
 	    robot_position_cm_corrected = odometry_to_srW(robot_odometry,m_robot_array.at(i));
@@ -437,12 +437,13 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)//TODO
 		float diff;
 		int to_update = -1;
 		cv::Rect new_rect;
+		ROS_INFO("x cm corrected ->%f , y cm corrected ->%f", robot_position_cm_corrected.x,robot_position_cm_corrected.y);
 		robot_position_pixel = W_to_cam(robot_position_cm_corrected);
-// 		ROS_INFO("x pix--> %f, y pix--> %f",robot_position_pixel.x,robot_position_pixel.y);
+		ROS_INFO("x pix--> %f, y pix--> %f",robot_position_pixel.x,robot_position_pixel.y);
 		int a,b;
 		a = m_robot_array.at(robot_number).odom_SR_origin_pix.x;
 		b = m_robot_array.at(robot_number).odom_SR_origin_pix.y;
-// 		ROS_INFO("x2 pix-> %d, y2 pix-> %d",a,b);
+		ROS_INFO("x_origin pix-> %d, y_origin pix-> %d",a,b);
 		diff = std::numeric_limits< float >::infinity();
 		for(size_t j = 0; j<m_robot_array.size(); ++j)
 		{
@@ -459,7 +460,7 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)//TODO
 			}
 		}
 	    
-		if(to_update >=0)
+		if(to_update >=0)// TODO
 		{
 			cv::Point l_tl,l_br;
 			if (robot_position_pixel.y>240)
@@ -685,8 +686,8 @@ ball_position Camera::W_to_cam(ball_position& pos_in)
 	pos_cam_cm[0] = Rtot[1][1]*pos_world[0]+Rtot[2][1]*pos_world[1]+Rtot[3][1]*pos_world[2];
 	pos_cam_cm[1] = Rtot[1][2]*pos_world[0]+Rtot[2][2]*pos_world[1]+Rtot[3][2]*pos_world[2];
 	pos_cam_cm[2] = Rtot[1][3]*pos_world[0]+Rtot[2][3]*pos_world[1]+Rtot[3][3]*pos_world[2];
-	//psi = atan(m_zCamera/pos_cam_cm[1]);
-	psi = atan(pos_cam_cm[1]/m_zCamera);
+	psi = atan2(pos_cam_cm[1],m_zCamera);
+// 	psi = atan(pos_cam_cm[1]/m_zCamera);
 	//pos_cam_cm[1]= pos_cam_cm[1]+m_h_robot/tan(psi);
 	pos_cam_cm[1]= pos_cam_cm[1]+m_h_robot*tan(psi);
 	distance_from_center_y = pos_cam_cm[0];
