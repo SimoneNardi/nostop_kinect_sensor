@@ -132,8 +132,13 @@ sensor_msgs::NavSatFix Robot::enu2geodetic(double& x,double& y,double& z)
   GPS.position_covariance.at(0) = 0.1;
   GPS.position_covariance.at(4) = 0.1;
   GPS.position_covariance.at(8) = 0.1;
+  GPS.header.frame_id = m_name+"/odom";//TODO is okay?
+  GPS.header.stamp = ros::Time::now();
   return GPS;
 }
+
+
+
 //////////////////////////////////////
 void Robot::publish_pose(ball_position front_pos,ball_position back_pos, float yaw)
 {
@@ -152,9 +157,9 @@ void Robot::publish_pose(ball_position front_pos,ball_position back_pos, float y
     }
     geometry_msgs::Quaternion q = tf::createQuaternionMsgFromYaw(m_heading);
     odom.pose.pose.orientation.x = q.x;
-    odom.pose.pose.orientation.x = q.y;
-    odom.pose.pose.orientation.x = q.z;
-    odom.pose.pose.orientation.x = q.w;
+    odom.pose.pose.orientation.y = q.y;
+    odom.pose.pose.orientation.z = q.z;
+    odom.pose.pose.orientation.w = q.w;
     m_robot_pose_pub.publish<nav_msgs::Odometry>(odom);
 
     //TEST GPS
