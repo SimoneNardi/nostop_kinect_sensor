@@ -27,14 +27,14 @@ namespace Robotics
 		  
 		  ros::Subscriber m_add_robot_topic;
 		  ros::ServiceServer m_add_robot_service;
-
+		  double m_lat0,m_lon0;
 		  std::vector< std::shared_ptr<Robot> > m_robot_array;
 		  
 		private:
 			ros::NodeHandle m_manager_node;
 
 		public:
-			Robot_manager();
+			Robot_manager(double& lat,double& lon);
 			~Robot_manager();
 			void new_robot_id_topic(const std_msgs::String::ConstPtr& msg);
 			bool new_robot_id_service(

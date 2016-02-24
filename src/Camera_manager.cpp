@@ -12,12 +12,12 @@ using namespace Robotics::GameTheory;
 
 
 /////////////////////////////////////////////
-Camera_manager::Camera_manager()
+Camera_manager::Camera_manager(double& lat0,double& lon0)
 {
 	ROS_INFO("COLLECTOR ON!");
 	m_camera_in = m_node.subscribe<nostop_kinect_sensor::Camera_data>("/camera_in", 1000, &Camera_manager::new_camera,this);
 	m_add_robot_topic = m_node.subscribe<std_msgs::String>("/localizer/kinect/add_robot", 10, &Camera_manager::new_robot_id_topic,this);
-	m_manager = std::make_shared<Robot_manager>();
+	m_manager = std::make_shared<Robot_manager>(lat0,lon0);
 }
 
 /////////////////////////////////////////////
@@ -80,8 +80,8 @@ void mouse_callback_tail_point(int event, int x, int y, int flags, void* param)
 		l_robot->tail_point.y = y;
 		l_robot->odom_SR_origin_pix.x = (l_robot->head_point.x+l_robot->tail_point.x)/2;
 		l_robot->odom_SR_origin_pix.y = (l_robot->head_point.y+l_robot->tail_point.y)/2;
-		pose.height = 200;//TODO
-		pose.width = 200;
+		pose.height = 600;//TODO
+		pose.width = 600;
 		pose.x = l_robot->odom_SR_origin_pix.x-pose.width/2;
 		pose.y = l_robot->odom_SR_origin_pix.y-pose.height/2;
 		l_robot->pose_rect = pose;
@@ -185,13 +185,13 @@ void Camera_manager::initialize_mouse() // CASE AGAINST IF?
 					m_robot_initial_configuration[i].pose_setted = 4;
 					break;
 				}  
-					
+				
 				case 4:
 				{
-					//nothing to do 
-					break;
+				  //nothing to do
+				  break;
 				}
-					
+				
 				default:
 				{
 					ROS_ERROR("Some errors. :-(");

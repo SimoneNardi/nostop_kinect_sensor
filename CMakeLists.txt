@@ -34,11 +34,7 @@ generate_dynamic_reconfigure_options(
    )
    
 find_package( OpenCV REQUIRED )
-# find_package( PCL 1.7.1 REQUIRED) # COMPONENT common io visualization)
-# 
-# include_directories(BEFORE ${PCL_INCLUDE_DIRS})
-# link_directories(${PCL_LIBRARY_DIRS})
-# add_definitions(${PCL_DEFINITIONS})
+
 
 
 
@@ -50,25 +46,8 @@ find_package( OpenCV REQUIRED )
 ## Generate messages in the 'msg' folder
  add_message_files(
    FILES
-#    AgentSensorData.msg
-#    SensorData.msg
-     #Id_robot.msg
      Camera_data.msg
  )
-
-## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
-
-## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
 
 ## Generate added messages and services with any dependencies listed here
  generate_messages(
@@ -83,7 +62,7 @@ find_package( OpenCV REQUIRED )
 catkin_package(
   INCLUDE_DIRS include/${PROJECT_NAME}/
   LIBRARIES ${PROJECT_NAME}
-  DEPENDS roscpp rospy base_math nostop_agent image_transport cv_bridge nostop_learning dynamic_reconfigure
+  DEPENDS roscpp rospy base_math nostop_agent image_transport cv_bridge nostop_learning dynamic_reconfigure Geographic
 )
 
 
@@ -92,6 +71,9 @@ catkin_package(
 ## Build ##
 ###########
 
+
+
+    
 include_directories(include/${PROJECT_NAME}/ ${catkin_INCLUDE_DIRS}
 ${dynamic_reconfigure_PACKAGE_PATH}/cmake/cfgbuild.cmake)
 
@@ -102,9 +84,6 @@ include_directories(${CMAKE_INSTALL_PREFIX}/include) # this line is to find lemo
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 set(sensor_SOURCES
-#         src/Sensor.cpp
-#         src/SensorCollection.cpp
-#         src/SensorCollector.cpp
         src/Camera.cpp
         src/Camera_manager.cpp
         src/acquisition_node.cpp
@@ -122,35 +101,33 @@ set(calibration_SOURCES
 set(cam_view_angle_SOURCES
 	src/cam_view_angle.cpp
 )
-# add_executable(Sensor ${sensor_SOURCES})
-# target_link_libraries(Sensor ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon )#${PCL_LIBRARIES})
-# add_dependencies(Sensor nostop_kinect_sensor_gencpp)
+
+set(fake_imu_SOURCES
+	src/fake_imu_node.cpp
+	src/Fake_imu.cpp
+)
 
 
 add_executable(acquisition_node ${sensor_SOURCES})
 add_dependencies(acquisition_node nostop_kinect_sensor_gencpp)
-target_link_libraries(acquisition_node ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning )#${PCL_LIBRARIES})
-
+target_link_libraries(acquisition_node ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning Geographic )
 
 add_executable(calibration ${calibration_SOURCES})
 add_dependencies(calibration nostop_kinect_sensor_gencpp  nostop_kinect_sensor_gencfg )
-target_link_libraries(calibration ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning)#${PCL_LIBRARIES})
+target_link_libraries(calibration ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning )
 
 add_executable(cam_view_angle ${cam_view_angle_SOURCES})
 add_dependencies(cam_view_angle nostop_kinect_sensor_gencpp)
-target_link_libraries(cam_view_angle ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning)#${PCL_LIBRARIES})
+target_link_libraries(cam_view_angle ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning )
 
+add_executable(fake_imu_node ${fake_imu_SOURCES})
+add_dependencies(fake_imu_node nostop_kinect_sensor_gencpp)
+target_link_libraries(fake_imu_node ${catkin_LIBRARIES} base_math lemon Geographic)
 
 #############
 ## Install ##
 #############
 
-## Mark executables and/or libraries for installation
-# install(TARGETS Sensor
-#  EXPORT nostop_kinect_sensor
-#    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-#  )
- 
 
  install(TARGETS acquisition_node
  EXPORT nostop_kinect_sensor

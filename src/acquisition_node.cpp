@@ -9,14 +9,21 @@ int main(int argc, char **argv)
 	
 	ros::init(argc, argv, "acquisition_node"); 
 	
-	Robotics::GameTheory::Camera_manager l_Camera_manager;
-	ros::NodeHandle n;
+	ros::NodeHandle n("~");
+	int frequency;
+	double lat0,lon0;
+	n.getParam("frequency",frequency);
+	n.getParam("SRworld_lat0",lat0);
+	n.getParam("SRworld_lon0",lon0);
+	
+	Robotics::GameTheory::Camera_manager l_Camera_manager(lat0,lon0);
 
+	ros::Rate r(frequency);
 	while(ros::ok())
 	{
 	  l_Camera_manager.pack_passage();
 	  ros::spinOnce();
-	  
+	  r.sleep();
 	}
 	
      

@@ -57,7 +57,7 @@ namespace Robotics
 			ros::NodeHandle m_node;
 		
 		public:
-			Camera_manager();
+			Camera_manager(double& lat,double& lon);
 			~Camera_manager();
 			void new_robot_id_topic(const std_msgs::String::ConstPtr& msg);
 			void initialize_mouse();

@@ -38,12 +38,12 @@ static const std::string YELLOW_THRESHOLD_WINDOWS = "Yellow threshold ";
 
 static const float g_ball_radius = 3.5;
 
-// FILTERING INITIAL VALUES
+// FILTERING INITIAL VALUES (H,S,V)//TODO
 int  lb_b[3]={100,125,100};
 int  ub_b[3] = {160,255,255};
 int  lb_g[3] = {30,150,50};
 int  ub_g[3] = {60,255,180}; 
-int  lower_lb_r[3] = {0,125,150};
+int  lower_lb_r[3] = {0,170,150};
 int  lower_ub_r[3] = {10,255,255}; 
 int  upper_lb_r[3] = {160,100,150};
 int  upper_ub_r[3] = {179,255,255};
@@ -390,11 +390,11 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 	float x_min,x_max,y_min,y_max;
 	ball_position robot_position_cm,robot_position_pixel;
 	ball_position robot_odometry,robot_position_cm_corrected;
-	std::string l_robot_name = msg->header.frame_id;
+	std::string l_robot_name = msg->child_frame_id;
 	l_robot_name = l_robot_name.substr(0,l_robot_name.find("/"));
-	robot_odometry.x = msg->pose.pose.position.x*100;
-	robot_odometry.y = msg->pose.pose.position.y*100;
-	ROS_INFO("robot odometry xy--> %f,%f", robot_odometry.x,robot_odometry.y);
+	robot_odometry.x = msg->pose.pose.position.x*100;// m to cm
+	robot_odometry.y = msg->pose.pose.position.y*100;// m to cm
+// 	ROS_INFO("robot odometry xy--> %f,%f", robot_odometry.x,robot_odometry.y);
 	for(size_t i = 0;i<m_robot_array.size();++i)
 	{
 	  if(m_robot_array.at(i).name == l_robot_name)
@@ -437,22 +437,19 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 		float diff;
 		int to_update = -1;
 		cv::Rect new_rect;
-		ROS_INFO("x cm corrected ->%f , y cm corrected ->%f", robot_position_cm_corrected.x,robot_position_cm_corrected.y);
+// 		ROS_INFO("x cm corrected ->%f , y cm corrected ->%f", robot_position_cm_corrected.x,robot_position_cm_corrected.y);
 		robot_position_pixel = W_to_cam(robot_position_cm_corrected);
-		ROS_INFO("x pix--> %f, y pix--> %f",robot_position_pixel.x,robot_position_pixel.y);
+// 		ROS_INFO("x pix--> %f, y pix--> %f",robot_position_pixel.x,robot_position_pixel.y);
 		int a,b;
 		a = m_robot_array.at(robot_number).odom_SR_origin_pix.x;
 		b = m_robot_array.at(robot_number).odom_SR_origin_pix.y;
-		ROS_INFO("x_origin pix-> %d, y_origin pix-> %d",a,b);
+// 		ROS_INFO("x_origin pix-> %d, y_origin pix-> %d",a,b);
 		diff = std::numeric_limits< float >::infinity();
 		for(size_t j = 0; j<m_robot_array.size(); ++j)
 		{
-			if(m_robot_array[j].pose_setted != 3)
-				continue;
-	      
 			float local_diff = sqrt( 
-			pow( robot_position_pixel.x - m_robot_array[j].pose_rect.x, 2) + 
-			pow( robot_position_pixel.y - m_robot_array[j].pose_rect.y, 2) );
+			pow( robot_position_pixel.x - m_robot_array[j].pose_rect.x/*+m_robot_array[j].pose_rect.height/2)*/, 2) + 
+			pow( robot_position_pixel.y - m_robot_array[j].pose_rect.y/*+m_robot_array[j].pose_rect.height/2)*/, 2) );
 			if(local_diff < diff)
 			{
 				diff = local_diff;
@@ -465,12 +462,10 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 			cv::Point l_tl,l_br;
 			if (robot_position_pixel.y>240)
 			{
-				robot_position_pixel.height = 150;
-				robot_position_pixel.width = 150;
+				robot_position_pixel.height = 200;
+				robot_position_pixel.width = 200;
  				l_tl.x = robot_position_pixel.x-robot_position_pixel.height/2;
  				l_tl.y = robot_position_pixel.y-robot_position_pixel.width/2;
-// 				l_tl.x = robot_position_pixel.x+robot_position_pixel.height/2;
-// 				l_tl.y = robot_position_pixel.y+robot_position_pixel.width/2;
 				l_br.x = l_tl.x+robot_position_pixel.height;
 				l_br.y = l_tl.y+robot_position_pixel.width;
  				new_rect.x = l_tl.x;
@@ -479,12 +474,10 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 				new_rect.width = robot_position_pixel.width;
 				m_robot_array[to_update].pose_rect = new_rect;
 			}else{
-				robot_position_pixel.height = 125;
-				robot_position_pixel.width = 125;
+				robot_position_pixel.height = 150;
+				robot_position_pixel.width = 150;
 				l_tl.x = robot_position_pixel.x-robot_position_pixel.height/2;
  				l_tl.y = robot_position_pixel.y-robot_position_pixel.width/2;
-// 				l_tl.x = robot_position_pixel.x+robot_position_pixel.height/2;
-// 				l_tl.y = robot_position_pixel.y+robot_position_pixel.width/2;
 				l_br.x = l_tl.x+robot_position_pixel.height;
 				l_br.y = l_tl.y+robot_position_pixel.width;
  				new_rect.x = l_tl.x;
