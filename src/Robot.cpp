@@ -60,7 +60,7 @@ void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vecto
 	  m_b_rect = Back_ptr->kalman_update(m_back_pos);
 	  m_heading = atan2((m_back_pos.y-m_front_pos.y),(m_back_pos.x-m_front_pos.x))+M_PI;
 // 	  m_heading = atan2((m_back_pos.y-m_front_pos.y),(m_back_pos.x-m_front_pos.x));
-	  ROS_INFO("Heading Robot side 1----> %f",m_heading*180/M_PI);
+// 	  ROS_INFO("Heading Robot side 1----> %f",m_heading*180/M_PI);
 	  publish_pose(m_front_pos,m_back_pos,m_heading);
 	}
 	else
@@ -113,7 +113,7 @@ void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vecto
     }
   //m_heading = atan2((m_back_pos.y-m_front_pos.y),(m_back_pos.x-m_front_pos.x))+M_PI;
   m_heading = atan2((m_back_pos.y-m_front_pos.y),(m_back_pos.x-m_front_pos.x))+M_PI;
-  ROS_INFO("Heading Robot side 2----> %f",m_heading*180/M_PI);
+//   ROS_INFO("Heading Robot side 2----> %f",m_heading*180/M_PI);
   publish_pose(m_front_pos,m_back_pos,m_heading);
   }
 }
@@ -132,7 +132,7 @@ sensor_msgs::NavSatFix Robot::enu2geodetic(double& x,double& y,double& z)
   GPS.position_covariance.at(0) = 0.1;
   GPS.position_covariance.at(4) = 0.1;
   GPS.position_covariance.at(8) = 0.1;
-  GPS.header.frame_id = m_name+"/odom";//TODO is okay?
+  GPS.header.frame_id = m_name+"/base_link";// antenna location
   GPS.header.stamp = ros::Time::now();
   return GPS;
 }
@@ -167,6 +167,10 @@ void Robot::publish_pose(ball_position front_pos,ball_position back_pos, float y
     double y = 0.01*(front_pos.y+back_pos.y)/2;
     double z = 0;
     pose_gps = enu2geodetic(x,y,z);
+    // TODO correction because y does't due to north
+//     double l_x = cos(M_PI/2)*x+sin(M_PI/2)*y;
+//     y = -sin(M_PI/2)*x+cos(M_PI/2)*y;
+//     pose_gps = enu2geodetic(l_x,y,z);
     m_robot_gps_pub.publish<sensor_msgs::NavSatFix>(pose_gps);          
 }
 
