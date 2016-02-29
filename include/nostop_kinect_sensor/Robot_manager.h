@@ -25,12 +25,10 @@ namespace Robotics
 		class Robot_manager
 		{
 		  
-		  ros::Subscriber m_add_robot_topic;
-		  ros::ServiceServer m_add_robot_service;
-		  double m_lat0,m_lon0;
-		  std::vector< std::shared_ptr<Robot> > m_robot_array;
-		  
-		private:
+			ros::Subscriber m_add_robot_topic;
+			ros::ServiceServer m_add_robot_service;
+			double m_lat0,m_lon0;
+			std::vector< std::shared_ptr<Robot> > m_robot_array;
 			ros::NodeHandle m_manager_node;
 
 		public:
@@ -45,7 +43,6 @@ namespace Robotics
 						std::vector<ball_position>& red_array,
 						std::vector<ball_position>& yellow_array);
 		};
-
 	}
 }
 

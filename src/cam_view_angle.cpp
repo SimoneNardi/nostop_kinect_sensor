@@ -39,32 +39,30 @@ void mouse_callback(int event, int x, int y, int flags, void* param)
 
 void subscriber_callback(const sensor_msgs::ImageConstPtr &msg)
 {
-  cv_bridge::CvImageConstPtr cv_ptr;
-  try
-  {
-    if (sensor_msgs::image_encodings::isColor(msg->encoding))
-	cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8);
-    else
-	cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
-  }
-  catch (cv_bridge::Exception& e)
-  {
-    ROS_ERROR("cv_bridge exception: %s", e.what());
-    return;
-  }
-    
-    cv::Mat video_image = cv_ptr->image.clone();
-    cv::waitKey(3);
-    cv::Point center,right;
-    center.x=320.5;
-    center.y=240.5;
-    right.x = 637;
-    right.y = 240.5;
-    cv::circle(video_image,right,2,cv::Scalar(0, 0, 255),-1,8,0);
-    cv::circle(video_image,center,2,cv::Scalar(0, 0, 255),-1,8,0);
-    cv::line(video_image,center,right,cv::Scalar(0,255,0),0,8,0);
-    cv::imshow(camera_name,video_image);
-    cvSetMouseCallback(camera_name,mouse_callback,NULL);	
+	cv_bridge::CvImageConstPtr cv_ptr;
+	try
+	{
+		if (sensor_msgs::image_encodings::isColor(msg->encoding))
+			cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8);
+		else
+			cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
+	}catch (cv_bridge::Exception& e)
+	{
+		ROS_ERROR("cv_bridge exception: %s", e.what());
+		return;
+	}
+	cv::Mat video_image = cv_ptr->image.clone();
+	cv::waitKey(3);
+	cv::Point center,right;
+	center.x=320.5;
+	center.y=240.5;
+	right.x = 637;
+	right.y = 240.5;
+	cv::circle(video_image,right,2,cv::Scalar(0, 0, 255),-1,8,0);
+	cv::circle(video_image,center,2,cv::Scalar(0, 0, 255),-1,8,0);
+	cv::line(video_image,center,right,cv::Scalar(0,255,0),0,8,0);
+	cv::imshow(camera_name,video_image);
+	cvSetMouseCallback(camera_name,mouse_callback,NULL);	
 
 }
 
@@ -81,28 +79,28 @@ int main(int argc, char *argv[])
 	subscriber = it.subscribe(argv[1], 1, &subscriber_callback,image_transport::TransportHints("raw"));
 	while(ros::ok())
 	{
-	  ros::spinOnce();
-	  if(ready)
-	  {
-	    cv::Point2f A,B,C,D;
-	    float x_edge_pixel,y_edge_pixel;
-	    A = vertex.at(0);
-	    B = vertex.at(1);
-	    C = vertex.at(2);
-	    D = vertex.at(3);
-	    x_edge_pixel = B.x-A.x;
-	    y_edge_pixel = C.y-B.y;
-	    float alpha = 2*atan(x_edge_cm/(2*distance));
-	    float beta = 2*atan(y_edge_cm/(2*distance));
-	    float iFOVx = alpha/x_edge_pixel;
-	    float iFOVy = beta/y_edge_pixel;
-	    std_msgs::Float64MultiArray message;
-	    message.data.resize(2);
-	    message.data[0] = (iFOVx*180/M_PI)*640;
-	    message.data[1] = (iFOVy*180/M_PI)*480;
-	    publisher.publish<std_msgs::Float64MultiArray>(message);
-	    vertex.clear();
-	    ready = false;
-	  }
+		ros::spinOnce();
+		if(ready)
+		{
+			cv::Point2f A,B,C,D;
+			float x_edge_pixel,y_edge_pixel;
+			A = vertex.at(0);
+			B = vertex.at(1);
+			C = vertex.at(2);
+			D = vertex.at(3);
+			x_edge_pixel = B.x-A.x;
+			y_edge_pixel = C.y-B.y;
+			float alpha = 2*atan(x_edge_cm/(2*distance));
+			float beta = 2*atan(y_edge_cm/(2*distance));
+			float iFOVx = alpha/x_edge_pixel;
+			float iFOVy = beta/y_edge_pixel;
+			std_msgs::Float64MultiArray message;
+			message.data.resize(2);
+			message.data[0] = (iFOVx*180/M_PI)*640;
+			message.data[1] = (iFOVy*180/M_PI)*480;
+			publisher.publish<std_msgs::Float64MultiArray>(message);
+			vertex.clear();
+			ready = false;
+		}
 	}
 }

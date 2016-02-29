@@ -18,7 +18,7 @@
    <!--include file="$(find nostop_kinect_sensor)/launch/philips-cam.launch"/-->
   
   <!-- fake imu -->
-  <include file="$(find nostop_kinect_sensor)/launch/fake_imu.launch"/>
+  <!--include file="$(find nostop_kinect_sensor)/launch/fake_imu.launch"/-->
   
   
 </launch>

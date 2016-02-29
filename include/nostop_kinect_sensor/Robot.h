@@ -20,8 +20,8 @@ namespace Robotics
 	{	
 	class Ball_tracker;
 	  
-	  class Robot
-		{
+	class Robot
+	{
 		  ros::NodeHandle m_robot;
 		  ros::Publisher m_robot_pose_pub,m_robot_gps_pub;
 		  std::string m_name;
@@ -36,18 +36,17 @@ namespace Robotics
 		  int m_notFoundCount;
 		  cv::Rect m_f_rect;
 		  cv::Rect m_b_rect;
-		  
 		  std::shared_ptr<Ball_tracker> Front_ptr;
 		  std::shared_ptr<Ball_tracker> Back_ptr;
 		  
-		public:
-		      Robot(std::string& name, double& lat, double& lon);
-		      sensor_msgs::NavSatFix enu2geodetic(double& x,double& y,double& z);
-		      void publish_pose(ball_position front_pos,ball_position back_pos,float yaw);
-		      void select_robot_pose(std::vector<ball_position>& front_array,std::vector<ball_position>& back_array);
-		      std::string color_f();
-		      std::string color_b();
-			~Robot();
+	public:
+		  Robot(std::string& name, double& lat, double& lon);
+			sensor_msgs::NavSatFix enu2geodetic(double& x,double& y,double& z);
+		  void publish_pose(ball_position front_pos,ball_position back_pos,float yaw);
+		  void select_robot_pose(std::vector<ball_position>& front_array,std::vector<ball_position>& back_array);
+		  std::string color_f();
+		  std::string color_b();
+		    ~Robot();
 		};
 
 	}

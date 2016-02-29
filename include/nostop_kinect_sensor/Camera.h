@@ -82,7 +82,6 @@ namespace Robotics
 			//POINT TRASFORMATION
 			float m_xCamera,m_yCamera,m_zCamera,m_R,m_omegaz,m_gammax,m_roll,m_h_robot;
 			geometry_msgs::PointStamped m_camera_point;
-      // 		  float m_focal_angle_x,m_focal_angle_y;
 			int m_focal_angle_x,m_focal_angle_y;
 			
 			// BALLS ARRAY

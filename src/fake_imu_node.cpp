@@ -16,9 +16,9 @@ int main(int argc, char **argv)
 	ros::Rate r(freq);
 	while(ros::ok())
 	{
-	  fake_imu.imu_published();
-	  r.sleep();
-	  ros::spinOnce();
+		fake_imu.imu_published();
+		r.sleep();
+		ros::spinOnce();
 	}
 	return 0;
 }

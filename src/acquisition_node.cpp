@@ -15,8 +15,6 @@ int main(int argc, char **argv)
 	n.getParam("frequency",frequency);
 	n.getParam("SRworld_lat0",lat0);
 	n.getParam("SRworld_lon0",lon0);
-	lat0 = 50;
-	lon0 = 50;
 	Robotics::GameTheory::Camera_manager l_Camera_manager(lat0,lon0);
 
 	ros::Rate r(50);

@@ -80,8 +80,8 @@ void mouse_callback_tail_point(int event, int x, int y, int flags, void* param)
 		l_robot->tail_point.y = y;
 		l_robot->odom_SR_origin_pix.x = (l_robot->head_point.x+l_robot->tail_point.x)/2;
 		l_robot->odom_SR_origin_pix.y = (l_robot->head_point.y+l_robot->tail_point.y)/2;
-		pose.height = 600;//TODO
-		pose.width = 600;
+		pose.height = 200;
+		pose.width = 200;
 		pose.x = l_robot->odom_SR_origin_pix.x-pose.width/2;
 		pose.y = l_robot->odom_SR_origin_pix.y-pose.height/2;
 		l_robot->pose_rect = pose;
@@ -99,7 +99,7 @@ void mouse_callback_central_point(int event, int x, int y, int flags, void* para
 		l_robot->central_point.y = y;
 		l_robot->odom_SR_origin_pix.x = l_robot->central_point.x;
 		l_robot->odom_SR_origin_pix.y = l_robot->central_point.y;
-		pose.height = 200;//TODO
+		pose.height = 200;
 		pose.width = 200;
 		pose.x = l_robot->odom_SR_origin_pix.x-pose.width/2;
 		pose.y = l_robot->odom_SR_origin_pix.y-pose.height/2;
