@@ -109,7 +109,7 @@ void mouse_callback_central_point(int event, int x, int y, int flags, void* para
 }
 
 // SETTING INITIAL POSE
-void Camera_manager::initialize_mouse() // CASE AGAINST IF?
+void Camera_manager::initialize_mouse()
 { 
   // ROBOTS INITIAL POSE
 	for(size_t i = 0; i<m_robot_initial_configuration.size(); ++i)
@@ -207,6 +207,7 @@ void Camera_manager::initialize_mouse() // CASE AGAINST IF?
 void Camera_manager::pack_passage()
 {
 	initialize_mouse();
+	std::vector<ball_position> l_blue_ball_W,l_green_ball_W,l_red_ball_W,l_yellow_ball_W;
 	for(size_t i = 0; i<m_camera_array.size();i++)
 	{
 		std::vector<ball_position> l_blue,l_green,l_red,l_yellow;
@@ -216,27 +217,21 @@ void Camera_manager::pack_passage()
 		l_yellow = m_camera_array[i]->get_yellow_array();
 		for(size_t j=0;j<l_blue.size();j++)
 		{
-			m_blue_ball_W.push_back(l_blue[j]);
+			l_blue_ball_W.push_back(l_blue[j]);
 		}
 		for(size_t j=0;j<l_green.size();j++)
 		{
-			m_green_ball_W.push_back(l_green[j]);
+			l_green_ball_W.push_back(l_green[j]);
 		}
 		for(size_t j=0;j<l_red.size();j++)
 		{
-			m_red_ball_W.push_back(l_red[j]);
+			l_red_ball_W.push_back(l_red[j]);
 		}
 		for(size_t j=0;j<l_yellow.size();j++)
 		{
-			m_yellow_ball_W.push_back(l_yellow[j]);
+			l_yellow_ball_W.push_back(l_yellow[j]);
 		}
 	}
 	// TO ROBOT MANAGER
-	Lock l_lock(m_mutex);
-	m_manager->array_assignment(m_blue_ball_W,m_green_ball_W,m_red_ball_W,m_yellow_ball_W);
-	// CLEARING
-	m_blue_ball_W.clear();
-	m_green_ball_W.clear();
-	m_red_ball_W.clear();
-	m_yellow_ball_W.clear();
+	m_manager->array_assignment(l_blue_ball_W,l_green_ball_W,l_red_ball_W,l_yellow_ball_W);
   }

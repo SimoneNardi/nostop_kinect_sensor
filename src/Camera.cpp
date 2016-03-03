@@ -481,7 +481,7 @@ void Camera::search_ball_pos()
 	filtering(m_stream_video,l_only_upper_red,upper_lb_r,upper_ub_r,dim_kernel_red+1);  
 	cv::addWeighted(l_only_lower_red,1.0,l_only_upper_red,1.0,0.0,l_only_red);
 	filtering(m_stream_video,l_only_yellow,lb_y,ub_y,dim_kernel_yellow+1);  
-
+		
 	//  CHARGE ARRAY WITH FIND BALLS 
 	l_blue_circles = charge_array(l_only_blue);
  	l_green_circles = charge_array(l_only_green);
@@ -490,11 +490,12 @@ void Camera::search_ball_pos()
 
 	
       //     FROM CAM (pixel) TO WORLD (cm)
+	Lock l_lock(m_mutex);
 	m_blue_circles_W = cam_to_W(l_blue_circles);
  	m_green_circles_W = cam_to_W(l_green_circles);
  	m_red_circles_W = cam_to_W(l_red_circles);
 	m_yellow_circles_W = cam_to_W(l_yellow_circles);
-
+	
 	// SHOW IMAGE
 	final_image_showing();
 

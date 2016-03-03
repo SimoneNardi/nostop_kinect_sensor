@@ -48,12 +48,6 @@ namespace Robotics
 			std::vector<RobotConfiguration> m_robot_initial_configuration;
 			std::vector<CameraImgName> m_camera_on;
 			
-			// PACKAGE
-			std::vector<ball_position> m_blue_ball_W;
-			std::vector<ball_position> m_green_ball_W;
-			std::vector<ball_position> m_red_ball_W;
-			std::vector<ball_position> m_yellow_ball_W;
-
 			ros::NodeHandle m_node;
 		
 		public:
