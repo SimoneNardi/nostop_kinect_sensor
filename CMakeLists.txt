@@ -102,11 +102,6 @@ set(cam_view_angle_SOURCES
 	src/cam_view_angle.cpp
 )
 
-set(fake_imu_SOURCES
-	src/fake_imu_node.cpp
-	src/Fake_imu.cpp
-)
-
 
 add_executable(acquisition_node ${sensor_SOURCES})
 add_dependencies(acquisition_node nostop_kinect_sensor_gencpp)
@@ -119,10 +114,6 @@ target_link_libraries(calibration ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math l
 add_executable(cam_view_angle ${cam_view_angle_SOURCES})
 add_dependencies(cam_view_angle nostop_kinect_sensor_gencpp)
 target_link_libraries(cam_view_angle ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning )
-
-add_executable(fake_imu_node ${fake_imu_SOURCES})
-add_dependencies(fake_imu_node nostop_kinect_sensor_gencpp)
-target_link_libraries(fake_imu_node ${catkin_LIBRARIES} base_math lemon Geographic)
 
 #############
 ## Install ##

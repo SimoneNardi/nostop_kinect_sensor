@@ -4,6 +4,7 @@
 #include <nav_msgs/Odometry.h>
 #include "tf/transform_broadcaster.h"
 #include <tf/transform_listener.h>
+#include <std_msgs/Float64.h>
 #include "Ball_tracker.h"
 #include "Camera.h"
 #include "math.h"
@@ -30,7 +31,7 @@ Robot::Robot(std::string& name, double& lat0, double& lon0):
 	m_front_marker_color = m_name.substr(0,m_name.find("_"));
 	m_back_marker_color = m_name.substr(m_name.find("_")+1,m_name.length());
 	m_robot_gps_pub = m_robot.advertise<sensor_msgs::NavSatFix>("/"+m_name+"/localizer/gps/fix",1);
-	m_robot_pose_pub= m_robot.advertise<nav_msgs::Odometry>("/"+m_name+"/cam_odom",1);
+	m_robot_heading_pub= m_robot.advertise<std_msgs::Float64>("/"+m_name+"/heading",1);
 	Front_ptr = std::make_shared<Ball_tracker>();
 	Back_ptr = std::make_shared<Ball_tracker>();
 	ROS_INFO("ROBOT %s ON!", m_name.c_str());
@@ -133,26 +134,11 @@ sensor_msgs::NavSatFix Robot::enu2geodetic(double& x,double& y,double& z)
 //////////////////////////////////////
 void Robot::publish_pose(ball_position front_pos,ball_position back_pos, float yaw)
 {
-//     nav_msgs::Odometry odom;
-//     sensor_msgs::NavSatFix pose_gps;
-//     //TEST ODOM
-//     odom.pose.pose.position.x = 0.01*(front_pos.x+back_pos.x)/2;//m
-//     odom.pose.pose.position.y = 0.01*(front_pos.y+back_pos.y)/2;//m
-//     odom.header.frame_id = "red_blue/odom";
-//     odom.child_frame_id = "red_blue/base_link";
-//     odom.header.stamp = ros::Time::now();
-//     for(int i = 0;i<36;++i)
-//     {
-//       odom.pose.covariance.at(i) = 0.1;
-//       i = i+6;
-//     }
-//     geometry_msgs::Quaternion q = tf::createQuaternionMsgFromYaw(m_heading);
-//     odom.pose.pose.orientation.x = q.x;
-//     odom.pose.pose.orientation.y = q.y;
-//     odom.pose.pose.orientation.z = q.z;
-//     odom.pose.pose.orientation.w = q.w;
-//     m_robot_pose_pub.publish<nav_msgs::Odometry>(odom);
-  
+	// heading pub
+	std_msgs::Float64 heading;
+	heading.data = yaw;
+	m_robot_heading_pub.publish<std_msgs::Float64>(heading);
+	// gps pub
 	sensor_msgs::NavSatFix pose_gps;
 	double x = 0.01*(front_pos.x+back_pos.x)/2;
 	double y = 0.01*(front_pos.y+back_pos.y)/2;

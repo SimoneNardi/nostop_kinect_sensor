@@ -23,7 +23,7 @@ namespace Robotics
 	class Robot
 	{
 		  ros::NodeHandle m_robot;
-		  ros::Publisher m_robot_pose_pub,m_robot_gps_pub;
+		  ros::Publisher m_robot_heading_pub,m_robot_gps_pub;
 		  std::string m_name;
 		  std::string m_front_marker_color;
 		  std::string m_back_marker_color;
