@@ -17,7 +17,7 @@ int main(int argc, char **argv)
 	n.getParam("SRworld_lon0",lon0);
 	Robotics::GameTheory::Camera_manager l_Camera_manager(lat0,lon0);
 
-	ros::Rate r(50);
+	ros::Rate r(20);
 	while(ros::ok())
 	{
 	  l_Camera_manager.pack_passage();
