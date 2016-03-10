@@ -385,26 +385,20 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 	}
 
 	Lock l_lock(m_mutex);
+	cv::Rect new_rect;
 	if (robot_position_cm_W.x<x_max && 
 	    robot_position_cm_W.x>x_min && 
 	    robot_position_cm_W.y<y_max && 
 	    robot_position_cm_W.y>y_min )
 	{
-		float diff;
 		int to_update = -1;
-		cv::Rect new_rect;
 		robot_position_pixel = W_to_cam(robot_position_cm_W);
 		std::vector<ball_position> in,out;
 		in.push_back(robot_position_pixel);
-		diff = std::numeric_limits< float >::infinity();
 		for(size_t j = 0; j<m_robot_array.size(); ++j)
 		{
-// 			float local_diff = sqrt( 
-// 			pow( robot_position_pixel.x - m_robot_array[j].pose_rect.x, 2) + 
-// 			pow( robot_position_pixel.y - m_robot_array[j].pose_rect.y, 2) );
 			if(l_robot_name == m_robot_array[j].name)
 			{
-// 				diff = local_diff;
 				to_update = j;
 			}
 		}
@@ -439,7 +433,23 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 				m_robot_array[to_update].pose_rect = new_rect;
 			}
 		}
-	}
+	}else{
+		int to_erase = -1;
+		for(size_t j = 0; j<m_robot_array.size(); ++j)
+		{
+			if(l_robot_name == m_robot_array[j].name)
+			{
+				to_erase = j;
+			}
+		}
+		if(to_erase >= 0)
+		{
+			new_rect.x = 320;
+			new_rect.y = 240;
+			new_rect.height = 0;
+			new_rect.width = 0;
+		}
+	} 
 }
 
 
