@@ -399,12 +399,12 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 		diff = std::numeric_limits< float >::infinity();
 		for(size_t j = 0; j<m_robot_array.size(); ++j)
 		{
-			float local_diff = sqrt( 
-			pow( robot_position_pixel.x - m_robot_array[j].pose_rect.x, 2) + 
-			pow( robot_position_pixel.y - m_robot_array[j].pose_rect.y, 2) );
-			if(local_diff < diff)
+// 			float local_diff = sqrt( 
+// 			pow( robot_position_pixel.x - m_robot_array[j].pose_rect.x, 2) + 
+// 			pow( robot_position_pixel.y - m_robot_array[j].pose_rect.y, 2) );
+			if(l_robot_name == m_robot_array[j].name)
 			{
-				diff = local_diff;
+// 				diff = local_diff;
 				to_update = j;
 			}
 		}
