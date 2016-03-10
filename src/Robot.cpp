@@ -27,11 +27,13 @@ Robot::Robot(std::string& name, double& lat0, double& lon0):
 , m_back_pos()
 , m_lat0(lat0)
 , m_lon0(lon0)
+, m_open_loop_off(true)
 { 
 	m_front_marker_color = m_name.substr(0,m_name.find("_"));
 	m_back_marker_color = m_name.substr(m_name.find("_")+1,m_name.length());
-	m_robot_gps_pub = m_robot.advertise<sensor_msgs::NavSatFix>("/"+m_name+"/localizer/gps/fix",1);
-	m_robot_heading_pub= m_robot.advertise<std_msgs::Float64>("/"+m_name+"/heading",1);
+	m_robot_gps_pub = m_robot.advertise<sensor_msgs::NavSatFix>("/"+m_name+"/localizer/gps/fix",5);
+	m_robot_heading_pub= m_robot.advertise<std_msgs::Float64>("/"+m_name+"/heading",5);
+	m_robot_command = m_robot.subscribe<geometry_msgs::Twist>("/"+m_name+"/cmd_vel",5,&Robot::command_reading,this);
 	Front_ptr = std::make_shared<Ball_tracker>();
 	Back_ptr = std::make_shared<Ball_tracker>();
 	ROS_INFO("ROBOT %s ON!", m_name.c_str());
@@ -41,11 +43,25 @@ Robot::Robot(std::string& name, double& lat0, double& lon0):
 Robot::~Robot()
 {}
 
+
+void Robot::command_reading(const geometry_msgs::Twist::ConstPtr& msg)
+{
+	if (m_open_loop_off)
+	{
+		Lock l_lock(m_mutex);
+		m_open_loop_off = false;
+	}
+}
+
+
+
+
+
 //////////////////////////////////////
 void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vector<ball_position>& back_array)
 {	
 	float distance;
-	if(front_array.size() > 0 && back_array.size() > 0)// Robot found!
+	if((front_array.size() > 0 && back_array.size() > 0) || m_open_loop_off)// Robot found!
 	{
 		if(!found)
 		{
@@ -144,6 +160,7 @@ void Robot::publish_pose(ball_position front_pos,ball_position back_pos, float y
 	double y = 0.01*(front_pos.y+back_pos.y)/2;
 	double z = 0;
 	pose_gps = enu2geodetic(x,y,z);// CORRECTION BECAUSE x NOT POINT TO EAST?
+	
 	m_robot_gps_pub.publish<sensor_msgs::NavSatFix>(pose_gps);          
 }
 
