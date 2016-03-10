@@ -68,6 +68,7 @@ void mouse_callback_head_point(int event, int x, int y, int flags, void* param)
 		l_robot->head_point.y = y;
 		l_robot->pose_setted = 0;
 		l_robot->cam_name = l_robot->cam_name_actual;
+		ROS_INFO("%s  ---  %s",l_robot->cam_name.c_str(),l_robot->cam_name_actual.c_str());
 	}
 }
 
@@ -114,9 +115,9 @@ void mouse_callback_central_point(int event, int x, int y, int flags, void* para
 void Camera_manager::initialize_mouse()
 { 
   // ROBOTS INITIAL POSE
-	for(size_t i = 0; i<m_robot_initial_configuration.size(); ++i)
+	for(size_t j = 0;j<m_camera_on.size();++j)
 	{
-		for(size_t j = 0;j<m_camera_on.size();j++)
+		for(size_t i = 0; i<m_robot_initial_configuration.size(); ++i)
 		{
 			ball_position SR_cm,SR_pix;
 			switch (m_robot_initial_configuration[i].pose_setted)
@@ -168,22 +169,23 @@ void Camera_manager::initialize_mouse()
 					
 				case 2://// IT'S TRUE? TODO
 				{
-					if(m_camera_array.size() == 1 ) 
-					{	
-						SR_pix.x = m_robot_initial_configuration[i].odom_SR_origin_pix.x;
-						SR_pix.y = m_robot_initial_configuration[i].odom_SR_origin_pix.y;
-						SR_cm = m_camera_array.at(0)->origin_pix2origin_world(SR_pix);
-						m_robot_initial_configuration[i].odom_SR_origin_cm.x = SR_cm.x;
-						m_robot_initial_configuration[i].odom_SR_origin_cm.y = SR_cm.y;
-						m_robot_initial_configuration[i].pose_setted = 3;
-					}else{
-					        SR_pix.x = m_robot_initial_configuration[i].odom_SR_origin_pix.x;
-						SR_pix.y = m_robot_initial_configuration[i].odom_SR_origin_pix.y;
-						m_camera_array.at(j-1)->origin_pix2origin_world(SR_pix);
-						m_robot_initial_configuration[i].odom_SR_origin_cm.x = SR_cm.x;
-						m_robot_initial_configuration[i].odom_SR_origin_cm.y = SR_cm.y;
-						m_robot_initial_configuration[i].pose_setted = 3;
-					}
+// 					if(m_camera_array.size() == 1 ) 
+// 					{	
+// 						SR_pix.x = m_robot_initial_configuration[i].odom_SR_origin_pix.x;
+// 						SR_pix.y = m_robot_initial_configuration[i].odom_SR_origin_pix.y;
+// 						SR_cm = m_camera_array.at(0)->origin_pix2origin_world(SR_pix);
+// 						m_robot_initial_configuration[i].odom_SR_origin_cm.x = SR_cm.x;
+// 						m_robot_initial_configuration[i].odom_SR_origin_cm.y = SR_cm.y;
+// 						m_robot_initial_configuration[i].pose_setted = 3;
+// 					}else{
+// 					        SR_pix.x = m_robot_initial_configuration[i].odom_SR_origin_pix.x;
+// 						SR_pix.y = m_robot_initial_configuration[i].odom_SR_origin_pix.y;
+// 						m_camera_array.at(j-1)->origin_pix2origin_world(SR_pix);
+// 						m_robot_initial_configuration[i].odom_SR_origin_cm.x = SR_cm.x;
+// 						m_robot_initial_configuration[i].odom_SR_origin_cm.y = SR_cm.y;
+// 						m_robot_initial_configuration[i].pose_setted = 3;
+// 					}
+				  //TEST
 					break;
 				}
 				
