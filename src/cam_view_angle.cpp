@@ -12,7 +12,7 @@ const char* camera_name = "camera";
 bool ready;
 
 // CAMERA VALUES
-static float distance = 53.5;
+static float distance = 40;
 static float x_edge_cm = 29.5;
 static float y_edge_cm = 21;
 
@@ -90,8 +90,8 @@ int main(int argc, char *argv[])
 			D = vertex.at(3);
 			x_edge_pixel = B.x-A.x;
 			y_edge_pixel = C.y-B.y;
-			float alpha = 2*atan(x_edge_cm/(2*distance));
-			float beta = 2*atan(y_edge_cm/(2*distance));
+			float alpha = 2*atan((x_edge_cm/2)/distance);
+			float beta = 2*atan((y_edge_cm/2)/distance);
 			float iFOVx = alpha/x_edge_pixel;
 			float iFOVy = beta/y_edge_pixel;
 			std_msgs::Float64MultiArray message;

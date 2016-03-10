@@ -52,6 +52,8 @@ namespace Robotics
 			cv::Rect pose_rect;
 			bool is_magnetometer;
 			std::string name;
+			std::string cam_name;
+			std::string cam_name_actual;
 		} RobotConfiguration;
 	  
 // 	  
@@ -78,6 +80,7 @@ namespace Robotics
 			
 			//ROBOT
 			std::vector<RobotConfiguration> m_robot_array;
+			std::vector<bool> m_feedback_on;
 			
 			//POINT TRASFORMATION
 			float m_xCamera,m_yCamera,m_zCamera,m_R,m_omegaz,m_gammax,m_roll,m_h_robot;

@@ -280,7 +280,7 @@ void Camera::final_image_showing()
   // SEARCH RECTANGLE
 	for(size_t i = 0;i<m_robot_array.size();++i)
 	{
-		if(m_robot_array[i].pose_setted == 3)
+		if(m_robot_array[i].pose_setted == 3 && (m_feedback_on.at(i) || (m_robot_array[i].cam_name == m_camera_name)))
 			rectangle(m_stream_video,m_robot_array[i].pose_rect,cv::Scalar(0, 0, 0),1,8,0);
 	}
 	cv::circle(m_stream_video,center,2,cv::Scalar(0, 0, 255),-1,8,0);
@@ -393,13 +393,12 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 	{
 		int to_update = -1;
 		robot_position_pixel = W_to_cam(robot_position_cm_W);
-		std::vector<ball_position> in,out;
-		in.push_back(robot_position_pixel);
 		for(size_t j = 0; j<m_robot_array.size(); ++j)
 		{
 			if(l_robot_name == m_robot_array[j].name)
 			{
 				to_update = j;
+				m_feedback_on.at(j) = true;
 			}
 		}
 	    
@@ -459,6 +458,7 @@ void Camera::robot_topic_pose_subscribe(RobotConfiguration& robot_pose)
 	ros::Subscriber pose_sub = m_node.subscribe<nav_msgs::Odometry>("/" + robot_pose.name + "/localizer/odometry/final", 100, &Camera::pose_feedback, this);
 	m_robot_feedback_pose_sub.push_back(pose_sub);  
 	m_robot_array.push_back(robot_pose);
+	m_feedback_on.push_back(false);
 }
 
 

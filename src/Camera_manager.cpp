@@ -67,6 +67,7 @@ void mouse_callback_head_point(int event, int x, int y, int flags, void* param)
 		l_robot->head_point.x = x;
 		l_robot->head_point.y = y;
 		l_robot->pose_setted = 0;
+		l_robot->cam_name = l_robot->cam_name_actual;
 	}
 }
 
@@ -105,6 +106,7 @@ void mouse_callback_central_point(int event, int x, int y, int flags, void* para
 		pose.y = l_robot->odom_SR_origin_pix.y-pose.height/2;
 		l_robot->pose_rect = pose;
 		l_robot->pose_setted = 1;
+		l_robot->cam_name = l_robot->cam_name_actual;
 	}
 }
 
@@ -128,6 +130,7 @@ void Camera_manager::initialize_mouse()
 						std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
 						mouse_windows_name[windows_name.size()] = '\0'; 
 						cv::imshow(windows_name,m_camera_on[j].image );
+						m_robot_initial_configuration[i].cam_name_actual = m_camera_on[j].camera_name;
 						cvSetMouseCallback(mouse_windows_name,mouse_callback_central_point, &(m_robot_initial_configuration[i]) );
 					
 					}else{
@@ -137,6 +140,7 @@ void Camera_manager::initialize_mouse()
 						std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
 						mouse_windows_name[windows_name.size()] = '\0'; 
 						cv::imshow(windows_name,m_camera_on[j].image );
+						m_robot_initial_configuration[i].cam_name_actual = m_camera_on[j].camera_name;
 						cvSetMouseCallback(mouse_windows_name,mouse_callback_head_point, &(m_robot_initial_configuration[i]) );
 					}
 					break;
@@ -163,6 +167,7 @@ void Camera_manager::initialize_mouse()
 					
 					
 				case 2://// IT'S TRUE? TODO
+				{
 					if(m_camera_array.size() == 1 ) 
 					{	
 						SR_pix.x = m_robot_initial_configuration[i].odom_SR_origin_pix.x;
@@ -180,6 +185,8 @@ void Camera_manager::initialize_mouse()
 						m_robot_initial_configuration[i].pose_setted = 3;
 					}
 					break;
+				}
+				
 					
 				case 3:
 				{	
