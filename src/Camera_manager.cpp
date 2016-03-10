@@ -172,6 +172,8 @@ void Camera_manager::initialize_mouse()
 						m_robot_initial_configuration[i].odom_SR_origin_cm.y = SR_cm.y;
 						m_robot_initial_configuration[i].pose_setted = 3;
 					}else{
+					        SR_pix.x = m_robot_initial_configuration[i].odom_SR_origin_pix.x;
+						SR_pix.y = m_robot_initial_configuration[i].odom_SR_origin_pix.y;
 						m_camera_array.at(j-1)->origin_pix2origin_world(SR_pix);
 						m_robot_initial_configuration[i].odom_SR_origin_cm.x = SR_cm.x;
 						m_robot_initial_configuration[i].odom_SR_origin_cm.y = SR_cm.y;
