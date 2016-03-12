@@ -159,7 +159,7 @@ void Robot::publish_pose(ball_position front_pos,ball_position back_pos, float y
 	double x = 0.01*(front_pos.x+back_pos.x)/2;
 	double y = 0.01*(front_pos.y+back_pos.y)/2;
 	double z = 0;
-	ROS_INFO("x--> %f, y--> %f",x,y);
+// 	ROS_INFO("x--> %f, y--> %f",x,y);
 	pose_gps = enu2geodetic(x,y,z);// CORRECTION BECAUSE x NOT POINT TO EAST?
 	m_robot_gps_pub.publish<sensor_msgs::NavSatFix>(pose_gps);          
 }

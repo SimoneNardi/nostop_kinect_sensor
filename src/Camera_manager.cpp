@@ -9,7 +9,12 @@ using namespace std;
 using namespace Robotics;
 using namespace Robotics::GameTheory;
 
+RobotConfiguration Robotics::GameTheory::g_dummy_robot_configuration;
 
+/////////////////////////////////////////////
+MouseCallbackData::MouseCallbackData() 
+: robot_config(g_dummy_robot_configuration) 
+{}
 
 /////////////////////////////////////////////
 Camera_manager::Camera_manager(double& lat0,double& lon0)
@@ -63,12 +68,11 @@ void mouse_callback_head_point(int event, int x, int y, int flags, void* param)
 {
 	if (event == CV_EVENT_LBUTTONDBLCLK) 
 	{
-		RobotConfiguration *l_robot = (RobotConfiguration*) param;
-		l_robot->head_point.x = x;
-		l_robot->head_point.y = y;
-		l_robot->pose_setted = 0;
-		l_robot->cam_name = l_robot->cam_name_actual;
-		ROS_INFO("%s  ---  %s",l_robot->cam_name.c_str(),l_robot->cam_name_actual.c_str());
+		MouseCallbackData *l_data = (MouseCallbackData*) param;
+		l_data->robot_config.head_point.x = x;
+		l_data->robot_config.head_point.y = y;
+		l_data->robot_config.pose_setted = 0;
+		l_data->robot_config.cam_name = l_data->camera_name;
 	}
 }
 
@@ -76,18 +80,18 @@ void mouse_callback_tail_point(int event, int x, int y, int flags, void* param)
 {
 	if (event == CV_EVENT_LBUTTONDBLCLK) 
 	{
-		RobotConfiguration *l_robot = (RobotConfiguration*) param;
+		MouseCallbackData *l_data = (MouseCallbackData*) param;
 		cv::Rect pose;
-		l_robot->tail_point.x = x;
-		l_robot->tail_point.y = y;
-		l_robot->odom_SR_origin_pix.x = (l_robot->head_point.x+l_robot->tail_point.x)/2;
-		l_robot->odom_SR_origin_pix.y = (l_robot->head_point.y+l_robot->tail_point.y)/2;
+		l_data->robot_config.tail_point.x = x;
+		l_data->robot_config.tail_point.y = y;
+		l_data->robot_config.odom_SR_origin_pix.x = (l_data->robot_config.head_point.x+l_data->robot_config.tail_point.x)/2;
+		l_data->robot_config.odom_SR_origin_pix.y = (l_data->robot_config.head_point.y+l_data->robot_config.tail_point.y)/2;
 		pose.height = 200;
 		pose.width = 200;
-		pose.x = l_robot->odom_SR_origin_pix.x-pose.width/2;
-		pose.y = l_robot->odom_SR_origin_pix.y-pose.height/2;
-		l_robot->pose_rect = pose;
-		l_robot->pose_setted = 1;
+		pose.x = l_data->robot_config.odom_SR_origin_pix.x-pose.width/2;
+		pose.y = l_data->robot_config.odom_SR_origin_pix.y-pose.height/2;
+		l_data->robot_config.pose_rect = pose;
+		l_data->robot_config.pose_setted = 1;
 	}
 }
 
@@ -107,7 +111,6 @@ void mouse_callback_central_point(int event, int x, int y, int flags, void* para
 		pose.y = l_robot->odom_SR_origin_pix.y-pose.height/2;
 		l_robot->pose_rect = pose;
 		l_robot->pose_setted = 1;
-		l_robot->cam_name = l_robot->cam_name_actual;
 	}
 }
 
@@ -115,9 +118,9 @@ void mouse_callback_central_point(int event, int x, int y, int flags, void* para
 void Camera_manager::initialize_mouse()
 { 
   // ROBOTS INITIAL POSE
-	for(size_t j = 0;j<m_camera_on.size();++j)
+	for(size_t j = 0;j<m_camera_on.size();j++)
 	{
-		for(size_t i = 0; i<m_robot_initial_configuration.size(); ++i)
+		for(size_t i = 0; i<m_robot_initial_configuration.size(); i++)
 		{
 			ball_position SR_cm,SR_pix;
 			switch (m_robot_initial_configuration[i].pose_setted)
@@ -131,8 +134,11 @@ void Camera_manager::initialize_mouse()
 						std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
 						mouse_windows_name[windows_name.size()] = '\0'; 
 						cv::imshow(windows_name,m_camera_on[j].image );
-						m_robot_initial_configuration[i].cam_name_actual = m_camera_on[j].camera_name;
-						cvSetMouseCallback(mouse_windows_name,mouse_callback_central_point, &(m_robot_initial_configuration[i]) );
+						std::shared_ptr<MouseCallbackData> l_callData = std::make_shared<MouseCallbackData>();
+						l_callData->camera_name = m_camera_on[j].camera_name;
+						l_callData->robot_config = m_robot_initial_configuration[i];
+						m_initialization_data.insert(l_callData);
+						cvSetMouseCallback(mouse_windows_name,mouse_callback_central_point, l_callData.get() );
 					
 					}else{
 						m_camera_on[j].image = m_camera_array.at(j)->get_stream_video();
@@ -141,8 +147,12 @@ void Camera_manager::initialize_mouse()
 						std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
 						mouse_windows_name[windows_name.size()] = '\0'; 
 						cv::imshow(windows_name,m_camera_on[j].image );
-						m_robot_initial_configuration[i].cam_name_actual = m_camera_on[j].camera_name;
-						cvSetMouseCallback(mouse_windows_name,mouse_callback_head_point, &(m_robot_initial_configuration[i]) );
+						
+						std::shared_ptr<MouseCallbackData> l_callData = std::make_shared<MouseCallbackData>();
+						l_callData->camera_name = m_camera_on[j].camera_name;
+						l_callData->robot_config = m_robot_initial_configuration[i];
+						m_initialization_data.insert(l_callData);
+						cvSetMouseCallback(mouse_windows_name,mouse_callback_head_point, l_callData.get() );
 					}
 					break;
 				}  
@@ -155,44 +165,35 @@ void Camera_manager::initialize_mouse()
 					std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
 					mouse_windows_name[windows_name.size()] = '\0'; 
 					cv::imshow(windows_name,m_camera_on[j].image );
-					cvSetMouseCallback(mouse_windows_name,mouse_callback_tail_point, &(m_robot_initial_configuration[i]) );
+					std::shared_ptr<MouseCallbackData> l_callData = std::make_shared<MouseCallbackData>();
+					l_callData->camera_name = m_camera_on[j].camera_name;
+					l_callData->robot_config = m_robot_initial_configuration[i];
+					m_initialization_data.insert(l_callData);
+					cvSetMouseCallback(mouse_windows_name,mouse_callback_tail_point, l_callData.get() );
 					break;
 				}
 					
 				case 1:
-				{	
+				{
 					cvDestroyAllWindows();
 					m_robot_initial_configuration[i].pose_setted = 2;
 					break;
 				}
 					
 					
-				case 2://// IT'S TRUE? TODO
-				{
-// 					if(m_camera_array.size() == 1 ) 
-// 					{	
-// 						SR_pix.x = m_robot_initial_configuration[i].odom_SR_origin_pix.x;
-// 						SR_pix.y = m_robot_initial_configuration[i].odom_SR_origin_pix.y;
-// 						SR_cm = m_camera_array.at(0)->origin_pix2origin_world(SR_pix);
-// 						m_robot_initial_configuration[i].odom_SR_origin_cm.x = SR_cm.x;
-// 						m_robot_initial_configuration[i].odom_SR_origin_cm.y = SR_cm.y;
-// 						m_robot_initial_configuration[i].pose_setted = 3;
-// 					}else{
-// 					        SR_pix.x = m_robot_initial_configuration[i].odom_SR_origin_pix.x;
-// 						SR_pix.y = m_robot_initial_configuration[i].odom_SR_origin_pix.y;
-// 						m_camera_array.at(j-1)->origin_pix2origin_world(SR_pix);
-// 						m_robot_initial_configuration[i].odom_SR_origin_cm.x = SR_cm.x;
-// 						m_robot_initial_configuration[i].odom_SR_origin_cm.y = SR_cm.y;
-// 						m_robot_initial_configuration[i].pose_setted = 3;
-// 					}
-				  //TEST
+				case 2:
+				{//TODO
+					m_robot_initial_configuration[i].pose_setted = 3;
 					break;
 				}
 				
 					
 				case 3:
-				{	
-					m_camera_array.at(j)->robot_topic_pose_subscribe(m_robot_initial_configuration[i]);
+				{
+					for(size_t k = 0; k < m_camera_array.size();++k)
+					{
+					  m_camera_array.at(k)->robot_topic_pose_subscribe(m_robot_initial_configuration[i]);	
+					}
 					m_robot_initial_configuration[i].pose_setted = 4;
 					break;
 				}  

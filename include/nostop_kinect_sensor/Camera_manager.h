@@ -23,13 +23,47 @@ namespace Robotics
 {
 	namespace GameTheory
 	{
-	  
+		  extern RobotConfiguration g_dummy_robot_configuration;
 		  
 		  typedef struct CameraImgNameI
 		  {
 		    cv::Mat image;
 		    std::string camera_name;
 		  }CameraImgName;
+		  
+		  class MouseCallbackData
+		  {
+		  public:
+		    MouseCallbackData();
+		    
+		    RobotConfiguration &robot_config;
+		    std::string camera_name;
+		  };
+		  
+		  struct less_MouseCallbackData  : std::binary_function<std::shared_ptr<MouseCallbackData>,std::shared_ptr<MouseCallbackData>,bool> {
+		    bool operator()( const std::shared_ptr<MouseCallbackData> & a, const std::shared_ptr<MouseCallbackData> & b ) {
+		     
+		      if (  a->robot_config.name < b->robot_config.name )
+			return true;
+		      else if( b->robot_config.name < a->robot_config.name )
+			return false;
+		      else if( a->camera_name < b->camera_name )
+			return true;
+		      else if( b->camera_name < a->camera_name )
+			return false;
+		      
+		      return false;
+		    }
+		  };
+		  
+		  inline  bool lex_compare(const std::shared_ptr<MouseCallbackData> & a, const std::shared_ptr<MouseCallbackData> & b) 
+		  {
+		      if( a->robot_config.name == b->robot_config.name &&
+			  a->camera_name == b->camera_name)
+			return true;
+		      
+		      return false;
+		  }
 		  
 		class Camera;
 		
@@ -47,6 +81,8 @@ namespace Robotics
 			// ROBOT
 			std::vector<RobotConfiguration> m_robot_initial_configuration;
 			std::vector<CameraImgName> m_camera_on;
+			
+			std::set< std::shared_ptr<MouseCallbackData>, less_MouseCallbackData > m_initialization_data;
 			
 			ros::NodeHandle m_node;
 		

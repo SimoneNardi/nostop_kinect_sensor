@@ -280,7 +280,7 @@ void Camera::final_image_showing()
   // SEARCH RECTANGLE
 	for(size_t i = 0;i<m_robot_array.size();++i)
 	{
-		if(m_robot_array[i].pose_setted == 3 && (m_feedback_on.at(i) || (m_robot_array[i].cam_name == m_camera_name)))
+		if(m_robot_array[i].pose_setted == 3 )//&& (m_feedback_on.at(i) || (m_robot_array[i].cam_name == m_camera_name)))
 			rectangle(m_stream_video,m_robot_array[i].pose_rect,cv::Scalar(0, 0, 0),1,8,0);
 	}
 	cv::circle(m_stream_video,center,2,cv::Scalar(0, 0, 255),-1,8,0);
@@ -337,10 +337,13 @@ std::vector<ball_position> Camera::get_yellow_array()
 	return m_yellow_circles_W;
 }
  
-ball_position Camera::origin_pix2origin_world(ball_position& origin_SR_pix)
+ball_position Camera::origin_pix2origin_world(cv::Point2f& origin_SR_pix)
 {
 	std::vector<ball_position> SR_cm,SR_pix;
-	SR_pix.push_back(origin_SR_pix);
+	ball_position SR;
+	SR.x = origin_SR_pix.x;
+	SR.y = origin_SR_pix.x;
+	SR_pix.push_back(SR);
 	SR_cm = cam_to_W(SR_pix);
 	return SR_cm.at(0);
 }
@@ -456,7 +459,8 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 void Camera::robot_topic_pose_subscribe(RobotConfiguration& robot_pose)
 {
 	ros::Subscriber pose_sub = m_node.subscribe<nav_msgs::Odometry>("/" + robot_pose.name + "/localizer/odometry/final", 100, &Camera::pose_feedback, this);
-	m_robot_feedback_pose_sub.push_back(pose_sub);  
+	m_robot_feedback_pose_sub.push_back(pose_sub);
+//         ROS_INFO("io sono %s ,in cam %s lui l'ho visto in %s",robot_pose.name.c_str(),m_camera_name.c_str(), robot_pose.cam_name.c_str());
 	m_robot_array.push_back(robot_pose);
 	m_feedback_on.push_back(false);
 }

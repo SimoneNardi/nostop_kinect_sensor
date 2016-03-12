@@ -41,20 +41,24 @@ namespace Robotics
 {
 	namespace GameTheory
 	{	  
-		typedef struct RobotConfigurationI
+		class RobotConfiguration
 		{
+		  public:
+		    RobotConfiguration() {}
+		    
 			int pose_setted;
 			cv::Point2f head_point;
 			cv::Point2f tail_point;
 			cv::Point2f central_point;
 			cv::Point2f odom_SR_origin_pix;
-			cv::Point2i odom_SR_origin_cm;
+			cv::Point2f odom_SR_origin_cm;
 			cv::Rect pose_rect;
 			bool is_magnetometer;
 			std::string name;
 			std::string cam_name;
 			std::string cam_name_actual;
-		} RobotConfiguration;
+			int cam_num;
+		};
 	  
 // 	  
 		class Guard;
@@ -108,7 +112,7 @@ namespace Robotics
 			cv::Mat get_stream_video();
 			std::vector<ball_position> get_yellow_array();
 			ball_position odometry_to_srW(ball_position& robot_odometry,RobotConfiguration& robot_config);
-			ball_position origin_pix2origin_world(ball_position& origin_SR_pix);
+			ball_position origin_pix2origin_world(cv::Point2f& origin_SR_pix);
 			void pose_feedback(const nav_msgs::Odometry::ConstPtr& msg);
 			void reset_vector();
 			void robot_topic_pose_subscribe(RobotConfiguration& robot_pose);
