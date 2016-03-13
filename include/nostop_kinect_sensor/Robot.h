@@ -9,6 +9,7 @@
 #include <string>
 #include <ros/ros.h>
 #include <sensor_msgs/NavSatFix.h>
+#include <tf/transform_broadcaster.h>
 #include "Ball_tracker.h"
 #include "Robot_manager.h"
 #include "Camera.h"
@@ -35,12 +36,14 @@ namespace Robotics
 		  ball_position m_front_pos;
 		  ball_position m_back_pos;
 		  float m_heading;
-		  bool found,m_open_loop_off;
+		  bool found,m_before_cmd;
 		  int m_notFoundCount;
 		  cv::Rect m_f_rect;
 		  cv::Rect m_b_rect;
 		  std::shared_ptr<Ball_tracker> Front_ptr;
 		  std::shared_ptr<Ball_tracker> Back_ptr;
+		  tf::TransformBroadcaster m_static_transform_broadcaster;
+		  geometry_msgs::TransformStamped m_static_tf;
 		  
 	public:
 		  Robot(std::string& name, double& lat, double& lon);
@@ -50,6 +53,7 @@ namespace Robotics
 		  void command_reading(const geometry_msgs::Twist::ConstPtr& msg);
 		  std::string color_f();
 		  std::string color_b();
+		  void static_transform_publishing(double& x,double& y);
 		    ~Robot();
 		};
 
