@@ -81,6 +81,12 @@ namespace Robotics
 		  public:
 		    RobotConfiguration *robot_config;
 		    std::string  cam_name;
+		    enum ClickType
+		    {
+		      HEAD,
+		      TAIL,
+		      CENTRAL
+		    } type;
 		  };
 		  
 		  struct less_MouseCallbackData  
@@ -90,11 +96,15 @@ namespace Robotics
 		     
 		      if (  a->robot_config->name < b->robot_config->name )
 			return true;
-		      else if( b->robot_config->name < a->robot_config->name )
+		      else if( a->robot_config->name > b->robot_config->name )
 			return false;
 		      else if( a->cam_name < b->cam_name )
 			return true;
-		      else if( b->cam_name < a->cam_name )
+		      else if( a->cam_name > b->cam_name )
+			return false;
+		      else if(a->type < b->type)
+			return true;
+		      else if(a->type > b->type)
 			return false;
 		      
 		      return false;
@@ -156,7 +166,7 @@ namespace Robotics
 			ball_position origin_pix2origin_world(cv::Point2f& origin_SR_pix);
 			void pose_feedback(const nav_msgs::Odometry::ConstPtr& msg);
 			void reset_vector();
-			void robot_topic_pose_subscribe(RobotConfiguration& robot_pose);
+			void robot_topic_pose_subscribe(RobotConfiguration robot_pose);
 			void search_ball_pos();
 			void subscribe();
 			void video_acquisition(const sensor_msgs::ImageConstPtr& msg);

@@ -197,8 +197,6 @@ void Camera::camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg
 	m_gammax = msg->data[6]*M_PI/180;
 	m_h_robot = msg->data[7];
 }
-
-
  
 /// CHARGE CLASS ARRAY WITH FOUNDED BALL POSITION
 std::vector<ball_position> Camera::charge_array(cv::Mat img)
@@ -454,24 +452,23 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 	} 
 }
 
-
-
-void Camera::robot_topic_pose_subscribe(RobotConfiguration& robot_pose)
+///
+void Camera::robot_topic_pose_subscribe(RobotConfiguration robot_pose)
 {
 	ros::Subscriber pose_sub = m_node.subscribe<nav_msgs::Odometry>("/" + robot_pose.name + "/localizer/odometry/final", 100, &Camera::pose_feedback, this);
 	m_robot_feedback_pose_sub.push_back(pose_sub);
         ROS_INFO("io sono %s ,in cam %s lui l'ho visto in %s",robot_pose.name.c_str(),m_camera_name.c_str(), robot_pose.cam_name.c_str());
-	if(robot_pose.cam_name != m_camera_name)
+	
+	if( robot_pose.cam_name != m_camera_name )
 	{
-	  robot_pose.pose_rect.height = 0;
 	  robot_pose.pose_rect.width = 0;
+	  robot_pose.pose_rect.height= 0;
 	}
+	
 	m_robot_array.push_back(robot_pose);
+	
 	m_feedback_on.push_back(false);
 }
-
-
-
 
 /// BALL SEARCHING 
 void Camera::search_ball_pos()
@@ -519,8 +516,6 @@ void Camera::search_ball_pos()
 	final_image_showing();
 
 }
-
-
 
 /// NEW ROBOT TOPIC SUBSCRIBE 
 void Camera::subscribe()
@@ -612,9 +607,6 @@ void Camera::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
 	cv::waitKey(3);
 	search_ball_pos();
 }
-
-
-
 
 ////// NEW 
 ball_position Camera::W_to_cam(ball_position& pos_in)

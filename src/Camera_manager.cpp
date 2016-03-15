@@ -43,21 +43,20 @@ void Camera_manager::new_camera(const nostop_kinect_sensor::Camera_data::ConstPt
 
 void Camera_manager::new_robot_id_topic(const std_msgs::String::ConstPtr& msg)
 {
-	RobotConfiguration l_robot;
-	l_robot.name =  msg->data;
-	l_robot.is_magnetometer = false;
-	if(l_robot.name.substr(l_robot.name.find_last_of("_")+1,l_robot.name.size()) == "ON")
+	RobotConfiguration *l_robot = new RobotConfiguration();
+	l_robot->name =  msg->data;
+	l_robot->is_magnetometer = false;
+	if(l_robot->name.substr(l_robot->name.find_last_of("_")+1,l_robot->name.size()) == "ON")
 	{
-		l_robot.is_magnetometer = true;
-		l_robot.name = l_robot.name.substr(0,l_robot.name.find_last_of("_"));
-		ROS_INFO("Robot %s has magnetometer!",l_robot.name.c_str());
+		l_robot->is_magnetometer = true;
+		l_robot->name = l_robot->name.substr(0,l_robot->name.find_last_of("_"));
+		ROS_INFO("Robot %s has magnetometer!",l_robot->name.c_str());
 	}else{
-		l_robot.name = l_robot.name.substr(0,l_robot.name.find_last_of("_"));
-		ROS_INFO("Robot %s hasn't magnetometer!",l_robot.name.c_str());
+		l_robot->name = l_robot->name.substr(0,l_robot->name.find_last_of("_"));
+		ROS_INFO("Robot %s hasn't magnetometer!",l_robot->name.c_str());
 	}
-	l_robot.pose_setted = -1;
-	l_robot.waiting_for_head_click = false;
-	l_robot.waiting_for_tail_click = false;
+	l_robot->pose_setted = -1;
+	
 	m_robot_initial_configuration.push_back(l_robot);
 }
 
@@ -125,56 +124,44 @@ void Camera_manager::initialize_mouse()
 		for(size_t i = 0; i<m_robot_initial_configuration.size(); i++)
 		{
 			ball_position SR_cm,SR_pix;
-			switch (m_robot_initial_configuration[i].pose_setted)
+			
+			std::string windows_name = m_robot_initial_configuration[i]->name + " " + m_camera_on[j].camera_name;
+			
+			switch ( m_robot_initial_configuration[i]->pose_setted )
 			{
 				case -1:
-				{	if(m_robot_initial_configuration[i].is_magnetometer)
+				{	
+					m_camera_on[j].image = m_camera_array.at(j)->get_stream_video();
+					cv::imshow( windows_name.c_str(), m_camera_on[j].image );
+				  
+				  	MouseCallbackData *l_callData=new MouseCallbackData;
+					l_callData->cam_name = m_camera_on[j].camera_name;
+					l_callData->robot_config = m_robot_initial_configuration[i];
+					
+				  
+					if(m_robot_initial_configuration[i]->is_magnetometer)
 					{
-// 						m_camera_on[j].image = m_camera_array.at(j)->get_stream_video();
-// 						std::string windows_name = m_robot_initial_configuration[i].name + " " + m_camera_on[j].camera_name  + " initial_pose (with magnetometer)";
-// 						char* mouse_windows_name = new char[windows_name.size() + 1];
-// 						std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
-// 						mouse_windows_name[windows_name.size()] = '\0'; 
-// 						cv::imshow(windows_name,m_camera_on[j].image );
-// 						
-// 						if(!m_camera_on[j].waiting_for_head_click)
-// 						{
-// 							MouseCallbackData *l_callData=new MouseCallbackData;
-// 							l_callData->cam_name = m_camera_on[j].camera_name;
-// 							l_callData->robot_config = &m_robot_initial_configuration[i];
-// 							m_initialization_data.insert(l_callData);
-// 							cvSetMouseCallback(mouse_windows_name, mouse_callback_central_point, l_callData);
-// 						}else{
-// 							if(!m_robot_initial_configuration[i].waiting_for_head_click)
-// 							{
-// 								MouseCallbackData *l_callData=new MouseCallbackData;
-// 								l_callData->cam_name = m_camera_on[j].camera_name;
-// 								l_callData->robot_config = &m_robot_initial_configuration[i];
-// 								m_initialization_data.insert(l_callData);
-// 								cvSetMouseCallback(mouse_windows_name, mouse_callback_central_point, l_callData);
-// 							}
-// 						}
-// 						m_robot_initial_configuration[i].waiting_for_head_click = true;
-// 						m_camera_on[j].waiting_for_head_click = true;
-					}else{
-						m_camera_on[j].image = m_camera_array.at(j)->get_stream_video();
-						std::string windows_name = m_robot_initial_configuration[i].name + " " + m_camera_on[j].camera_name  + " initial_pose (without magnetometer)";
-						char* mouse_windows_name = new char[windows_name.size() + 1];
-						std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
-						mouse_windows_name[windows_name.size()] = '\0'; 
-						cv::imshow(windows_name,m_camera_on[j].image );
+						l_callData->type = MouseCallbackData::CENTRAL;
 						
-						if(!m_camera_on[j].waiting_for_head_click &&
-						  !m_robot_initial_configuration[i].waiting_for_head_click)
+						if(m_initialization_data.find(l_callData) == m_initialization_data.end())
 						{
-							MouseCallbackData *l_callData=new MouseCallbackData;
-							l_callData->cam_name = m_camera_on[j].camera_name;
-							l_callData->robot_config = &m_robot_initial_configuration[i];
-							m_initialization_data.insert(l_callData);
-							cvSetMouseCallback(mouse_windows_name, mouse_callback_head_point, l_callData);
-							m_robot_initial_configuration[i].waiting_for_head_click = true;
-							m_camera_on[j].waiting_for_head_click = true;
+						  m_initialization_data.insert(l_callData);
+						  cvSetMouseCallback(windows_name.c_str(), mouse_callback_central_point, l_callData);
 						}
+						else
+						  delete l_callData;
+					}
+					else
+					{
+						l_callData->type = MouseCallbackData::HEAD;
+						
+						if(m_initialization_data.find(l_callData) == m_initialization_data.end())
+						{
+						  m_initialization_data.insert(l_callData);
+						  cvSetMouseCallback(windows_name.c_str(), mouse_callback_head_point, l_callData);
+						}
+						else
+						  delete l_callData;
 					}
 					break;
 				}  
@@ -182,38 +169,43 @@ void Camera_manager::initialize_mouse()
 				case 0:
 				{
 					m_camera_on[j].image = m_camera_array.at(j)->get_stream_video();
-					std::string windows_name =  m_robot_initial_configuration[i].name + " " + m_camera_on[j].camera_name  + " initial_pose (without magnetometer)";
-					char* mouse_windows_name = new char[windows_name.size() + 1];
-					std::copy(windows_name.begin(), windows_name.end(), mouse_windows_name);
-					mouse_windows_name[windows_name.size()] = '\0'; 
-					cv::imshow(windows_name,m_camera_on[j].image );
+					cv::imshow(windows_name.c_str(), m_camera_on[j].image );
 					
-					if(!m_camera_on[j].waiting_for_tail_click)
+					MouseCallbackData *l_callData=new MouseCallbackData;
+					l_callData->cam_name = m_camera_on[j].camera_name;
+					l_callData->robot_config = m_robot_initial_configuration[i];
+					l_callData->type = MouseCallbackData::TAIL;
+					
+					if(m_initialization_data.find(l_callData) == m_initialization_data.end())
 					{
-						MouseCallbackData *l_callData=new MouseCallbackData;
-						l_callData->cam_name = m_camera_on[j].camera_name;
-						l_callData->robot_config = &m_robot_initial_configuration[i];
-						m_initialization_data.insert(l_callData);
-						cvSetMouseCallback(mouse_windows_name, mouse_callback_tail_point, l_callData);
+					  m_initialization_data.insert(l_callData);
+					  cvSetMouseCallback(windows_name.c_str(), mouse_callback_tail_point, l_callData);
 					}
-					m_camera_on[j].waiting_for_tail_click = true;
+					else
+					  delete l_callData;
+					
 					break;
 				}
 					
 				case 1:
 				{
-					cvDestroyAllWindows();
-					m_robot_initial_configuration[i].pose_setted = 2;
-					break;
+				    for(auto k= 0; k < m_camera_on.size(); ++k)
+				    {
+					std::string windows_name_local =  m_robot_initial_configuration[i]->name + " " + m_camera_on[k].camera_name;
+					cvDestroyWindow( windows_name_local.c_str() );
+				    }
+					
+				    m_robot_initial_configuration[i]->pose_setted = 2;
+				    break;
 				}
 					
 					
 				case 2:
 				{
-					m_robot_initial_configuration[i].pose_setted = 3;
+					m_robot_initial_configuration[i]->pose_setted = 3;
 					for(size_t k = 0; k < m_camera_array.size();++k)
 					{
-					  m_camera_array.at(k)->robot_topic_pose_subscribe(m_robot_initial_configuration[i]);
+					  m_camera_array.at(k)->robot_topic_pose_subscribe( *(m_robot_initial_configuration[i]) );
 					}
 					break;
 				}

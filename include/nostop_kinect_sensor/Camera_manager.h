@@ -24,6 +24,14 @@ namespace Robotics
 	namespace GameTheory
 	{
 
+		
+		typedef struct CallbackMNGI
+		{
+		  std::string cam_name;
+		  std::string robot_name;
+		  bool head_callback_done,tail_callback_done;
+		}CallbackMNG;
+		
 		class Camera;
 		
 		class Camera_manager
@@ -38,9 +46,9 @@ namespace Robotics
 			std::shared_ptr<Robot_manager> m_manager;
 			
 			// ROBOT
-			std::vector<RobotConfiguration> m_robot_initial_configuration;
+			std::vector<RobotConfiguration*> m_robot_initial_configuration;
 			std::vector<CameraImgName> m_camera_on;
-			
+			std::vector<CallbackMNG> m_callback;
 			std::set< MouseCallbackData*, less_MouseCallbackData > m_initialization_data;
 			
 			ros::NodeHandle m_node;
