@@ -42,8 +42,6 @@ namespace Robotics
 		  cv::Rect m_b_rect;
 		  std::shared_ptr<Ball_tracker> Front_ptr;
 		  std::shared_ptr<Ball_tracker> Back_ptr;
-		  tf::TransformBroadcaster m_static_transform_broadcaster;
-		  geometry_msgs::TransformStamped m_static_tf;
 		  
 	public:
 		  Robot(std::string& name, double& lat, double& lon);
@@ -53,7 +51,6 @@ namespace Robotics
 		  void command_reading(const geometry_msgs::Twist::ConstPtr& msg);
 		  std::string color_f();
 		  std::string color_b();
-		  void static_transform_publishing(double& x,double& y);
 		    ~Robot();
 		};
 

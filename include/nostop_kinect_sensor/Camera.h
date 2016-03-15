@@ -41,26 +41,67 @@ namespace Robotics
 {
 	namespace GameTheory
 	{	  
+		  class CameraID
+		  {
+		  public:
+		    std::string name;
+		    int number;
+		  public:
+		    CameraID(){}
+		  };
+		  
+		  
 		class RobotConfiguration
 		{
-		  public:
-		    RobotConfiguration() {}
-		    
+		public:
 			int pose_setted;
 			cv::Point2f head_point;
 			cv::Point2f tail_point;
 			cv::Point2f central_point;
 			cv::Point2f odom_SR_origin_pix;
-			cv::Point2f odom_SR_origin_cm;
 			cv::Rect pose_rect;
 			bool is_magnetometer;
 			std::string name;
 			std::string cam_name;
-			std::string cam_name_actual;
-			int cam_num;
+			bool waiting_for_head_click,waiting_for_tail_click;
+			public:
+			      RobotConfiguration() {}
 		};
-	  
-// 	  
+			  
+		  typedef struct CameraImgNameI
+		  {
+		    cv::Mat image;
+		    std::string camera_name;
+		    bool waiting_for_head_click, waiting_for_tail_click;
+		  }CameraImgName;
+		  
+		  
+		  class MouseCallbackData
+		  {
+		  public:
+		    RobotConfiguration *robot_config;
+		    std::string  cam_name;
+		  };
+		  
+		  struct less_MouseCallbackData  
+		  : std::binary_function< MouseCallbackData*,MouseCallbackData*,bool> 
+		  {
+		    bool operator()( const MouseCallbackData * a, const MouseCallbackData * b ) {
+		     
+		      if (  a->robot_config->name < b->robot_config->name )
+			return true;
+		      else if( b->robot_config->name < a->robot_config->name )
+			return false;
+		      else if( a->cam_name < b->cam_name )
+			return true;
+		      else if( b->cam_name < a->cam_name )
+			return false;
+		      
+		      return false;
+		    }
+		  };
+		  
+		  // 	  
 		class Guard;
 		class Ball_tracker;
 		class Robot_manager;

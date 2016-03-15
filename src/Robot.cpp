@@ -160,28 +160,10 @@ void Robot::publish_pose(ball_position front_pos,ball_position back_pos, float y
 	double y = 0.01*(front_pos.y+back_pos.y)/2;
 	double z = 0;
 // 	ROS_INFO("x--> %f, y--> %f",x,y);
-	static_transform_publishing(x,y);
-	geometry_msgs::Quaternion l_static_transform_quaternion = tf::createQuaternionMsgFromYaw(yaw);
-	m_static_tf.transform.rotation = l_static_transform_quaternion;
-	m_static_transform_broadcaster.sendTransform(m_static_tf);
 	pose_gps = enu2geodetic(x,y,z);// CORRECTION BECAUSE x NOT POINT TO EAST?
 	m_robot_gps_pub.publish<sensor_msgs::NavSatFix>(pose_gps);          
 }
 
-
-void Robot::static_transform_publishing(double& x,double& y)
-{
-	if(m_before_cmd)
-	{
-		// publish over /tf
-		m_static_tf.header.stamp = ros::Time::now();
-		m_static_tf.header.frame_id = "SR_world";
-		m_static_tf.child_frame_id = m_name+"/odom";
-		m_static_tf.transform.translation.x = x;
-		m_static_tf.transform.translation.y = y;
-		m_static_tf.transform.translation.z = 0.0;
-	} 
-}
 
 //////////////////////////////////////
 std::string Robot::color_f()
