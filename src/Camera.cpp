@@ -63,7 +63,7 @@ Camera::Camera(std::string name_,std::string image_topic_name,std::string calibr
 , m_focal_angle_y(ifovy)
 {
 	ROS_INFO("CAMERA %s ON!",m_camera_name.c_str());
-	m_calibration_sub = m_node.subscribe(calibration_topic,1,&Camera::camera_calibration,this);
+	m_calibration_sub = m_node.subscribe(calibration_topic,10,&Camera::camera_calibration,this);
 	subscribe();  
 }
 
@@ -454,7 +454,7 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 ///
 void Camera::robot_topic_pose_subscribe(RobotConfiguration robot_pose)
 {
-	ros::Subscriber pose_sub = m_node.subscribe<nav_msgs::Odometry>("/" + robot_pose.name + "/localizer/odometry/final", 100, &Camera::pose_feedback, this);
+	ros::Subscriber pose_sub = m_node.subscribe<nav_msgs::Odometry>("/" + robot_pose.name + "/localizer/odometry/final", 1000, &Camera::pose_feedback, this);
 	m_robot_feedback_pose_sub.push_back(pose_sub);
         ROS_INFO("io sono %s ,in cam %s lui l'ho visto in %s",robot_pose.name.c_str(),m_camera_name.c_str(), robot_pose.cam_name.c_str());
 	if( robot_pose.cam_name != m_camera_name )
@@ -462,7 +462,6 @@ void Camera::robot_topic_pose_subscribe(RobotConfiguration robot_pose)
 	  robot_pose.pose_rect.width = 0;
 	  robot_pose.pose_rect.height= 0;
 	}
-	
 	m_robot_array.push_back(robot_pose);
 }
 
@@ -517,7 +516,7 @@ void Camera::search_ball_pos()
 void Camera::subscribe()
 {
 	cv::namedWindow(SENSOR_CV_WINDOW+m_camera_name);
-	m_image_sub = m_it.subscribe(m_topic_name, 1, &Camera::video_acquisition, this, image_transport::TransportHints("raw")); 
+	m_image_sub = m_it.subscribe(m_topic_name, 1000, &Camera::video_acquisition, this, image_transport::TransportHints("raw")); 
 }
 
 

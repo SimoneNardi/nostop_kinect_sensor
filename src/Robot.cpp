@@ -31,9 +31,9 @@ Robot::Robot(std::string& name, double& lat0, double& lon0):
 { 
 	m_front_marker_color = m_name.substr(0,m_name.find("_"));
 	m_back_marker_color = m_name.substr(m_name.find("_")+1,m_name.length());
-	m_robot_gps_pub = m_robot.advertise<sensor_msgs::NavSatFix>("/"+m_name+"/localizer/gps/fix",5);
-	m_robot_heading_pub= m_robot.advertise<std_msgs::Float64>("/"+m_name+"/heading",5);
-	m_robot_command = m_robot.subscribe<geometry_msgs::Twist>("/"+m_name+"/cmd_vel",5,&Robot::command_reading,this);
+	m_robot_gps_pub = m_robot.advertise<sensor_msgs::NavSatFix>("/"+m_name+"/localizer/gps/fix",1000);
+	m_robot_heading_pub= m_robot.advertise<std_msgs::Float64>("/"+m_name+"/heading",1000);
+	m_robot_command = m_robot.subscribe<geometry_msgs::Twist>("/"+m_name+"/cmd_vel",1000,&Robot::command_reading,this);
 	Front_ptr = std::make_shared<Ball_tracker>();
 	Back_ptr = std::make_shared<Ball_tracker>();
 	ROS_INFO("ROBOT %s ON!", m_name.c_str());
