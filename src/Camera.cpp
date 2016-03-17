@@ -387,6 +387,8 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 
 	Lock l_lock(m_mutex);
 	cv::Rect new_rect;
+	cv::Rect field_vision;
+	
 	if (robot_position_cm_W.x<x_max && 
 	    robot_position_cm_W.x>x_min && 
 	    robot_position_cm_W.y<y_max && 
@@ -448,6 +450,7 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 			new_rect.height = 0;
 			new_rect.width = 0;
 		}
+		m_robot_array[to_erase].pose_rect = new_rect;
 	} 
 }
 

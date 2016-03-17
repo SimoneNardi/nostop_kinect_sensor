@@ -26,6 +26,7 @@ namespace Robotics
 		  ros::NodeHandle m_robot;
 		  ros::Publisher m_robot_heading_pub,m_robot_gps_pub;
 		  ros::Subscriber m_robot_command;
+		  ros::Publisher m_robot_initial_pose;
 		  std::string m_name;
 		  std::string m_front_marker_color;
 		  std::string m_back_marker_color;
@@ -43,15 +44,21 @@ namespace Robotics
 		  std::shared_ptr<Ball_tracker> Front_ptr;
 		  std::shared_ptr<Ball_tracker> Back_ptr;
 		  
+		  
+		  tf::TransformBroadcaster m_test_tf_broadcaster;
+		geometry_msgs::TransformStamped m_test_tf;
+		double start;
+		
 	public:
 		  Robot(std::string& name, double& lat, double& lon);
-		  sensor_msgs::NavSatFix enu2geodetic(double& x,double& y,double& z);
+		  sensor_msgs::NavSatFix enu2geodetic(double x,double y,double z);
 		  void publish_pose(ball_position front_pos,ball_position back_pos,float yaw);
 		  void select_robot_pose(std::vector<ball_position>& front_array,std::vector<ball_position>& back_array);
 		  void command_reading(const geometry_msgs::Twist::ConstPtr& msg);
 		  std::string color_f();
 		  std::string color_b();
-		    ~Robot();
+		  void tf_test(double& x,double& y,float& yaw);
+		  ~Robot();
 		};
 
 	}
