@@ -32,10 +32,10 @@ Robot::Robot(std::string& name, double& lat0, double& lon0):
 { 
 	m_front_marker_color = m_name.substr(0,m_name.find("_"));
 	m_back_marker_color = m_name.substr(m_name.find("_")+1,m_name.length());
-	m_robot_gps_pub = m_robot.advertise<sensor_msgs::NavSatFix>("/"+m_name+"/localizer/gps/fix",1000);
-	m_robot_heading_pub= m_robot.advertise<std_msgs::Float64>("/"+m_name+"/heading",1000);
-	m_robot_command = m_robot.subscribe<geometry_msgs::Twist>("/"+m_name+"/cmd_vel",1000,&Robot::command_reading,this);
-	m_robot_initial_pose = m_robot.advertise<geometry_msgs::PoseWithCovarianceStamped>("/"+m_name+"/set_pose",100);
+	m_robot_gps_pub = m_robot.advertise<sensor_msgs::NavSatFix>("/"+m_name+"/localizer/gps/fix",10);
+	m_robot_heading_pub= m_robot.advertise<std_msgs::Float64>("/"+m_name+"/heading",10);
+	m_robot_command = m_robot.subscribe<geometry_msgs::Twist>("/"+m_name+"/cmd_vel",10,&Robot::command_reading,this);
+	m_robot_initial_pose = m_robot.advertise<geometry_msgs::PoseWithCovarianceStamped>("/"+m_name+"/set_pose",10);
 	Front_ptr = std::make_shared<Ball_tracker>();
 	Back_ptr = std::make_shared<Ball_tracker>();
 	ROS_INFO("ROBOT %s ON!", m_name.c_str());
@@ -57,7 +57,7 @@ void Robot::command_reading(const geometry_msgs::Twist::ConstPtr& msg)
 
 
 
-void Robot::tf_test(double& x,double& y,float& yaw)
+void Robot::set_initial_robot_pose(double& x,double& y,float& yaw)
 {
 	if(m_before_cmd)
 	{
@@ -163,8 +163,8 @@ sensor_msgs::NavSatFix Robot::enu2geodetic(double x,double y,double z)
 	GPS.position_covariance.at(0) = 0.1;
 	GPS.position_covariance.at(4) = 0.1;
 	GPS.position_covariance.at(8) = 0.1;
-	GPS.header.frame_id = m_name+"/base_link";// antenna location
-// 	GPS.header.frame_id = "SRworld";//TEST
+// 	GPS.header.frame_id = m_name+"/base_link";// antenna location
+	GPS.header.frame_id = "SRworld";//TEST
 	GPS.header.stamp = ros::Time::now();
 	return GPS;
 }
@@ -183,8 +183,7 @@ void Robot::publish_pose(ball_position front_pos,ball_position back_pos, float y
 	double x = 0.01*(front_pos.x+back_pos.x)/2;
 	double y = 0.01*(front_pos.y+back_pos.y)/2;
 	double z = 0;
-	tf_test(x,y,yaw);
-	
+	set_initial_robot_pose(x,y,yaw);
 // 	ROS_INFO("x--> %f, y--> %f",x,y);
 	pose_gps = enu2geodetic(x,y,z);// CORRECTION BECAUSE x NOT POINT TO EAST?
 	m_robot_gps_pub.publish<sensor_msgs::NavSatFix>(pose_gps);          

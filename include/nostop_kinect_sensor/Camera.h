@@ -141,6 +141,22 @@ namespace Robotics
 			geometry_msgs::PointStamped m_camera_point;
 			int m_focal_angle_x,m_focal_angle_y;
 			
+			// HSV
+			int m_lb_b[3];
+			int m_ub_b[3]; 
+			int m_lb_g[3]; 
+			int m_ub_g[3];  
+			int m_lower_lb_r[3]; 
+			int m_lower_ub_r[3];
+			int m_upper_lb_r[3];
+			int m_upper_ub_r[3]; 
+			int m_lb_y[3];
+			int m_ub_y[3]; 
+			int m_dim_kernel_blue;
+			int m_dim_kernel_green;
+			int m_dim_kernel_red;
+			int m_dim_kernel_yellow;
+			
 			// BALLS ARRAY
 			std::vector<ball_position>  m_blue_circles_W;
 			std::vector<ball_position>  m_green_circles_W;
@@ -155,6 +171,7 @@ namespace Robotics
 			std::vector<ball_position> cam_to_W(std::vector<ball_position>& array);
 			std::vector<ball_position> charge_array(cv::Mat img);
 			void filtering(cv::Mat &src,cv::Mat &dst,int  lb[],int ub[],int dim_kernel);
+			void filtering_initialization();
 			void final_image_showing();
 			std::vector<ball_position> get_blue_array();
 			std::vector<ball_position> get_green_array();

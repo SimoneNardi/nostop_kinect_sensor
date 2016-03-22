@@ -14,7 +14,7 @@ using namespace Robotics::GameTheory;
 Camera_manager::Camera_manager(double& lat0,double& lon0)
 {
 	ROS_INFO("COLLECTOR ON!");
-	m_camera_in = m_node.subscribe<nostop_kinect_sensor::Camera_data>("/camera_in", 1000, &Camera_manager::new_camera,this);
+	m_camera_in = m_node.subscribe<nostop_kinect_sensor::Camera_data>("/camera_in", 10, &Camera_manager::new_camera,this);
 	m_add_robot_topic = m_node.subscribe<std_msgs::String>("/localizer/kinect/add_robot", 10, &Camera_manager::new_robot_id_topic,this);
 	m_manager = std::make_shared<Robot_manager>(lat0,lon0);
 }

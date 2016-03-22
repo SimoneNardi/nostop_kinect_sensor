@@ -2,7 +2,6 @@
 #define struct_H
 #pragma once
 
-
 namespace Robotics 
 {
 	namespace GameTheory

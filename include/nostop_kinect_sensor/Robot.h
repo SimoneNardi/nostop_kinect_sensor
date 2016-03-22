@@ -57,7 +57,7 @@ namespace Robotics
 		  void command_reading(const geometry_msgs::Twist::ConstPtr& msg);
 		  std::string color_f();
 		  std::string color_b();
-		  void tf_test(double& x,double& y,float& yaw);
+		  void set_initial_robot_pose(double& x,double& y,float& yaw);
 		  ~Robot();
 		};
 
