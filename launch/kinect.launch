@@ -119,12 +119,11 @@
   
   <!--SETTINGS-->
   <!--remap from="/camera/rgb/image_raw" to = "/kinect/cam_img" /--> <!--  DONE PREVIOUSLY -->
-  <arg name="image_topic" default="/kinect/cam_img" />
-<arg name="calibration_topic_name" default="/kinect/calibration_topic"/>
-<arg name="node_name" default = "kinect_calibration"/>
-<node pkg="nostop_kinect_sensor" type="script_calibration.sh" 
-    args="$(arg node_name) $(arg image_topic) $(arg calibration_topic_name)"
-    name="calibration_node" output="screen">
+<node pkg="nostop_kinect_sensor" type="calibration_node" output="screen">
+    <param name="image_topic" value="/kinect/cam_img" />
+    <param name="node_name" value = "kinect_calibration"/>
+    <param name="calibration_topic_name" value="/kinect/calibration_topic"/>
+    <param name="camera_name" value="kinect" />
 </node>
 
 <arg name="camera_name" default="kinect" />

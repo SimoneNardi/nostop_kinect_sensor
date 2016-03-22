@@ -6,17 +6,21 @@
     <param name="video_device" value="/dev/video1" />
     <param name="image_width" value="640" />
     <param name="image_height" value="480" />
+    <param name="pixel_format" value="yuyv" />
     <param name="camera_name" value="philips" />
   </node>   
   
-<arg name="image_topic" default="/usb/philips/cam_img" />
-<arg name="calibration_topic_name" default="/philips/calibration_topic"/>
-<arg name="node_name" default = "philips_calibration"/>
-<node name="calibration_philips" pkg="nostop_kinect_sensor" type="script_calibration.sh" 
-    args="$(arg node_name) $(arg image_topic) $(arg calibration_topic_name)"
-     output="screen">
+  
+<node name="philips_calibration" pkg="nostop_kinect_sensor" type="calibration" output="screen">
+    <param name="calibration_topic_name" value="/philips/calibration_topic"/>
+    <param name="image_topic" value="/usb/philips/cam_img" />
+    <param name="camera_name" value="philips"/>
 </node>
 
+
+
+<arg name="image_topic" default="/usb/philips/cam_img" />
+<arg name="calibration_topic_name" default="/philips/calibration_topic"/>
 <arg name="camera_name" default="philips" />
 <arg name="iFOVx_angle" default = "70"/><!--65-->
 <arg name="iFOVy_angle" default = "55"/>

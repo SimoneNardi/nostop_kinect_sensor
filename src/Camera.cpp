@@ -65,36 +65,36 @@ void Camera::filtering_initialization()
 	m_lb_b[0] = 100;
 	m_lb_b[1] = 125;
 	m_lb_b[2] = 100;
-	m_ub_b[0] = 100;
-	m_ub_b[1] = 125;
-	m_ub_b[2] = 100;
+	m_ub_b[0] = 160;
+	m_ub_b[1] = 255;
+	m_ub_b[2] = 255;
 	//GREEN
-	m_lb_g[0] = 100;
-	m_lb_g[1] = 125;
-	m_lb_g[2] = 100;
-	m_ub_g[0] = 100;
-	m_ub_g[1] = 125;
-	m_ub_g[2] = 100;
+	m_lb_g[0] = 30;
+	m_lb_g[1] = 150;
+	m_lb_g[2] = 50;
+	m_ub_g[0] = 60;
+	m_ub_g[1] = 255;
+	m_ub_g[2] = 180;
 	//RED
-	m_lower_lb_r[0] = 100;
-	m_lower_lb_r[1] = 125;
-	m_lower_lb_r[2] = 100;
-	m_lower_ub_r[0] = 100;
-	m_lower_ub_r[1] = 125;
-	m_lower_ub_r[2] = 100;
-	m_upper_lb_r[0] = 100;
-	m_upper_lb_r[1] = 125;
-	m_upper_lb_r[2] = 100;
-	m_upper_ub_r[0] = 100;
-	m_upper_ub_r[1] = 125;
-	m_upper_ub_r[2] = 100;
+	m_lower_lb_r[0] = 0;
+	m_lower_lb_r[1] = 170;
+	m_lower_lb_r[2] = 150;
+	m_lower_ub_r[0] = 10;
+	m_lower_ub_r[1] = 255;
+	m_lower_ub_r[2] = 255;
+	m_upper_lb_r[0] = 160;
+	m_upper_lb_r[1] = 100;
+	m_upper_lb_r[2] = 150;
+	m_upper_ub_r[0] = 179;
+	m_upper_ub_r[1] = 255;
+	m_upper_ub_r[2] = 255;
 	//YELLOW
-	m_lb_y[0] = 100;
-	m_lb_y[1] = 125;
-	m_lb_y[2] = 100;
-	m_ub_y[0] = 100;
-	m_ub_y[1] = 125;
-	m_ub_y[2] = 100;
+	m_lb_y[0] = 20;
+	m_lb_y[1] = 50;
+	m_lb_y[2] = 160;
+	m_ub_y[0] = 45;
+	m_ub_y[1] = 255;
+	m_ub_y[2] = 255;
 	//KERNEL
 	m_dim_kernel_blue = 4;
 	m_dim_kernel_green = 4;
@@ -525,7 +525,7 @@ void Camera::search_ball_pos()
 
 	
       //     FROM CAM (pixel) TO WORLD (cm)
-	Lock l_lock(m_mutex);
+// 	Lock l_lock(m_mutex);
 	m_blue_circles_W = cam_to_W(l_blue_circles);
  	m_green_circles_W = cam_to_W(l_green_circles);
  	m_red_circles_W = cam_to_W(l_red_circles);
@@ -540,7 +540,7 @@ void Camera::search_ball_pos()
 void Camera::subscribe()
 {
 	cv::namedWindow(SENSOR_CV_WINDOW+m_camera_name);
-	m_image_sub = m_it.subscribe(m_topic_name, 10, &Camera::video_acquisition, this, image_transport::TransportHints("raw")); 
+	m_image_sub = m_it.subscribe(m_topic_name, 1, &Camera::video_acquisition, this, image_transport::TransportHints("raw")); 
 }
 
 
@@ -621,9 +621,10 @@ void Camera::video_acquisition(const sensor_msgs::ImageConstPtr& msg)
 		ROS_ERROR("cv_bridge exception: %s", e.what());
 		return;
 	}
+	Lock l_lock(m_mutex);
 	m_stream_video = cv_ptr->image.clone();
 	// Update GUI Window
-	cv::waitKey(3);
+	cv::waitKey(1);
 	search_ball_pos();
 }
 

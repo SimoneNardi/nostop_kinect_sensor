@@ -6,23 +6,27 @@
     <param name="video_device" value="/dev/video1" />
     <param name="image_width" value="640" />
     <param name="image_height" value="480" />
+    <param name="pixel_format" value="yuyv" />
     <param name="camera_name" value="logitech" />
   </node>   
   
-<arg name="image_topic" default="/usb/logitech/cam_img" />
-<arg name="calibration_topic_name" default="/logitech/calibration_topic"/>
-<arg name="node_name" default = "logitech_calibration" />
-<node name="calibration_logitech" pkg="nostop_kinect_sensor" type="script_calibration.sh" 
-    args="$(arg node_name) $(arg image_topic) $(arg calibration_topic_name)"
-     output="screen">
+
+<node name="calibration_logitech" pkg="nostop_kinect_sensor" type="calibration" output="screen">
+    <param name="camera_name" value="logitech" />
+    <param name="image_topic" value="/usb/logitech/cam_img" />
+    <param name="calibration_topic_name" value="/logitech/calibration_topic"/>
 </node>
 
+
+
+<arg name="image_topic" default="/usb/logitech/cam_img" />
+<arg name="calibration_topic_name" default="/logitech/calibration_topic"/>
 <arg name="camera_name" default="logitech" />
 <arg name="iFOVx_angle" default = "45"/>
 <arg name="iFOVy_angle" default = "30"/>
   <node pkg="nostop_kinect_sensor" type="script_cam.sh" 
     args="$(arg camera_name) $(arg image_topic) $(arg calibration_topic_name) $(arg iFOVx_angle) $(arg iFOVy_angle) " 
-    name="camera_node" output="screen">
+    name="camera_node_logitech" output="screen">
   </node>
   
   <node name="rqt_reconfigure_logitech" pkg="rqt_reconfigure" type="rqt_reconfigure"/>

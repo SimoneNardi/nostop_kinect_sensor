@@ -14,8 +14,8 @@ cv::Point2f xy;
 std::vector<cv::Point2f> vertex;
 cv::Point2f A_toimage;
 std_msgs::Float64MultiArray message;
-bool to_publish;
-char* camera_name;
+bool to_publish,callback_on = false;
+std::string cam_name;
  
 void mouse_callback(int event, int x, int y, int flags, void* param)
 {
@@ -24,6 +24,7 @@ void mouse_callback(int event, int x, int y, int flags, void* param)
 		xy.y = y;
 		vertex.push_back(xy);
 	}
+	callback_on = true;
 }
 
 
@@ -74,8 +75,10 @@ void subscriber_callback(const sensor_msgs::ImageConstPtr &msg)
 		cv::line(video_image,center,A_symmetric,cv::Scalar(0,255,0),0,8,0);
 		cv::line(video_image,A_toimage,center_symmetric,cv::Scalar(0,0,255),0,8,0);
 	}
-	cv::imshow(camera_name,video_image);
-	cvSetMouseCallback(camera_name,mouse_callback,NULL);	
+	cv::imshow(cam_name.c_str(),video_image);
+	if(!callback_on)
+	  cvSetMouseCallback(cam_name.c_str(),mouse_callback,NULL);
+	
 	if (vertex.size()==1)
 	{ 
 		to_publish = true;
@@ -123,21 +126,23 @@ void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &confi
 }
 
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
-	ROS_INFO("Calibration %s : ON",argv[1]);
-	ros::init(argc, argv, argv[1]);
-	camera_name = argv[1];
-	std::string cam_name = argv[1];
-	message.data.resize(8);
-	ros::NodeHandle calibrator;
+	std::string calibration_topic,image_topic;
+	ros::init(argc, argv, "calibration");
+	ros::NodeHandle calibrator("~");
 	ros::Publisher calibrator_pub;
+	ROS_INFO("Calibration %s : ON",cam_name.c_str());
+	message.data.resize(8);
+	calibrator.getParam("camera_name",cam_name);
+	calibrator.getParam("image_topic",image_topic);
+	calibrator.getParam("calibration_topic_name",calibration_topic);
 	A_toimage.x=320.5;
 	A_toimage.y=240.5;
 	image_transport::ImageTransport it(calibrator);
 	image_transport::Subscriber subscriber;
-	subscriber = it.subscribe(argv[2], 1, &subscriber_callback,image_transport::TransportHints("raw"));
-	calibrator_pub = calibrator.advertise<std_msgs::Float64MultiArray>(argv[3],1000);
+	subscriber = it.subscribe(image_topic.c_str(),3, &subscriber_callback,image_transport::TransportHints("raw"));
+	calibrator_pub = calibrator.advertise<std_msgs::Float64MultiArray>(calibration_topic,10);
 	dynamic_reconfigure::Server<nostop_kinect_sensor::Camera_calibrationConfig> camera_calibration;
 	dynamic_reconfigure::Server<nostop_kinect_sensor::Camera_calibrationConfig>::CallbackType callback;
 	callback = boost::bind(&calibration_callback,_1,_2);

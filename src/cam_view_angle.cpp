@@ -9,7 +9,7 @@
 
 std::vector<cv::Point2f> vertex;
 const char* camera_name = "camera";
-bool ready;
+bool ready,callback_on=false;
 
 // CAMERA VALUES
 static float distance = 40;
@@ -33,7 +33,9 @@ void mouse_callback(int event, int x, int y, int flags, void* param)
 		}else{
 		  ready = false;
 		  }
+		callback_on = false;
 	}
+	callback_on = true;
 }
 
 
@@ -62,21 +64,23 @@ void subscriber_callback(const sensor_msgs::ImageConstPtr &msg)
 	cv::circle(video_image,center,2,cv::Scalar(0, 0, 255),-1,8,0);
 	cv::line(video_image,center,right,cv::Scalar(0,255,0),0,8,0);
 	cv::imshow(camera_name,video_image);
-	cvSetMouseCallback(camera_name,mouse_callback,NULL);	
-
+	if(!callback_on)
+	  cvSetMouseCallback(camera_name,mouse_callback,NULL);
 }
 
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
 	ROS_INFO("Calibration camera view angle: ON");
 	ros::init(argc, argv,"camera");
-	ros::NodeHandle angle_view;
+	ros::NodeHandle angle_view("~");
 	image_transport::ImageTransport it(angle_view);
 	image_transport::Subscriber subscriber;
 	ros::Publisher publisher;
-	publisher = angle_view.advertise<std_msgs::Float64MultiArray>("/view_angle_founded",1000);
-	subscriber = it.subscribe(argv[1], 1, &subscriber_callback,image_transport::TransportHints("raw"));
+	std::string image_topic;
+	angle_view.getParam("image_topic",image_topic);
+	publisher = angle_view.advertise<std_msgs::Float64MultiArray>("/view_angle_founded",10);
+	subscriber = it.subscribe(image_topic, 10, &subscriber_callback,image_transport::TransportHints("raw"));
 	while(ros::ok())
 	{
 		ros::spinOnce();

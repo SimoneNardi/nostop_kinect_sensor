@@ -11,10 +11,9 @@
   </node>   
   
     
-<arg name="image_topic" default="/usb/cam_img" />
-<node name="view_angle" pkg="nostop_kinect_sensor" type="script_view_angle.sh" 
-    args="$(arg image_topic)"
-     output="screen">
+
+<node name="view_angle" pkg="nostop_kinect_sensor" type="cam_view_angle" output="screen">
+    <param name="image_topic" value="/usb/cam_img" />
 </node>
 
 </launch>
