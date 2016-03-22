@@ -478,7 +478,7 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 ///
 void Camera::robot_topic_pose_subscribe(RobotConfiguration robot_pose)
 {
-	ros::Subscriber pose_sub = m_node.subscribe<nav_msgs::Odometry>("/" + robot_pose.name + "/localizer/odometry/final", 1000, &Camera::pose_feedback, this);
+	ros::Subscriber pose_sub = m_node.subscribe<nav_msgs::Odometry>("/" + robot_pose.name + "/localizer/odometry/final", 10, &Camera::pose_feedback, this);
 	m_robot_feedback_pose_sub.push_back(pose_sub);
         ROS_INFO("io sono %s ,in cam %s lui l'ho visto in %s",robot_pose.name.c_str(),m_camera_name.c_str(), robot_pose.cam_name.c_str());
 	if( robot_pose.cam_name != m_camera_name )
