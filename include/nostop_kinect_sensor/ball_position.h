@@ -1,5 +1,5 @@
-#ifndef struct_H
-#define struct_H
+#ifndef ball_position_H
+#define ball_position_H
 #pragma once
 
 namespace Robotics 
@@ -16,9 +16,8 @@ namespace Robotics
 		public:
 		  ball_position(): x(0), y(0), height(0), width(0) {}
 		};
-
 	}
 }
 
 
-#endif // struct_H
+#endif // ball_position_H

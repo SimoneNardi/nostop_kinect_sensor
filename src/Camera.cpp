@@ -323,7 +323,7 @@ void Camera::final_image_showing()
 
 
 
-// GIVE THE CLASS ARRAY
+// GET THE CLASS ARRAY
 std::vector<ball_position> Camera::get_blue_array()
 {
 	Lock l_lock(m_mutex);
@@ -332,7 +332,7 @@ std::vector<ball_position> Camera::get_blue_array()
 
 
 
-// GIVE THE CLASS ARRAY
+// GET THE CLASS ARRAY
 std::vector<ball_position> Camera::get_green_array()
 {
 	Lock l_lock(m_mutex);
@@ -342,7 +342,7 @@ std::vector<ball_position> Camera::get_green_array()
 
 
 
-// GIVE THE CLASS ARRAY
+// GET THE CLASS ARRAY
 std::vector<ball_position> Camera::get_red_array()
 {
 	Lock l_lock(m_mutex);
@@ -366,6 +366,12 @@ std::vector<ball_position> Camera::get_yellow_array()
 {
 	Lock l_lock(m_mutex);
 	return m_yellow_circles_W;
+}
+
+string Camera::get_name()
+{
+  Lock l_lock(m_mutex);
+  return m_camera_name;
 }
 
 // FEEDBACK OF EKF NODE 
@@ -550,10 +556,10 @@ void Camera::thresholded_images_settings()
 {
 	// Blue Ball HSV values 
 	namedWindow(BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name);
-	//      createTrackbar("H lower",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_lb_b[0],180,0,0);
+	createTrackbar("H lower",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_lb_b[0],180,0,0);
 	createTrackbar("S lower",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_lb_b[1],255,0,0);
 	createTrackbar("V lower",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_lb_b[2],255,0,0);
-	//      createTrackbar("H upper",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_ub_b[0],180,0,0);
+	createTrackbar("H upper",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_ub_b[0],180,0,0);
 	createTrackbar("S upper",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_ub_b[1],255,0,0);
 	createTrackbar("V upper",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_ub_b[2],255,0,0);
 	createTrackbar("Kernel size",BLUE_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_dim_kernel_blue,20,0,0);
@@ -572,26 +578,26 @@ void Camera::thresholded_images_settings()
 
 	//      Red Ball HSV values (H had *0.5 scale factor)
 	namedWindow(RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name);
-	//      createTrackbar("H lower (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_lower_lb_r[0],180,0,0);
+	createTrackbar("H lower (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_lower_lb_r[0],180,0,0);
 	createTrackbar("S lower (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_lower_lb_r[1],255,0,0);
 	createTrackbar("V lower (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_lower_lb_r[2],255,0,0);
-	//      createTrackbar("H upper (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_lower_ub_r[0],180,0,0);
+	createTrackbar("H upper (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_lower_ub_r[0],180,0,0);
 	createTrackbar("S upper (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_lower_ub_r[1],255,0,0);
 	createTrackbar("V upper (lower red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_lower_ub_r[2],255,0,0);
-	//      createTrackbar("H lower (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_upper_lb_r[0],180,0,0);
+	createTrackbar("H lower (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_upper_lb_r[0],180,0,0);
 	createTrackbar("S lower (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_upper_lb_r[1],255,0,0);
 	createTrackbar("V lower (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_upper_lb_r[2],255,0,0);
-	//      createTrackbar("H upper (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_upper_ub_r[0],180,0,0);
+	createTrackbar("H upper (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_upper_ub_r[0],180,0,0);
 	createTrackbar("S upper (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_upper_ub_r[1],255,0,0);
 	createTrackbar("V upper (upper red)",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_upper_ub_r[2],255,0,0);
 	createTrackbar("Kernel size",RED_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_dim_kernel_red,20,0,0);
 	    
 	//      Yellow Ball HSV values
 	namedWindow(YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name);
-	//      createTrackbar("H lower",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_lb_y[0],180,0,0);
+	createTrackbar("H lower",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_lb_y[0],180,0,0);
 	createTrackbar("S lower",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_lb_y[1],255,0,0);
 	createTrackbar("V lower",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_lb_y[2],255,0,0);
-	//      createTrackbar("H upper",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&ub_y[0],180,0,0);
+	createTrackbar("H upper",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_ub_y[0],180,0,0);
 	createTrackbar("S upper",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_ub_y[1],255,0,0);
 	createTrackbar("V upper",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_ub_y[2],255,0,0);
 	createTrackbar("Kernel size",YELLOW_THRESHOLD_WINDOWS+"calibration"+m_camera_name,&m_dim_kernel_yellow,20,0,0);
