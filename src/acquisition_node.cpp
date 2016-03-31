@@ -1,5 +1,4 @@
 #include "ros/ros.h"
-
 #include "Camera_manager.h"
 
 
@@ -10,11 +9,11 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "acquisition_node"); 
 	
 	ros::NodeHandle n("~");
-	int frequency(50);
-	double lat0(0),lon0(0);
-	n.getParam("frequency",frequency);
-	n.getParam("SRworld_lat0",lat0);
-	n.getParam("SRworld_lon0",lon0);
+	int frequency;
+	double lat0,lon0;
+	n.param("frequency",frequency,50);
+	n.param("SRworld_lat0",lat0,47.0);
+	n.param("SRworld_lon0",lon0,-10.0);
 	Robotics::GameTheory::Camera_manager l_Camera_manager(lat0,lon0);
 
 	ros::Rate r(frequency);

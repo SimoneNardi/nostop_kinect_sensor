@@ -24,6 +24,7 @@
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
+#include <sensor_msgs/NavSatFix.h>
 #include <geometry_msgs/PointStamped.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <nav_msgs/Odometry.h>
@@ -55,6 +56,7 @@ namespace Robotics
 		{
 		public:
 			int pose_setted;
+			long int gps_time;
 			cv::Point2f head_point;
 			cv::Point2f tail_point;
 			cv::Point2f central_point;
@@ -63,6 +65,8 @@ namespace Robotics
 			bool is_magnetometer;
 			std::string name;
 			std::string cam_name;
+			std::string front_color;
+			std::string back_color;
 			bool waiting_for_head_click,waiting_for_tail_click;
 			public:
 			      RobotConfiguration() {}
@@ -119,7 +123,6 @@ namespace Robotics
 		{
 		 
 			Mutex m_mutex;
-			
 			std::string m_camera_name;
 			std::string m_topic_name;
 			bool m_available;
@@ -127,7 +130,7 @@ namespace Robotics
 			ros::NodeHandle m_node;
 			ros::Subscriber m_calibration_sub;
 			ros::Subscriber m_robot_init_pose_sub;
-			std::vector<ros::Subscriber> m_robot_feedback_pose_sub;
+			std::vector<ros::Subscriber> m_robot_feedback_pose_sub,m_robot_feedback_GPS_sub;
 			image_transport::ImageTransport m_it;
 			image_transport::Subscriber m_image_sub;
 			
@@ -169,7 +172,7 @@ namespace Robotics
 			~Camera();
 			void camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg);
 			std::vector<ball_position> cam_to_W(std::vector<ball_position>& array);
-			std::vector<ball_position> charge_array(cv::Mat img);
+			std::vector<ball_position> charge_array(cv::Mat& img,std::string& color);
 			void filtering(cv::Mat &src,cv::Mat &dst,int  lb[],int ub[],int dim_kernel);
 			void filtering_initialization();
 			void final_image_showing();
@@ -179,8 +182,6 @@ namespace Robotics
 			std::string get_name();
 			cv::Mat get_stream_video();
 			std::vector<ball_position> get_yellow_array();
-// 			ball_position odometry_to_srW(ball_position& robot_odometry,RobotConfiguration& robot_config);
-// 			ball_position origin_pix2origin_world(cv::Point2f& origin_SR_pix);
 			void pose_feedback(const nav_msgs::Odometry::ConstPtr& msg);
 			void reset_vector();
 			void robot_topic_pose_subscribe(RobotConfiguration robot_pose);
@@ -189,6 +190,7 @@ namespace Robotics
 			void video_acquisition(const sensor_msgs::ImageConstPtr& msg);
 			void thresholded_images_settings();
 			ball_position W_to_cam(ball_position& in);
+			void GPS_sub(const nav_msgs::Odometry::ConstPtr& msg);
 		};
 
 	}
