@@ -119,19 +119,22 @@
   
   <!--SETTINGS-->
   <!--remap from="/camera/rgb/image_raw" to = "/kinect/cam_img" /--> <!--  DONE PREVIOUSLY -->
-<node pkg="nostop_kinect_sensor" type="calibration_node" output="screen">
+<node name="kinect_calibration" pkg="nostop_kinect_sensor" type="calibration" output="screen">
     <param name="image_topic" value="/kinect/cam_img" />
-    <param name="node_name" value = "kinect_calibration"/>
+<!--     <param name="node_name" value = "kinect_calibration"/> -->
     <param name="calibration_topic_name" value="/kinect/calibration_topic"/>
     <param name="camera_name" value="kinect" />
 </node>
 
+
+<arg name="image_topic" default="/kinect/cam_img" />
+<arg name="calibration_topic_name" default="/kinect/calibration_topic"/>
 <arg name="camera_name" default="kinect" />
-<arg name="iFOVx_angle" default = "60"/>
-<arg name="iFOVy_angle" default = "32"/>
+<arg name="iFOVx_angle" default = "65"/>
+<arg name="iFOVy_angle" default = "55"/>
   <node pkg="nostop_kinect_sensor" type="script_cam.sh" 
     args="$(arg camera_name) $(arg image_topic) $(arg calibration_topic_name) $(arg iFOVx_angle) $(arg iFOVy_angle)" 
-    name="camera_node" output="screen">
+    name="camera_node_kinect" output="screen">
   </node>
   
     <node name="rqt_reconfigure_kinect" pkg="rqt_reconfigure" type="rqt_reconfigure"/>
