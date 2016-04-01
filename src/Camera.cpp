@@ -51,6 +51,7 @@ Camera::Camera(std::string name_,std::string image_topic_name,std::string calibr
 , m_roll(0)
 , m_focal_angle_x(ifovx)
 , m_focal_angle_y(ifovy)
+, m_lost_gps_time(5)
 {
 	filtering_initialization();
 	ROS_INFO("CAMERA %s ON!",m_camera_name.c_str());
