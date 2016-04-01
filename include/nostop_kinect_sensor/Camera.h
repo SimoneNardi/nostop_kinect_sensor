@@ -137,6 +137,7 @@ namespace Robotics
 			cv::Mat m_stream_video;
 			
 			//ROBOT
+			double m_lost_gps_time;
 			std::vector<RobotConfiguration> m_robot_array;
 			
 			//POINT TRASFORMATION
@@ -179,7 +180,7 @@ namespace Robotics
 			std::vector<ball_position> get_blue_array();
 			std::vector<ball_position> get_green_array();
 			std::vector<ball_position> get_red_array();
-			std::string get_name();
+			void GPS_sub(const nav_msgs::Odometry::ConstPtr& msg);
 			cv::Mat get_stream_video();
 			std::vector<ball_position> get_yellow_array();
 			void pose_feedback(const nav_msgs::Odometry::ConstPtr& msg);
@@ -190,7 +191,6 @@ namespace Robotics
 			void video_acquisition(const sensor_msgs::ImageConstPtr& msg);
 			void thresholded_images_settings();
 			ball_position W_to_cam(ball_position& in);
-			void GPS_sub(const nav_msgs::Odometry::ConstPtr& msg);
 		};
 
 	}

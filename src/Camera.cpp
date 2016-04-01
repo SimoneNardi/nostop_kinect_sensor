@@ -230,6 +230,7 @@ void Camera::camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg
 	ROS_INFO("omegaz--->%f",m_omegaz*180/M_PI);
 	m_gammax = msg->data[6]*M_PI/180;
 	m_h_robot = msg->data[7];
+	m_lost_gps_time = msg->data[8];
 }
  
 /// CHARGE CLASS ARRAY WITH FOUNDED BALL POSITION
@@ -368,11 +369,23 @@ std::vector<ball_position> Camera::get_yellow_array()
 	return m_yellow_circles_W;
 }
 
-string Camera::get_name()
+
+
+/////////////////////////////////////////////////////////////////
+void Camera::GPS_sub(const nav_msgs::Odometry::ConstPtr& msg)
 {
-  Lock l_lock(m_mutex);
-  return m_camera_name;
+	std::string robot_name;
+	Lock l_lock(m_mutex);
+	robot_name = msg->child_frame_id.substr(0,msg->child_frame_id.find("/"));
+	for(size_t j = 0; j<m_robot_array.size(); ++j)
+	{
+		if(robot_name == m_robot_array[j].name)
+		{
+			m_robot_array[j].gps_time = ros::Time::now().toSec();
+		}
+	}
 }
+
 
 // FEEDBACK OF EKF NODE 
 void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
@@ -436,7 +449,7 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 			cv::Point l_tl,l_br;
 			if (robot_position_pixel.y>240)
 			{
-				if(ros::Time::now().toSec() - m_robot_array[to_update].gps_time > 4)
+				if(ros::Time::now().toSec() - m_robot_array[to_update].gps_time > m_lost_gps_time)
 				{
 					robot_position_pixel.height = m_robot_array[to_update].pose_rect.height+25;
 					robot_position_pixel.width = m_robot_array[to_update].pose_rect.width+25;
@@ -454,7 +467,7 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 				new_rect.width = robot_position_pixel.width;
 				m_robot_array[to_update].pose_rect = new_rect;
 			}else{
-				if(ros::Time::now().toSec() - m_robot_array[to_update].gps_time > 4)
+				if(ros::Time::now().toSec() - m_robot_array[to_update].gps_time > m_lost_gps_time)
 				{
 					robot_position_pixel.height = m_robot_array[to_update].pose_rect.height+25;
 					robot_position_pixel.width = m_robot_array[to_update].pose_rect.width+25;
@@ -496,20 +509,6 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 
 
 
-
-void Camera::GPS_sub(const nav_msgs::Odometry::ConstPtr& msg)
-{
-	std::string robot_name;
-	Lock l_lock(m_mutex);
-	robot_name = msg->child_frame_id.substr(0,msg->child_frame_id.find("/"));
-	for(size_t j = 0; j<m_robot_array.size(); ++j)
-	{
-		if(robot_name == m_robot_array[j].name)
-		{
-			m_robot_array[j].gps_time = ros::Time::now().toSec();
-		}
-	}
-}
 ///////////////////////////////////////////////////
 void Camera::robot_topic_pose_subscribe(RobotConfiguration robot_pose)
 {

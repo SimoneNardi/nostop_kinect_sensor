@@ -36,8 +36,6 @@ Robot::Robot(std::string& name, double& lat0, double& lon0):
 	m_robot_heading_pub= m_robot.advertise<std_msgs::Float64>("/"+m_name+"/heading",10);
 	m_robot_command = m_robot.subscribe<geometry_msgs::Twist>("/"+m_name+"/cmd_vel",10,&Robot::command_reading,this);
 	m_robot_initial_pose = m_robot.advertise<geometry_msgs::PoseWithCovarianceStamped>("/"+m_name+"/set_pose",10);
-	//TEST
-	m_robot_odometry = m_robot.advertise<nav_msgs::Odometry>("/"+m_name+"/localizer/odometry/final",10);
 	Front_ptr = std::make_shared<Ball_tracker>();
 	Back_ptr = std::make_shared<Ball_tracker>();
 	ROS_INFO("ROBOT %s ON!", m_name.c_str());
@@ -77,15 +75,6 @@ void Robot::set_initial_robot_pose(double& x,double& y,float& yaw)
 			i = i+6;
 		}
 		m_robot_initial_pose.publish<geometry_msgs::PoseWithCovarianceStamped>(msg);
-		//TEST
-		nav_msgs::Odometry msg2;
-		msg2.header.frame_id = "SRworld";
-		msg2.child_frame_id = "red_blue/base_link";
-		msg2.header.stamp = ros::Time::now();
-		msg2.pose.pose.position.x = x;
-		msg2.pose.pose.position.y = y;
-		msg2.pose.pose.position.z = 0.0;
-		m_robot_odometry.publish<nav_msgs::Odometry>(msg2);
 	}
 }
 
