@@ -105,7 +105,9 @@ float rot_Z(float xC,float yC,float xP,float yP)
 
 void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &config, uint32_t level) 
  {
-	float R,xC,yC,zC,xW,yW,xP,yP,omega_z,gam,h_robot,gps_time;
+	float R,xC,yC,zC,xW,yW,xP,yP,omega_z,gam,h_robot;
+	int gps_time;
+	float HSV_calibration_on;
 	R = config.R_distance;
 	message.data[1] = R;
 	xC = config.W_xC;
@@ -123,7 +125,12 @@ void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &confi
 	h_robot = config.h_robot;
 	message.data[7] = h_robot;
 	gps_time = config.lost_gps_time;
-	message.data[8] = gps_time;
+	message.data[8] = (float) gps_time;
+	if(config.HSV_calibration)
+	  HSV_calibration_on = 1;
+	else
+	  HSV_calibration_on = 0;
+	message.data[9] = HSV_calibration_on;
 	to_publish = true;
 }
 
@@ -135,7 +142,7 @@ int main(int argc, char **argv)
 	ros::NodeHandle calibrator("~");
 	ros::Publisher calibrator_pub;
 	ROS_INFO("Calibration %s : ON",cam_name.c_str());
-	message.data.resize(9);
+	message.data.resize(10);
 	calibrator.getParam("camera_name",cam_name);
 	calibrator.getParam("image_topic",image_topic);
 	calibrator.getParam("calibration_topic_name",calibration_topic);

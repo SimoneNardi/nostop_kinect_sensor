@@ -146,6 +146,16 @@ void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vecto
 		m_heading = atan2((m_back_pos.y-m_front_pos.y),(m_back_pos.x-m_front_pos.x))+M_PI;
 		publish_pose(m_front_pos,m_back_pos,m_heading);
 		}
+	}else{
+	  if(ros::Time::now().toSec()-m_gps_time > 60)
+	  {
+		double x = 0.01*(m_front_pos.x+m_back_pos.x)/2;
+		double y = 0.01*(m_front_pos.y+m_back_pos.y)/2;
+		Lock l_lock(m_mutex);
+		m_before_cmd = true;
+		set_initial_robot_pose(x,y,m_heading);
+		m_before_cmd = false;
+	  }
 	}
 }
 
@@ -165,6 +175,7 @@ sensor_msgs::NavSatFix Robot::enu2geodetic(double x,double y,double z)
 	GPS.position_covariance.at(8) = 0.1;
 // 	GPS.header.frame_id = m_name+"/base_link";// antenna location
 	GPS.header.frame_id = "SRworld";//TEST
+	m_gps_time = ros::Time::now().toSec();
 	GPS.header.stamp = ros::Time::now();
 	return GPS;
 }

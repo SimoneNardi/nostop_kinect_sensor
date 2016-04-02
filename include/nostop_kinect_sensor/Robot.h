@@ -47,7 +47,7 @@ namespace Robotics
 		  
 		  tf::TransformBroadcaster m_test_tf_broadcaster;
 		geometry_msgs::TransformStamped m_test_tf;
-		double start;
+		double m_gps_time;
 		
 	public:
 		  Robot(std::string& name, double& lat, double& lon);

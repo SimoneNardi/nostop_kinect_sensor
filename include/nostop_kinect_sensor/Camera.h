@@ -125,7 +125,7 @@ namespace Robotics
 			Mutex m_mutex;
 			std::string m_camera_name;
 			std::string m_topic_name;
-			bool m_available;
+			bool m_available,m_HSV_calibration_on;
 			
 			ros::NodeHandle m_node;
 			ros::Subscriber m_calibration_sub;
@@ -146,6 +146,7 @@ namespace Robotics
 			int m_focal_angle_x,m_focal_angle_y;
 			
 			// HSV
+			int m_blue_threshold_on,m_green_threshold_on,m_red_threshold_on,m_yellow_threshold_on;
 			int m_lb_b[3];
 			int m_ub_b[3]; 
 			int m_lb_g[3]; 
@@ -173,7 +174,10 @@ namespace Robotics
 			~Camera();
 			void camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg);
 			std::vector<ball_position> cam_to_W(std::vector<ball_position>& array);
-			std::vector<ball_position> charge_array(cv::Mat& img,std::string& color);
+			std::vector<ball_position> charge_array(cv::Mat& img);
+			void delete_thresholded_images_settings();
+			void filtering(cv::Mat &src,cv::Mat &dst,int  lb[],int ub[],int dim_kernel,
+			  		       int& viewing_on,std::string& color);
 			void filtering(cv::Mat &src,cv::Mat &dst,int  lb[],int ub[],int dim_kernel);
 			void filtering_initialization();
 			void final_image_showing();
