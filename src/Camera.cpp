@@ -486,7 +486,6 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 
 	Lock l_lock(m_mutex);
 	cv::Rect new_rect;
-	cv::Rect field_vision;
 	
 	if (robot_position_cm_W.x<x_max && 
 	    robot_position_cm_W.x>x_min && 

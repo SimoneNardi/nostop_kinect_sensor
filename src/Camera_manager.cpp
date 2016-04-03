@@ -118,7 +118,7 @@ void mouse_callback_central_point(int event, int x, int y, int flags, void* para
 // SETTING INITIAL POSE
 void Camera_manager::initialize_mouse()
 { 
-  // ROBOTS INITIAL POSE
+	// ROBOTS INITIAL POSE 
 	for(size_t j = 0;j<m_camera_on.size();j++)
 	{
 		for(size_t i = 0; i<m_robot_initial_configuration.size(); i++)
@@ -132,36 +132,35 @@ void Camera_manager::initialize_mouse()
 				case -1:
 				{	
 					m_camera_on[j].image = m_camera_array.at(j)->get_stream_video();
-					cv::imshow( windows_name.c_str(), m_camera_on[j].image );
-				  
-				  	MouseCallbackData *l_callData=new MouseCallbackData;
-					l_callData->cam_name = m_camera_on[j].camera_name;
-					l_callData->robot_config = m_robot_initial_configuration[i];
-					
-				  
-					if(m_robot_initial_configuration[i]->is_magnetometer)
+					if(m_camera_on[j].image.cols && m_camera_on[j].image.rows)
 					{
-						l_callData->type = MouseCallbackData::CENTRAL;
-						
-						if(m_initialization_data.find(l_callData) == m_initialization_data.end())
+						cv::imshow( windows_name.c_str(), m_camera_on[j].image );
+						MouseCallbackData *l_callData=new MouseCallbackData;
+						l_callData->cam_name = m_camera_on[j].camera_name;
+						l_callData->robot_config = m_robot_initial_configuration[i];
+						if(m_robot_initial_configuration[i]->is_magnetometer)
 						{
-						  m_initialization_data.insert(l_callData);
-						  cvSetMouseCallback(windows_name.c_str(), mouse_callback_central_point, l_callData);
+							l_callData->type = MouseCallbackData::CENTRAL;
+							
+							if(m_initialization_data.find(l_callData) == m_initialization_data.end())
+							{
+								m_initialization_data.insert(l_callData);
+								cvSetMouseCallback(windows_name.c_str(), mouse_callback_central_point, l_callData);
+							}
+							else
+								delete l_callData;
 						}
 						else
-						  delete l_callData;
-					}
-					else
-					{
-						l_callData->type = MouseCallbackData::HEAD;
-						
-						if(m_initialization_data.find(l_callData) == m_initialization_data.end())
 						{
-						  m_initialization_data.insert(l_callData);
-						  cvSetMouseCallback(windows_name.c_str(), mouse_callback_head_point, l_callData);
+							l_callData->type = MouseCallbackData::HEAD;
+							if(m_initialization_data.find(l_callData) == m_initialization_data.end())
+							{
+								m_initialization_data.insert(l_callData);
+								cvSetMouseCallback(windows_name.c_str(), mouse_callback_head_point, l_callData);
+							}
+							else
+							      delete l_callData;
 						}
-						else
-						  delete l_callData;
 					}
 					break;
 				}  
