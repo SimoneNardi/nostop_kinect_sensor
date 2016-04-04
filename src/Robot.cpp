@@ -35,7 +35,7 @@ Robot::Robot(std::string& name, double& lat0, double& lon0):
 	m_robot_gps_pub = m_robot.advertise<sensor_msgs::NavSatFix>("/"+m_name+"/localizer/gps/fix",10);
 	m_robot_heading_pub= m_robot.advertise<std_msgs::Float64>("/"+m_name+"/heading",10);
 	m_robot_command = m_robot.subscribe<geometry_msgs::Twist>("/"+m_name+"/cmd_vel",10,&Robot::command_reading,this);
-	m_robot_initial_pose = m_robot.advertise<geometry_msgs::PoseWithCovarianceStamped>("/"+m_name+"/set_pose",10);
+	m_robot_initial_pose = m_robot.advertise<geometry_msgs::PoseWithCovarianceStamped>("/"+m_name+"/localizer/camera/pose",10);
 	Front_ptr = std::make_shared<Ball_tracker>();
 	Back_ptr = std::make_shared<Ball_tracker>();
 	ROS_INFO("ROBOT %s ON!", m_name.c_str());
