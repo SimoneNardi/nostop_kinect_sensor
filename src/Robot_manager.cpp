@@ -16,8 +16,6 @@ m_lat0(lat0)
 , m_lon0(lon0)
 {
 	ROS_INFO("ROBOT MANAGER ON!");
-	m_add_robot_topic = m_manager_node.subscribe<std_msgs::String>("/localizer/camera/add_robot", 10, &Robot_manager::new_robot_id_topic,this);
-	m_add_robot_service = m_manager_node.advertiseService("/localizer/add_robot", &Robot_manager::new_robot_id_service,this);
 }
 
 //////////////////////////////////////
@@ -25,21 +23,16 @@ Robot_manager::~Robot_manager()
 {}
 
 //////////////////////////////////////
-bool Robot_manager::new_robot_id_service(
-  nostop_agent::AddRobot::Request  &req,
-  nostop_agent::AddRobot::Response &res)
-{
-	m_robot_array.push_back( std::make_shared<Robot>(req.name,m_lat0,m_lon0) );
-	return true;
-}
-
-//////////////////////////////////////
-void Robot_manager::new_robot_id_topic(const std_msgs::String::ConstPtr& msg)
+void Robot_manager::add_robot(const std_msgs::String::ConstPtr& msg)
 {	
+	std::cout<<"add_robot"<<std::endl;
 	std::string l_robot_name = msg->data;
 	std::size_t found = l_robot_name.find_last_of("_");
 	l_robot_name = l_robot_name.substr(0,found);
+	
 	m_robot_array.push_back( std::make_shared<Robot>(l_robot_name,m_lat0,m_lon0) );
+	
+	std::cout << l_robot_name << " has been added!" << std::endl;
 }
 
 //////////////////////////////////////

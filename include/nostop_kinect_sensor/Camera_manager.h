@@ -19,6 +19,8 @@
 #include "Camera.h"
 #include "ball_position.h"
 
+#include "nostop_agent/AddRobot.h"
+
 namespace Robotics 
 {
 	namespace GameTheory
@@ -32,7 +34,10 @@ namespace Robotics
 
 			ros::Publisher m_pub;
 			ros::Subscriber m_camera_in;
+			
 			ros::Subscriber m_add_robot_topic;
+			ros::ServiceServer m_add_robot_service;
+			
 			std::vector< std::shared_ptr<Camera> > m_camera_array;
 			std::vector<std::string> m_camera_names;
 			std::shared_ptr<Robot_manager> m_manager;
@@ -51,6 +56,8 @@ namespace Robotics
 			void initialize_mouse();
 			void new_camera(const nostop_kinect_sensor::Camera_data::ConstPtr& msg);
  			void pack_passage();
+			
+			bool new_robot_id_service( nostop_agent::AddRobot::Request  &req, nostop_agent::AddRobot::Response &res);
 		};
 
 	}

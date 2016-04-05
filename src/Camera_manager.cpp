@@ -15,6 +15,7 @@ Camera_manager::Camera_manager(double& lat0,double& lon0)
 {
 	ROS_INFO("COLLECTOR ON!");
 	m_camera_in = m_node.subscribe<nostop_kinect_sensor::Camera_data>("/camera_in", 10, &Camera_manager::new_camera,this);
+	m_add_robot_service = m_node.advertiseService("/localizer/add_robot", &Camera_manager::new_robot_id_service,this);
 	m_add_robot_topic = m_node.subscribe<std_msgs::String>("/localizer/camera/add_robot", 10, &Camera_manager::new_robot_id_topic,this);
 	m_manager = std::make_shared<Robot_manager>(lat0,lon0);
 }
@@ -41,8 +42,24 @@ void Camera_manager::new_camera(const nostop_kinect_sensor::Camera_data::ConstPt
 	m_camera_on.push_back(camera);
 }
 
+//////////////////////////////////////
+bool Camera_manager::new_robot_id_service(
+  nostop_agent::AddRobot::Request  &req,
+  nostop_agent::AddRobot::Response &res)
+{
+	std::cout<<"new_robot_id_service"<<std::endl;
+	std::string l_robot_name = req.name+"_OFF";
+
+	std_msgs::String::Ptr l_msg(new std_msgs::String());
+	l_msg->data = l_robot_name;
+	new_robot_id_topic(l_msg);
+	
+	return true;
+}
+
 void Camera_manager::new_robot_id_topic(const std_msgs::String::ConstPtr& msg)
 {
+	std::cout<<"new_robot_id_topic"<<std::endl;
 	RobotConfiguration *l_robot = new RobotConfiguration();
 	l_robot->name =  msg->data;
 	l_robot->is_magnetometer = false;
@@ -58,6 +75,9 @@ void Camera_manager::new_robot_id_topic(const std_msgs::String::ConstPtr& msg)
 	l_robot->pose_setted = -1;
 	
 	m_robot_initial_configuration.push_back(l_robot);
+	
+	if(m_manager)
+	  m_manager->add_robot(msg);
 }
 
 
