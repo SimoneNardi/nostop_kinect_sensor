@@ -11,6 +11,7 @@
 #include "math.h"
 #include <string>
 #include "ball_position.h"
+#include <nostop_robot_localization/SetPose.h>
 #include <GeographicLib/Geocentric.hpp>
 #include <GeographicLib/LocalCartesian.hpp>
 
@@ -36,9 +37,11 @@ Robot::Robot(std::string& name, double& lat0, double& lon0):
 	m_robot_heading_pub= m_robot.advertise<std_msgs::Float64>("/"+m_name+"/heading",10);
 	m_robot_command = m_robot.subscribe<geometry_msgs::Twist>("/"+m_name+"/cmd_vel",10,&Robot::command_reading,this);
 	m_robot_initial_pose = m_robot.advertise<geometry_msgs::PoseWithCovarianceStamped>("/"+m_name+"/reset/pose",10);
+	m_robot_initial_pose_client= m_robot.serviceClient<nostop_robot_localization::SetPose>("/"+m_name+"/reset/pose");
 	Front_ptr = std::make_shared<Ball_tracker>();
 	Back_ptr = std::make_shared<Ball_tracker>();
 	ROS_INFO("ROBOT %s ON!", m_name.c_str());
+
 }
 
 //////////////////////////////////////
@@ -56,25 +59,26 @@ void Robot::command_reading(const geometry_msgs::Twist::ConstPtr& msg)
 }
 
 
-
 void Robot::set_initial_robot_pose(double& x,double& y,float& yaw)
 {
 	if(m_before_cmd)
 	{
-		geometry_msgs::PoseWithCovarianceStamped msg;
-		msg.header.frame_id = "SRworld";
-		msg.header.stamp = ros::Time::now();
-		msg.pose.pose.position.x = x;
-		msg.pose.pose.position.y = y;
-		msg.pose.pose.position.z = 0.0;
+		nostop_robot_localization::SetPose msg;
+		msg.request.pose.header.frame_id = "map";
+		msg.request.pose.header.stamp = ros::Time::now();
+		msg.request.pose.pose.pose.position.x = x;
+		msg.request.pose.pose.pose.position.y = y;
+		msg.request.pose.pose.pose.position.z = 0.0;
 		geometry_msgs::Quaternion l_quat = tf::createQuaternionMsgFromYaw(yaw);
-		msg.pose.pose.orientation = l_quat;
-		for(size_t i = 0;i<msg.pose.covariance.size();++i)
+		msg.request.pose.pose.pose.orientation = l_quat;
+		for(size_t i = 0;i<msg.request.pose.pose.covariance.size();++i)
 		{
-			msg.pose.covariance.at(i) = 0.1;
+			msg.request.pose.pose.covariance.at(i) = 0.1;
 			i = i+6;
 		}
-		m_robot_initial_pose.publish<geometry_msgs::PoseWithCovarianceStamped>(msg);
+		
+		if(m_robot_initial_pose_client.call<nostop_robot_localization::SetPose>(msg))
+			m_before_cmd = false;
 	}
 }
 
@@ -147,7 +151,7 @@ void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vecto
 		publish_pose(m_front_pos,m_back_pos,m_heading);
 		}
 	}else{
-	  if(ros::Time::now().toSec()-m_gps_time > 60)
+	  if(ros::Time::now().toSec()-m_gps_time > 30)
 	  {
 		double x = 0.01*(m_front_pos.x+m_back_pos.x)/2;
 		double y = 0.01*(m_front_pos.y+m_back_pos.y)/2;
@@ -174,12 +178,11 @@ sensor_msgs::NavSatFix Robot::enu2geodetic(double x,double y,double z)
 	GPS.position_covariance.at(4) = 0.1;
 	GPS.position_covariance.at(8) = 0.1;
 // 	GPS.header.frame_id = m_name+"/base_link";// antenna location
-	GPS.header.frame_id = "SRworld";//TEST
+	GPS.header.frame_id = "map";//TEST
 	m_gps_time = ros::Time::now().toSec();
 	GPS.header.stamp = ros::Time::now();
 	return GPS;
 }
-
 
 
 //////////////////////////////////////
@@ -195,7 +198,7 @@ void Robot::publish_pose(ball_position front_pos,ball_position back_pos, float y
 	double y = 0.01*(front_pos.y+back_pos.y)/2;
 	double z = 0;
 	set_initial_robot_pose(x,y,yaw);
-// 	ROS_INFO("x--> %f, y--> %f",x,y);
+// 	  ROS_INFO("x--> %f, y--> %f",x,y);
 	pose_gps = enu2geodetic(x,y,z);// CORRECTION BECAUSE x NOT POINT TO EAST?
 	m_robot_gps_pub.publish<sensor_msgs::NavSatFix>(pose_gps);          
 }

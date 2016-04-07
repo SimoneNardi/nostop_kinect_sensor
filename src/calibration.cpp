@@ -23,10 +23,12 @@ std::string cam_name;
  
 void mouse_callback(int event, int x, int y, int flags, void* param)
 {
-	if (event == CV_EVENT_LBUTTONDBLCLK) { 
+	if (event == CV_EVENT_LBUTTONDBLCLK) 
+	{ 
 		xy.x = x;
 		xy.y = y;
 		vertex.push_back(xy);
+		callback_on = false;
 	}
 }
 
@@ -121,7 +123,7 @@ float rot_Z(float xC,float yC,float xP,float yP)
 void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &config, uint32_t level) 
  {
 	float R,xC,yC,zC,xW,yW,xP,yP,omega_z,gam,h_robot;
-	int gps_time;
+	int gps_time,max_area,min_area;
 	float HSV_calibration_on,roll_calibration;
 	R = config.R_distance;
 	message.data[1] = R;
@@ -150,6 +152,12 @@ void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &confi
 	  rool_cal_window_on = true;
 	else
 	  rool_cal_window_on = false;
+	
+	//TEST
+	message.data[10] = config.MinArea;
+	message.data[11] = config.MaxArea;
+	
+	
 	to_publish = true;
 }
 
@@ -163,7 +171,7 @@ int main(int argc, char **argv)
 	ros::Publisher calibrator_pub;
 	ros::ServiceClient camera_in_pub;
 	ROS_INFO("Calibration %s : ON",cam_name.c_str());
-	message.data.resize(10);
+	message.data.resize(12);
 	
 	calibrator.getParam("camera_name",cam_name);
 	calibrator.getParam("image_topic",image_topic);
@@ -188,20 +196,23 @@ int main(int argc, char **argv)
 	camera_in.request.ifovy = iFOVy;
 	camera_in.request.name = cam_name;
 	camera_in.request.topic_name = image_topic;
-	
-	if(camera_in_pub.call<nostop_kinect_sensor::Camera_data_srv>(camera_in))
+	bool camera_in_setted = false;
+	while(!camera_in_setted)
 	{
-		while(ros::ok)
-		{
-			
-			if(to_publish)
-			{  
-				calibrator_pub.publish(message);
-				ROS_INFO("%s published calibration values",cam_name.c_str());
-				to_publish=false;
-			}
-			ros::spinOnce();
+		if(camera_in_pub.call<nostop_kinect_sensor::Camera_data_srv>(camera_in))
+			camera_in_setted = true;
+		ros::spinOnce();
+	}
+	while(ros::ok)
+	{
+		
+		if(to_publish)
+		{  
+			calibrator_pub.publish(message);
+			ROS_INFO("%s published calibration values",cam_name.c_str());
+			to_publish=false;
 		}
+		ros::spinOnce();
 	}
 	return 0;
 }

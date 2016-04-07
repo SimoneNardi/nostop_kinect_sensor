@@ -46,6 +46,8 @@ Camera::Camera(std::string name_,std::string image_topic_name,std::string calibr
 , m_it(m_node)
 , m_camera_name(name_)
 , m_topic_name(image_topic_name)
+, m_min_area(0)
+, m_max_area(600)
 , m_R(120)
 , m_roll(0)
 , m_xCamera(0)
@@ -195,6 +197,8 @@ void Camera::camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg
 		m_HSV_calibration_on = true;
 	else
 		m_HSV_calibration_on = false;
+	m_min_area = msg->data[10];
+	m_max_area = msg->data[11];
 }
  
 /// CHARGE CLASS ARRAY WITH FOUNDED BALL POSITION
@@ -203,6 +207,7 @@ std::vector<ball_position> Camera::charge_array(cv::Mat& img)
 	std::vector<vector<cv::Point> > l_contours; 
 	ball_position l_ball;
 	std::vector<ball_position> l_array;
+	//WITH HOUGHCIRCLES?
 	cv::findContours(img, l_contours, CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);   
 	for (size_t i = 0; i < l_contours.size(); i++)       
 	{          
@@ -218,10 +223,10 @@ std::vector<ball_position> Camera::charge_array(cv::Mat& img)
 
 		for(size_t j = 0;j<m_robot_array.size();j++)
 		{
-			if (ratio > 0.6 && 
+			if (ratio > 0.7 && 
 			    m_robot_array[j].pose_setted == 3 && 
 			    possible_ball.inside(m_robot_array[j].pose_rect) && 
-			    bBox.area()<1900 && bBox.area()>100) 
+			    bBox.area()<m_max_area && bBox.area()>m_min_area) 
 			{
 				cv::Point point;
 				point.x = possible_ball.x;
@@ -383,8 +388,9 @@ void Camera::final_image_showing()
 	}
 	cv::circle(m_stream_video,center,2,cv::Scalar(0, 0, 255),-1,8,0);
 	cv::circle(m_stream_video,center,10,cv::Scalar(0, 0, 0),1,8,0);
-// 	createTrackbar("iFOVx",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_x,255,0,0);
-// 	createTrackbar("iFOVy",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_y,255,0,0);
+	createTrackbar("iFOVx",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_x,255,0,0);
+	createTrackbar("iFOVy",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_y,255,0,0);
+	
 	cv::imshow(SENSOR_CV_WINDOW+m_camera_name,m_stream_video);
 }
 

@@ -27,6 +27,8 @@ namespace Robotics
 		  ros::Publisher m_robot_heading_pub,m_robot_gps_pub;
 		  ros::Subscriber m_robot_command;
 		  ros::Publisher m_robot_initial_pose;
+		  ros::ServiceClient m_robot_initial_pose_client;
+		  
 		  std::string m_name;
 		  std::string m_front_marker_color;
 		  std::string m_back_marker_color;
