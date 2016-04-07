@@ -12,7 +12,7 @@
   <build_depend>base_math</build_depend>
   <build_depend>message_generation</build_depend>
   <build_depend>roscpp</build_depend>
-    <build_depend>rospy</build_depend>
+  <build_depend>rospy</build_depend>
   <build_depend>cv_bridge</build_depend>
   <build_depend>image_transport</build_depend>
   <build_depend>nostop_agent</build_depend>
@@ -24,7 +24,7 @@
   <run_depend>base_math</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>roscpp</run_depend>
-    <run_depend>rospy</run_depend>
+  <run_depend>rospy</run_depend>
   <run_depend>cv_bridge</run_depend>
   <run_depend>image_transport</run_depend>
   <run_depend>nostop_agent</run_depend>

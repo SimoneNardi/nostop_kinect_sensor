@@ -8,13 +8,17 @@
 #include <std_msgs/Float64MultiArray.h>
 #include <dynamic_reconfigure/server.h>
 #include <nostop_kinect_sensor/Camera_calibrationConfig.h>
+#include <nostop_kinect_sensor/Camera_data_msg.h>
+#include <nostop_kinect_sensor/Camera_data_srv.h>
+
 #include <cv.h>
 #include <stdlib.h>
+
 cv::Point2f xy;
 std::vector<cv::Point2f> vertex;
 cv::Point2f A_toimage;
 std_msgs::Float64MultiArray message;
-bool to_publish,rool_cal_window_on = false,callback_on = false;
+bool to_publish = false,rool_cal_window_on = false,callback_on = false;
 std::string cam_name;
  
 void mouse_callback(int event, int x, int y, int flags, void* param)
@@ -153,34 +157,51 @@ void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &confi
 int main(int argc, char **argv)
 {
 	std::string calibration_topic,image_topic;
+	int iFOVx,iFOVy;
 	ros::init(argc, argv, "calibration");
 	ros::NodeHandle calibrator("~");
 	ros::Publisher calibrator_pub;
+	ros::ServiceClient camera_in_pub;
 	ROS_INFO("Calibration %s : ON",cam_name.c_str());
 	message.data.resize(10);
+	
 	calibrator.getParam("camera_name",cam_name);
 	calibrator.getParam("image_topic",image_topic);
 	calibrator.getParam("calibration_topic_name",calibration_topic);
+	calibrator.getParam("iFOVx",iFOVx);
+	calibrator.getParam("iFOVy",iFOVy);
 	A_toimage.x=320.5;
 	A_toimage.y=240.5;
 	image_transport::ImageTransport it(calibrator);
 	image_transport::Subscriber subscriber;
 	subscriber = it.subscribe(image_topic.c_str(),3, &subscriber_callback,image_transport::TransportHints("raw"));
 	calibrator_pub = calibrator.advertise<std_msgs::Float64MultiArray>(calibration_topic,10);
+	camera_in_pub = calibrator.serviceClient<nostop_kinect_sensor::Camera_data_srv>("/camera_in");
 	dynamic_reconfigure::Server<nostop_kinect_sensor::Camera_calibrationConfig> camera_calibration;
 	dynamic_reconfigure::Server<nostop_kinect_sensor::Camera_calibrationConfig>::CallbackType callback;
 	callback = boost::bind(&calibration_callback,_1,_2);
 	camera_calibration.setCallback(callback);
+
+	nostop_kinect_sensor::Camera_data_srv camera_in;
+	camera_in.request.calibration_topic = calibration_topic;
+	camera_in.request.ifovx = iFOVx;
+	camera_in.request.ifovy = iFOVy;
+	camera_in.request.name = cam_name;
+	camera_in.request.topic_name = image_topic;
 	
-	while (ros::ok())
+	if(camera_in_pub.call<nostop_kinect_sensor::Camera_data_srv>(camera_in))
 	{
-		if(to_publish)
-		{  
-			calibrator_pub.publish(message);
-			ROS_INFO("%s published calibration values",cam_name.c_str());
-			to_publish=false;
+		while(ros::ok)
+		{
+			
+			if(to_publish)
+			{  
+				calibrator_pub.publish(message);
+				ROS_INFO("%s published calibration values",cam_name.c_str());
+				to_publish=false;
+			}
+			ros::spinOnce();
 		}
-		ros::spinOnce();
 	}
 	return 0;
 }

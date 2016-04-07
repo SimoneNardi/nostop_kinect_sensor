@@ -3,9 +3,6 @@
 #include "std_msgs/String.h"
 #include <Robot_manager.h>
 
-#include "nostop_kinect_sensor/Camera_data.h"
-
-
 using namespace std;
 using namespace Robotics;
 using namespace Robotics::GameTheory;
@@ -14,7 +11,8 @@ using namespace Robotics::GameTheory;
 Camera_manager::Camera_manager(double& lat0,double& lon0)
 {
 	ROS_INFO("COLLECTOR ON!");
-	m_camera_in = m_node.subscribe<nostop_kinect_sensor::Camera_data>("/camera_in", 10, &Camera_manager::new_camera,this);
+	m_camera_in = m_node.subscribe<nostop_kinect_sensor::Camera_data_msg>("/camera_in", 10, &Camera_manager::new_camera_topic,this);
+	m_camera_in_service = m_node.advertiseService("/camera_in",&Camera_manager::new_camera_service,this);
 	m_add_robot_service = m_node.advertiseService("/localizer/add_robot", &Camera_manager::new_robot_id_service,this);
 	m_add_robot_topic = m_node.subscribe<std_msgs::String>("/localizer/camera/add_robot", 10, &Camera_manager::new_robot_id_topic,this);
 	m_manager = std::make_shared<Robot_manager>(lat0,lon0);
@@ -24,8 +22,21 @@ Camera_manager::Camera_manager(double& lat0,double& lon0)
 Camera_manager::~Camera_manager()
 {}
 
+bool Camera_manager::new_camera_service(nostop_kinect_sensor::Camera_data_srv::Request& req, 
+					nostop_kinect_sensor::Camera_data_srv::Response& res)
+{
+  nostop_kinect_sensor::Camera_data_msg::Ptr l_data(new nostop_kinect_sensor::Camera_data_msg);
+  l_data->calibration_topic = req.calibration_topic;
+  l_data->ifovx = req.ifovx;
+  l_data->ifovy = req.ifovy;
+  l_data->name = req.name;
+  l_data->topic_name = req.topic_name;
+  new_camera_topic(l_data);
+  return true;
+}
+
 /////////////////////////////////////////////
-void Camera_manager::new_camera(const nostop_kinect_sensor::Camera_data::ConstPtr& msg)
+void Camera_manager::new_camera_topic(const nostop_kinect_sensor::Camera_data_msg::ConstPtr& msg)
 {	
 	std::string camera_name,image_topic,calibration_topic;
 	camera_name.assign( msg->name);

@@ -46,8 +46,14 @@ Camera::Camera(std::string name_,std::string image_topic_name,std::string calibr
 , m_it(m_node)
 , m_camera_name(name_)
 , m_topic_name(image_topic_name)
-, m_R(1)
+, m_R(120)
 , m_roll(0)
+, m_xCamera(0)
+, m_yCamera(0)
+, m_zCamera(100)
+, m_omegaz(M_PI/2)
+, m_gammax(180)
+, m_h_robot(0)
 , m_focal_angle_x(ifovx)
 , m_focal_angle_y(ifovy)
 , m_lost_gps_time(5)
@@ -377,8 +383,8 @@ void Camera::final_image_showing()
 	}
 	cv::circle(m_stream_video,center,2,cv::Scalar(0, 0, 255),-1,8,0);
 	cv::circle(m_stream_video,center,10,cv::Scalar(0, 0, 0),1,8,0);
-	createTrackbar("iFOVx",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_x,255,0,0);
-	createTrackbar("iFOVy",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_y,255,0,0);
+// 	createTrackbar("iFOVx",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_x,255,0,0);
+// 	createTrackbar("iFOVy",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_y,255,0,0);
 	cv::imshow(SENSOR_CV_WINDOW+m_camera_name,m_stream_video);
 }
 

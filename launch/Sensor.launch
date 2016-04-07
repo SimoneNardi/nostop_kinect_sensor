@@ -1,7 +1,0 @@
-<launch>
-
-  <include file="$(find openni2_launch)/launch/openni2.launch"/>
-  
-  <node pkg="nostop_kinect_sensor" type="Sensor" name="Sensor" required="true" output="screen" />
-  
-</launch>

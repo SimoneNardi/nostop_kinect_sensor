@@ -15,7 +15,8 @@
 #include <memory>
 
 // #include "Threads.h"
-#include "nostop_kinect_sensor/Camera_data.h"
+#include "nostop_kinect_sensor/Camera_data_msg.h"
+#include <nostop_kinect_sensor/Camera_data_srv.h>
 #include "Camera.h"
 #include "ball_position.h"
 
@@ -36,7 +37,7 @@ namespace Robotics
 			ros::Subscriber m_camera_in;
 			
 			ros::Subscriber m_add_robot_topic;
-			ros::ServiceServer m_add_robot_service;
+			ros::ServiceServer m_add_robot_service,m_camera_in_service;
 			
 			std::vector< std::shared_ptr<Camera> > m_camera_array;
 			std::vector<std::string> m_camera_names;
@@ -54,10 +55,12 @@ namespace Robotics
 			~Camera_manager();
 			void new_robot_id_topic(const std_msgs::String::ConstPtr& msg);
 			void initialize_mouse();
-			void new_camera(const nostop_kinect_sensor::Camera_data::ConstPtr& msg);
+			void new_camera_topic(const nostop_kinect_sensor::Camera_data_msg::ConstPtr& msg);
  			void pack_passage();
-			
-			bool new_robot_id_service( nostop_agent::AddRobot::Request  &req, nostop_agent::AddRobot::Response &res);
+			bool new_camera_service(nostop_kinect_sensor::Camera_data_srv::Request& req,
+						nostop_kinect_sensor::Camera_data_srv::Response& res );
+			bool new_robot_id_service( nostop_agent::AddRobot::Request  &req, 
+						   nostop_agent::AddRobot::Response &res);
 		};
 
 	}

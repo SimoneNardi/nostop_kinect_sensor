@@ -43,20 +43,27 @@ find_package( OpenCV REQUIRED )
 ## Declare ROS messages, services and actions ##
 ################################################
 
-## Generate messages in the 'msg' folder
- add_message_files(
-   FILES
-     Camera_data.msg
- )
 
-## Generate added messages and services with any dependencies listed here
+add_service_files(
+  FILES
+  Camera_data_srv.srv
+)
+
+## Generate messages in the 'msg' folder
+add_message_files(
+ FILES
+  Camera_data_msg.msg
+)
+
+ ## Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
    std_msgs  # Or other packages containing msgs
    
  )
 
-###################################
+
+ ###################################
 ## catkin specific configuration ##
 ###################################
 catkin_package(
