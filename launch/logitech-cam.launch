@@ -8,6 +8,8 @@
     <param name="image_height" value="480" />
     <param name="pixel_format" value="yuyv" />
     <param name="camera_name" value="logitech" />
+    <param name="framerate" value="100"/>
+    <param name="camera_frame_id" value="logitech_cam"/>
   </node>   
   
 

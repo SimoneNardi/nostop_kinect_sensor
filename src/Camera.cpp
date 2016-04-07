@@ -1,4 +1,3 @@
-
 #include "Camera.h"
 
 #include "Robot_manager.h"
@@ -52,11 +51,13 @@ Camera::Camera(std::string name_,std::string image_topic_name,std::string calibr
 , m_focal_angle_x(ifovx)
 , m_focal_angle_y(ifovy)
 , m_lost_gps_time(5)
-, m_HSV_calibration_on(true)
+, m_HSV_calibration_on(false)
 {
 	filtering_initialization();
 	ROS_INFO("CAMERA %s ON!",m_camera_name.c_str());
 	m_calibration_sub = m_node.subscribe(calibration_topic,10,&Camera::camera_calibration,this);
+	//TEST
+	m_autocalibration_sub = m_node.subscribe("/"+m_camera_name+"/svo/pose",1,&Camera::auto_recalibration,this);
 	subscribe();  
 }
 
@@ -794,4 +795,15 @@ ball_position Camera::W_to_cam(ball_position& pos_in)
 	pos_cam_pixel.height = 2*g_ball_radius;
 	pos_cam_pixel.width = 2*g_ball_radius;
 	return pos_cam_pixel;
+}
+
+
+
+
+
+////////////////////////// TEST FUNCTION AUTO RECALIBRATION
+void Camera::auto_recalibration(const geometry_msgs::PoseWithCovarianceStamped& msg)
+{
+  Lock l_lock(m_mutex);
+  //TODO
 }
