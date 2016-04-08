@@ -76,7 +76,10 @@ void Robot::set_initial_robot_pose(double& x,double& y,float& yaw)
 			msg.request.pose.pose.covariance.at(i) = 0.1;
 			i = i+6;
 		}
-		
+		geometry_msgs::PoseWithCovarianceStamped msg2;
+		msg2.header = msg.request.pose.header;
+		msg2.pose = msg.request.pose.pose;
+		m_robot_initial_pose.publish<geometry_msgs::PoseWithCovarianceStamped>(msg2);
 		if(m_robot_initial_pose_client.call<nostop_robot_localization::SetPose>(msg))
 			m_before_cmd = false;
 	}

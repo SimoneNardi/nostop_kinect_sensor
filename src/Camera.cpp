@@ -65,7 +65,7 @@ Camera::Camera(std::string name_,std::string image_topic_name,std::string calibr
 	ROS_INFO("CAMERA %s ON!",m_camera_name.c_str());
 	m_calibration_sub = m_node.subscribe(calibration_topic,10,&Camera::camera_calibration,this);
 	//TEST
-	m_autocalibration_sub = m_node.subscribe("/"+m_camera_name+"/svo/pose",1,&Camera::auto_recalibration,this);
+// 	m_autocalibration_sub = m_node.subscribe("/"+m_camera_name+"/svo/pose",1,&Camera::auto_recalibration,this);
 	subscribe();  
 }
 
@@ -125,7 +125,7 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
 			distance_from_center_x = rx*tan(azimuth);
 		}else{
 			// y correction
-			phi = pitch-elevation;
+			phi = std::min( pitch-elevation,iFOVy);
 			distance_from_center_y = -(sin(elevation)/sin(phi))*ipotenuse;
 			// h robot correction in y
 			psi1 = atan((m_R-distance_from_center_y)/m_zCamera);
@@ -200,14 +200,16 @@ void Camera::camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg
 	m_min_area = msg->data[10];
 	m_max_area = msg->data[11];
 }
- 
+
+
+
 /// CHARGE CLASS ARRAY WITH FOUNDED BALL POSITION
 std::vector<ball_position> Camera::charge_array(cv::Mat& img)
 {
 	std::vector<vector<cv::Point> > l_contours; 
 	ball_position l_ball;
 	std::vector<ball_position> l_array;
-	//WITH HOUGHCIRCLES?
+  
 	cv::findContours(img, l_contours, CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);   
 	for (size_t i = 0; i < l_contours.size(); i++)       
 	{          
@@ -218,6 +220,7 @@ std::vector<ball_position> Camera::charge_array(cv::Mat& img)
 		    ratio = 1.0f / ratio;
 		  // Searching for a bBox almost square
 		cv::Point2f possible_ball;
+				
 		possible_ball.x = bBox.x+bBox.width/2;
 		possible_ball.y = bBox.y+bBox.height/2;
 
@@ -267,7 +270,38 @@ void Camera::delete_thresholded_images_settings()
 	m_yellow_threshold_on = false; 
 }
 
-
+int g_min_dist = 1;
+int g_canny_edge = 200;
+int g_false_det =  20;
+int g_min_rad = 0;
+int g_max_rad = 0;
+cv::Mat g_stream;
+const static std::string g_test_windows = "test";
+//TEST
+vector<Vec3f> houghCircles(cv::Mat stream,cv::Mat src_gray)
+{
+	/// Apply the Hough Transform to find the circles
+	vector<Vec3f> circles;
+	HoughCircles( src_gray, circles, CV_HOUGH_GRADIENT, 1, g_min_dist+1, g_canny_edge+1, g_false_det+1,g_min_rad, g_max_rad );
+	createTrackbar("min_distance","test",&g_min_dist,400,0,0);
+	createTrackbar("canny_edge","test",&g_canny_edge,400,0,0);
+	createTrackbar("false_detect","test",&g_false_det,300,0,0);
+	createTrackbar("min_rad","test",&g_min_rad,100,0,0);
+	createTrackbar("max_rad","test",&g_max_rad,300,0,0);
+// 	std::cout<<circles.size()<<std::endl;
+	/// Draw the circles detected
+	for( size_t i = 0; i < circles.size(); i++ )
+	{
+	    Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+	    int radius = cvRound(circles[i][2]);
+	    // circle center
+	    circle( g_stream, center, 3, Scalar(0,255,0), -1, 8, 0 );
+	    // circle outline
+	    circle( g_stream, center, radius, Scalar(0,0,255), 3, 8, 0 );
+	}
+	imshow(g_test_windows,g_stream);
+	return circles;
+}
 /// COLOR FILTERING FUNCTION
 void Camera::filtering(cv::Mat &src,cv::Mat &dst,int  lb[],int  ub[],int dim_kernel,
 		       int& viewing_on,std::string& color)
@@ -332,7 +366,7 @@ void Camera::filtering_initialization()
 	m_ub_b[0] = 160;
 	m_ub_b[1] = 255;
 	m_ub_b[2] = 255;
-	m_dim_kernel_blue = 4;
+	m_dim_kernel_blue = 2;
 	//GREEN
 	m_green_threshold_on = false;
 	m_lb_g[0] = 40;
@@ -341,7 +375,7 @@ void Camera::filtering_initialization()
 	m_ub_g[0] = 60;
 	m_ub_g[1] = 255;
 	m_ub_g[2] = 255;
-	m_dim_kernel_green = 4;
+	m_dim_kernel_green = 2;
 	//RED
 	m_red_threshold_on = false;
 	m_lower_lb_r[0] = 0;
@@ -356,7 +390,7 @@ void Camera::filtering_initialization()
 	m_upper_ub_r[0] = 179;
 	m_upper_ub_r[1] = 255;
 	m_upper_ub_r[2] = 255;
-	m_dim_kernel_red = 4;
+	m_dim_kernel_red = 2;
 	//YELLOW
 	m_yellow_threshold_on = false;
 	m_lb_y[0] = 20;
@@ -365,7 +399,7 @@ void Camera::filtering_initialization()
 	m_ub_y[0] = 45;
 	m_ub_y[1] = 255;
 	m_ub_y[2] = 255;
-	m_dim_kernel_yellow = 4;
+	m_dim_kernel_yellow = 2;
 }
 
 
@@ -388,8 +422,8 @@ void Camera::final_image_showing()
 	}
 	cv::circle(m_stream_video,center,2,cv::Scalar(0, 0, 255),-1,8,0);
 	cv::circle(m_stream_video,center,10,cv::Scalar(0, 0, 0),1,8,0);
-	createTrackbar("iFOVx",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_x,255,0,0);
-	createTrackbar("iFOVy",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_y,255,0,0);
+// 	createTrackbar("iFOVx",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_x,255,0,0);
+// 	createTrackbar("iFOVy",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_y,255,0,0);
 	
 	cv::imshow(SENSOR_CV_WINDOW+m_camera_name,m_stream_video);
 }
@@ -466,7 +500,7 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 	ball_position corn;
 	int robot_number;
 	float x_min,x_max,y_min,y_max;
-	ball_position robot_position_cm,robot_position_pixel;
+	ball_position robot_position_pixel;
 	ball_position robot_position_cm_W;
 	std::string l_robot_name = msg->child_frame_id;
 	l_robot_name = l_robot_name.substr(0,l_robot_name.find("/"));
@@ -499,7 +533,14 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 
 	Lock l_lock(m_mutex);
 	cv::Rect new_rect;
-	
+	ROS_INFO("min: x   y");
+	ROS_INFO("    %f  %f",x_min,y_min);
+	ROS_INFO("max: x   y");
+	ROS_INFO("    %f  %f",x_max,y_max);
+	ROS_INFO("CORNER");
+	ROS_INFO("x--> %f %f %f %f",corners_cm_w.at(0).x,corners_cm_w.at(1).x,corners_cm_w.at(1).x,corners_cm_w.at(3).x);
+	ROS_INFO("y--> %f %f %f %f",corners_cm_w.at(0).y,corners_cm_w.at(1).y,corners_cm_w.at(1).y,corners_cm_w.at(3).y);
+	ROS_INFO("Cm world--> x=%f y=%f",robot_position_cm_W.x,robot_position_cm_W.y);
 	if (robot_position_cm_W.x<x_max && 
 	    robot_position_cm_W.x>x_min && 
 	    robot_position_cm_W.y<y_max && 
@@ -583,8 +624,9 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 ///////////////////////////////////////////////////
 void Camera::robot_topic_pose_subscribe(RobotConfiguration robot_pose)
 {
+	Lock l_lock(m_mutex);
 	ros::Subscriber pose_sub = m_node.subscribe<nav_msgs::Odometry>("/" + robot_pose.name + "/localizer/odometry/final", 10, &Camera::pose_feedback, this);
-	ros::Subscriber gps_odom_sub = m_node.subscribe<nav_msgs::Odometry>("/"+robot_pose.name+"/odom_from_gps",10, &Camera::GPS_sub, this);//COME FACCIO A DISTINGUERE?
+	ros::Subscriber gps_odom_sub = m_node.subscribe<nav_msgs::Odometry>("/"+robot_pose.name+"/odom_from_gps",10, &Camera::GPS_sub, this);
 	m_robot_feedback_GPS_sub.push_back(gps_odom_sub);
 	m_robot_feedback_pose_sub.push_back(pose_sub);
         if( robot_pose.cam_name != m_camera_name )
@@ -620,20 +662,28 @@ void Camera::search_ball_pos()
 	else
 		delete_thresholded_images_settings();
 	
-	std::string blue("blue"),green("green"),yellow("yellow"),red("red");
+	std::string l_blue("blue"),l_green("green"),l_yellow("yellow"),l_red("red");
 	// FILTERING
-	filtering(m_stream_video,l_only_blue,m_lb_b,m_ub_b,m_dim_kernel_blue+1,m_blue_threshold_on,blue);  
-	filtering(m_stream_video,l_only_green,m_lb_g,m_ub_g,m_dim_kernel_green+1,m_green_threshold_on,green);  
+	filtering(m_stream_video,l_only_blue,m_lb_b,m_ub_b,m_dim_kernel_blue+1,m_blue_threshold_on,l_blue);  
+	filtering(m_stream_video,l_only_green,m_lb_g,m_ub_g,m_dim_kernel_green+1,m_green_threshold_on,l_green);  
 	filtering(m_stream_video,l_only_lower_red,m_lower_lb_r,m_lower_ub_r,m_dim_kernel_red+1);  
 	filtering(m_stream_video,l_only_upper_red,m_upper_lb_r,m_upper_ub_r,m_dim_kernel_red+1);  
 	cv::addWeighted(l_only_lower_red,1.0,l_only_upper_red,1.0,0.0,l_only_red);
 	if(m_red_threshold_on)
-		cv::imshow(red+" thresholded image "+m_camera_name,l_only_red);
+		cv::imshow(l_red+" thresholded image "+m_camera_name,l_only_red);
 	else
-		cv::destroyWindow(red+" thresholded image "+m_camera_name);
+		cv::destroyWindow(l_red+" thresholded image "+m_camera_name);
 	
-	filtering(m_stream_video,l_only_yellow,m_lb_y,m_ub_y,m_dim_kernel_yellow+1,m_yellow_threshold_on,yellow);  
-		
+	filtering(m_stream_video,l_only_yellow,m_lb_y,m_ub_y,m_dim_kernel_yellow+1,m_yellow_threshold_on,l_yellow);  
+
+	// TEST
+// 	g_stream = m_stream_video.clone();
+// 	vector<Vec3f> blue_vec,green_vec,red_vec,yellow_vec;
+// 	blue_vec = houghCircles(m_stream_video, l_only_blue);
+// 	green_vec = houghCircles(m_stream_video, l_only_green);
+// 	red_vec = houghCircles(m_stream_video, l_only_red);
+// 	yellow_vec = houghCircles(m_stream_video, l_only_yellow);
+	
 	//  CHARGE ARRAY WITH FIND BALLS 
 	l_blue_circles = charge_array(l_only_blue);
  	l_green_circles = charge_array(l_only_green);
