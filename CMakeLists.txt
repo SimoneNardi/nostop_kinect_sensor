@@ -122,6 +122,12 @@ add_executable(cam_view_angle ${cam_view_angle_SOURCES})
 add_dependencies(cam_view_angle nostop_kinect_sensor_gencpp)
 target_link_libraries(cam_view_angle ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning )
 
+
+add_executable(test_Hough src/test.cpp)
+add_dependencies(test_Hough nostop_kinect_sensor_gencpp)
+target_link_libraries(test_Hough ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning )
+
+
 #############
 ## Install ##
 #############
