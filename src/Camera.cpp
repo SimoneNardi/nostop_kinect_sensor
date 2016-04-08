@@ -189,7 +189,7 @@ void Camera::camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg
 	m_yCamera = msg->data[3];
 	m_zCamera = msg->data[4];
 	m_omegaz = msg->data[5];// radians
-	ROS_INFO("omegaz--->%f",m_omegaz*180/M_PI);
+	ROS_INFO("%s omega_z--->%f",m_camera_name.c_str(),m_omegaz*180/M_PI);
 	m_gammax = msg->data[6]*M_PI/180;
 	m_h_robot = msg->data[7];
 	m_lost_gps_time = msg->data[8];

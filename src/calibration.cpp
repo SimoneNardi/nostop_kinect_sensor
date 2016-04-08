@@ -137,7 +137,8 @@ void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &confi
 	yP = config.W_yAxesP;
 	omega_z = rot_Z(xC,yC,xP,yP);
 	message.data[5] = omega_z;
-	gam = config.gamma_xC;  
+// 	gam = config.gamma_xC;
+	gam = 180;
 	message.data[6] = gam;
 	h_robot = config.h_robot;
 	message.data[7] = h_robot;
