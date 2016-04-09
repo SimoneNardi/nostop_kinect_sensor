@@ -21,6 +21,7 @@ cv::Point2f A_toimage;
 std_msgs::Float64MultiArray message;
 bool to_publish,rool_cal_window_on,callback_on;
 std::string cam_name;
+int image_width,image_height;
  
 
 void mouse_callback(int event, int x, int y, int flags, void* param)
@@ -55,18 +56,20 @@ void subscriber_callback(const sensor_msgs::ImageConstPtr &msg)
 			return;
 		}
 		cv::Mat video_image = cv_ptr->image.clone();
+		image_width = video_image.cols;
+		image_height = video_image.rows;
 		cv::waitKey(3);
 		cv::Point center,up,right,down,left;
-		center.x=320.5;
-		center.y=240.5;
-		up.x = 320.5;
+		center.x=image_width/2;
+		center.y=image_height/2;
+		up.x = image_width/2;
 		up.y = 2;
-		right.x = 637;
-		right.y = 240.5;
-		down.x = 320.5;
-		down.y = 477;
+		right.x = image_width-3;
+		right.y = image_height/2;
+		down.x = image_width/2;
+		down.y = image_height-3;
 		left.x = 3;
-		left.y = 240.5;
+		left.y = image_height/2;
 		cv::circle(video_image,down,2,cv::Scalar(0, 0, 255),-1,8,0);
 		cv::circle(video_image,left,2,cv::Scalar(0, 0, 255),-1,8,0);
 		cv::circle(video_image,up,2,cv::Scalar(0, 0, 255),-1,8,0);
@@ -74,15 +77,15 @@ void subscriber_callback(const sensor_msgs::ImageConstPtr &msg)
 		cv::circle(video_image,center,2,cv::Scalar(0, 0, 255),-1,8,0);
 		cv::circle(video_image,center,10,cv::Scalar(0, 0, 0),1,8,0);
 		cv::line(video_image,center,right,cv::Scalar(0,255,0),0,8,0);
-		if(A_toimage.x > 320)
+		if(A_toimage.x > image_width/2)
 		{
 			cv::line(video_image,center,A_toimage,cv::Scalar(0,255,0),0,8,0);
 		} else {
 			cv::line(video_image,center,A_toimage,cv::Scalar(0,0,255),0,8,0);
 			cv::Point2f A_symmetric,center_symmetric;
-			A_symmetric.x = 640-A_toimage.x;
-			A_symmetric.y = 480-A_toimage.y;
-			center_symmetric.x = 320;
+			A_symmetric.x = image_width-A_toimage.x;
+			A_symmetric.y = image_height-A_toimage.y;
+			center_symmetric.x = image_width/2;
 			center_symmetric.y = A_toimage.y;
 			cv::line(video_image,center,A_symmetric,cv::Scalar(0,255,0),0,8,0);
 			cv::line(video_image,A_toimage,center_symmetric,cv::Scalar(0,0,255),0,8,0);
@@ -100,8 +103,8 @@ void subscriber_callback(const sensor_msgs::ImageConstPtr &msg)
 			cv::Point2f A;
 			A = vertex[0];
 			A_toimage = A;
-			A.y = A.y-240;
-			A.x = A.x-320;
+			A.y = A.y-image_height/2;
+			A.x = A.x-image_width/2;
 			float roll_angle = atan(A.y/A.x)*180/M_PI;
 			message.data[0] = roll_angle;
 			vertex.clear();
@@ -191,8 +194,9 @@ int main(int argc, char **argv)
 	calibrator.getParam("iFOVx",iFOVx);
 	calibrator.getParam("iFOVy",iFOVy);
 	calibrator.getParam("user_name",user_name);
-	A_toimage.x=320.5;
-	A_toimage.y=240.5;
+	calibrator.getParam("image_width",image_width);
+        calibrator.getParam("image_height",image_height);
+
 	image_transport::ImageTransport it(calibrator);
 	image_transport::Subscriber subscriber;
 	subscriber = it.subscribe(image_topic.c_str(),3, &subscriber_callback,image_transport::TransportHints("raw"));
@@ -243,6 +247,8 @@ int main(int argc, char **argv)
 // 		std::cout<<"Calibration file not founded in: "+file_name.substr(0,file_name.find_last_of("/"))<<std::endl;
 // 	}
 // 	inputFile.close();
+	A_toimage.x=image_width/2;
+	A_toimage.y=image_height/2;
 	while(ros::ok)
 	{	
 		ros::spinOnce();
@@ -256,6 +262,7 @@ int main(int argc, char **argv)
 // 				local = message.data.at(i);
 // 				outputFile << local <<std::endl;
 // 			}
+
 // 			outputFile.close();
 // 			if(from_file)
 // 			{
