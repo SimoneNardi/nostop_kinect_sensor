@@ -125,7 +125,7 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
 			distance_from_center_x = rx*tan(azimuth);
 		}else{
 			// y correction
-			phi = std::min( pitch-elevation,iFOVy);
+			phi = std::max( pitch-elevation,iFOVy);
 			distance_from_center_y = -(sin(elevation)/sin(phi))*ipotenuse;
 			// h robot correction in y
 			psi1 = atan((m_R-distance_from_center_y)/m_zCamera);
@@ -226,7 +226,7 @@ std::vector<ball_position> Camera::charge_array(cv::Mat& img)
 
 		for(size_t j = 0;j<m_robot_array.size();j++)
 		{
-			if (ratio > 0.7 && 
+			if (ratio > 0.65 && 
 			    m_robot_array[j].pose_setted == 3 && 
 			    possible_ball.inside(m_robot_array[j].pose_rect) && 
 			    bBox.area()<m_max_area && bBox.area()>m_min_area) 
@@ -361,12 +361,12 @@ void Camera::filtering_initialization()
 	// BLUE
 	m_blue_threshold_on = false;
 	m_lb_b[0] = 100;
-	m_lb_b[1] = 125;
+	m_lb_b[1] = 100;
 	m_lb_b[2] = 100;
 	m_ub_b[0] = 160;
 	m_ub_b[1] = 255;
 	m_ub_b[2] = 255;
-	m_dim_kernel_blue = 2;
+	m_dim_kernel_blue = 1;
 	//GREEN
 	m_green_threshold_on = false;
 	m_lb_g[0] = 40;
@@ -379,7 +379,7 @@ void Camera::filtering_initialization()
 	//RED
 	m_red_threshold_on = false;
 	m_lower_lb_r[0] = 0;
-	m_lower_lb_r[1] = 170;
+	m_lower_lb_r[1] = 125;
 	m_lower_lb_r[2] = 150;
 	m_lower_ub_r[0] = 20;
 	m_lower_ub_r[1] = 255;
@@ -390,7 +390,7 @@ void Camera::filtering_initialization()
 	m_upper_ub_r[0] = 179;
 	m_upper_ub_r[1] = 255;
 	m_upper_ub_r[2] = 255;
-	m_dim_kernel_red = 2;
+	m_dim_kernel_red = 1;
 	//YELLOW
 	m_yellow_threshold_on = false;
 	m_lb_y[0] = 20;
@@ -422,8 +422,8 @@ void Camera::final_image_showing()
 	}
 	cv::circle(m_stream_video,center,2,cv::Scalar(0, 0, 255),-1,8,0);
 	cv::circle(m_stream_video,center,10,cv::Scalar(0, 0, 0),1,8,0);
-// 	createTrackbar("iFOVx",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_x,255,0,0);
-// 	createTrackbar("iFOVy",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_y,255,0,0);
+	createTrackbar("iFOVx",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_x,255,0,0);
+	createTrackbar("iFOVy",SENSOR_CV_WINDOW+m_camera_name,&m_focal_angle_y,255,0,0);
 	
 	cv::imshow(SENSOR_CV_WINDOW+m_camera_name,m_stream_video);
 }

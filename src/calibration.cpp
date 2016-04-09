@@ -4,23 +4,25 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <opencv2/highgui/highgui.hpp>
- 
 #include <std_msgs/Float64MultiArray.h>
 #include <dynamic_reconfigure/server.h>
 #include <nostop_kinect_sensor/Camera_calibrationConfig.h>
 #include <nostop_kinect_sensor/Camera_data_msg.h>
 #include <nostop_kinect_sensor/Camera_data_srv.h>
-
+#include <iostream>
+#include <fstream>
 #include <cv.h>
 #include <stdlib.h>
 
+#define message_size 12 
 cv::Point2f xy;
 std::vector<cv::Point2f> vertex;
 cv::Point2f A_toimage;
 std_msgs::Float64MultiArray message;
-bool to_publish = false,rool_cal_window_on = false,callback_on = false;
+bool to_publish,rool_cal_window_on,callback_on;
 std::string cam_name;
  
+
 void mouse_callback(int event, int x, int y, int flags, void* param)
 {
 	if (event == CV_EVENT_LBUTTONDBLCLK) 
@@ -119,12 +121,17 @@ float rot_Z(float xC,float yC,float xP,float yP)
 	return omega;
 }
 
-
+bool from_file = false;
+float readed_cfg[message_size];
 void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &config, uint32_t level) 
  {
 	float R,xC,yC,zC,xW,yW,xP,yP,omega_z,gam,h_robot;
 	int gps_time,max_area,min_area;
 	float HSV_calibration_on,roll_calibration;
+// 	if(from_file)
+// 	{
+// 	  config.R_distance=message.data[1];
+// 	}
 	R = config.R_distance;
 	message.data[1] = R;
 	xC = config.W_xC;
@@ -158,27 +165,32 @@ void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &confi
 	message.data[10] = config.MinArea;
 	message.data[11] = config.MaxArea;
 	
-	
 	to_publish = true;
 }
 
 
 int main(int argc, char **argv)
 {
-	std::string calibration_topic,image_topic;
+	std::string calibration_topic,image_topic,user_name;
 	int iFOVx,iFOVy;
 	ros::init(argc, argv, "calibration");
 	ros::NodeHandle calibrator("~");
 	ros::Publisher calibrator_pub;
 	ros::ServiceClient camera_in_pub;
 	ROS_INFO("Calibration %s : ON",cam_name.c_str());
-	message.data.resize(12);
+	message.data.resize(message_size);
 	
+	// initialization
+	rool_cal_window_on = false;
+	to_publish = false;
+	callback_on = false;;
+
 	calibrator.getParam("camera_name",cam_name);
 	calibrator.getParam("image_topic",image_topic);
 	calibrator.getParam("calibration_topic_name",calibration_topic);
 	calibrator.getParam("iFOVx",iFOVx);
 	calibrator.getParam("iFOVy",iFOVy);
+	calibrator.getParam("user_name",user_name);
 	A_toimage.x=320.5;
 	A_toimage.y=240.5;
 	image_transport::ImageTransport it(calibrator);
@@ -186,11 +198,11 @@ int main(int argc, char **argv)
 	subscriber = it.subscribe(image_topic.c_str(),3, &subscriber_callback,image_transport::TransportHints("raw"));
 	calibrator_pub = calibrator.advertise<std_msgs::Float64MultiArray>(calibration_topic,10);
 	camera_in_pub = calibrator.serviceClient<nostop_kinect_sensor::Camera_data_srv>("/camera_in");
+
 	dynamic_reconfigure::Server<nostop_kinect_sensor::Camera_calibrationConfig> camera_calibration;
 	dynamic_reconfigure::Server<nostop_kinect_sensor::Camera_calibrationConfig>::CallbackType callback;
 	callback = boost::bind(&calibration_callback,_1,_2);
 	camera_calibration.setCallback(callback);
-
 	nostop_kinect_sensor::Camera_data_srv camera_in;
 	camera_in.request.calibration_topic = calibration_topic;
 	camera_in.request.ifovx = iFOVx;
@@ -204,16 +216,59 @@ int main(int argc, char **argv)
 			camera_in_setted = true;
 		ros::spinOnce();
 	}
+	//TODO
+// 	std::ofstream outputFile;
+// 	std::ifstream inputFile;
+// 	bool file_readed;
+// // 	std::string file_name;user_name = "niko";cam_name="philips";
+// 	file_name = "/home/"+user_name+"/catkin_ws/src/nostop/nostop_kinect_sensor/"+cam_name+"_calibration_file.txt";
+// 	inputFile.open(file_name.c_str());
+// 	if(inputFile.is_open())
+// 	{
+// 		int count;
+// 		char output[100];
+// 		std::cout<<"Calibration file founded in: "+ file_name.substr(0,file_name.find_last_of("/"))<<std::endl;
+// 
+// 		while(count<message_size)
+// 		{
+// 			inputFile >> output;
+// // 			std::cout << output<<std::endl;
+// 			float readed = atof(output);
+// 			readed_cfg[count] = readed;
+// 			count+=1;
+// 		}
+// 		from_file =  true;
+// 		to_publish = true;
+// 	}else{
+// 		std::cout<<"Calibration file not founded in: "+file_name.substr(0,file_name.find_last_of("/"))<<std::endl;
+// 	}
+// 	inputFile.close();
 	while(ros::ok)
-	{
-		
+	{	
+		ros::spinOnce();
 		if(to_publish)
 		{  
+		//TODO
+// 			outputFile.open(file_name.c_str());
+// 			for(size_t i=0;i<message_size;++i)
+// 			{
+// 				float local;
+// 				local = message.data.at(i);
+// 				outputFile << local <<std::endl;
+// 			}
+// 			outputFile.close();
+// 			if(from_file)
+// 			{
+// 				for(size_t i=0;i<message_size;++i)
+// 				{
+// 					message.data.at(i) = readed_cfg[i];
+// 				}
+// 				from_file = false;
+// 			}
 			calibrator_pub.publish(message);
 			ROS_INFO("%s published calibration values",cam_name.c_str());
 			to_publish=false;
 		}
-		ros::spinOnce();
 	}
 	return 0;
 }
