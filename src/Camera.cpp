@@ -382,7 +382,7 @@ void Camera::filtering_initialization()
 	m_red_threshold_on = false;
 	m_lower_lb_r[0] = 0;
 	m_lower_lb_r[1] = 125;
-	m_lower_lb_r[2] = 150;
+	m_lower_lb_r[2] = 115;
 	m_lower_ub_r[0] = 20;
 	m_lower_ub_r[1] = 255;
 	m_lower_ub_r[2] = 255;
