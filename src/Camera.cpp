@@ -86,8 +86,8 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
 	float Rtot[3][3];
 	float x_SR_centered,y_SR_centered,x_roll_corrected,y_roll_corrected;
 	ball_position l_pos_pix,l_pos_cm,l_world_cm;
-	float iFOVx = (m_focal_angle_x*M_PI/180)/640;
-	float iFOVy = (m_focal_angle_y*M_PI/180)/480;
+	float iFOVx = (m_focal_angle_x*M_PI/180)/m_image_width;
+	float iFOVy = (m_focal_angle_y*M_PI/180)/m_image_height;
 	float azimuth,elevation;
 	float phi;
 	float distance_from_center_x,distance_from_center_y;
@@ -99,8 +99,8 @@ std::vector< ball_position > Camera::cam_to_W(std::vector<ball_position>& array)
 		l_pos_pix.y = array[i].y;
 		l_pos_pix.width = array[i].width;
 		l_pos_pix.height = array[i].height;    
-		x_SR_centered =l_pos_pix.x-320.5;
-		y_SR_centered = l_pos_pix.y-240.5;
+		x_SR_centered =l_pos_pix.x-m_image_width/2;
+		y_SR_centered = l_pos_pix.y-m_image_height/2;
 		x_roll_corrected = x_SR_centered*cos(m_roll)-y_SR_centered*sin(m_roll);
 		y_roll_corrected = x_SR_centered*sin(m_roll)+y_SR_centered*cos(m_roll);
 
@@ -199,6 +199,8 @@ void Camera::camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg
 		m_HSV_calibration_on = false;
 	m_min_area = msg->data[10];
 	m_max_area = msg->data[11];
+	m_image_height = m_stream_video.rows;
+	m_image_width = m_stream_video.cols;
 }
 
 
@@ -411,8 +413,8 @@ void Camera::final_image_showing()
 {  
       // BALLS' RECTANGLES
 	Point center;
-	center.x=320;
-	center.y=240;
+	center.x=m_image_width/2;
+	center.y=m_image_height/2;
 	
   // SEARCH RECTANGLE
 	for(size_t i = 0;i<m_robot_array.size();++i)
@@ -509,14 +511,14 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 	corn.x = 0;
 	corn.y = 0;
 	corners_pixel.push_back(corn);
-	corn.x = 640;
+	corn.x = m_image_height;
 	corn.y = 0;
 	corners_pixel.push_back(corn);
-	corn.x = 640;
-	corn.y = 480;
+	corn.x = m_image_height;
+	corn.y = m_image_height;
 	corners_pixel.push_back(corn);
 	corn.x = 0;
-	corn.y = 480;
+	corn.y = m_image_height;
 	corners_pixel.push_back(corn);
 	corners_cm_w = cam_to_W(corners_pixel);
 	x_min = min(corners_cm_w.at(0).x,corners_cm_w.at(1).x);
@@ -559,7 +561,7 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 		if(to_update >=0)
 		{
 			cv::Point l_tl,l_br;
-			if (robot_position_pixel.y>240)
+			if (robot_position_pixel.y>m_image_height/2)
 			{
 				if(ros::Time::now().toSec() - m_robot_array[to_update].gps_time > m_lost_gps_time)
 				{
@@ -610,8 +612,8 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 		}
 		if(to_erase >= 0)
 		{
-			new_rect.x = 320;
-			new_rect.y = 240;
+			new_rect.x = m_image_width/2;
+			new_rect.y = m_image_height/2;
 			new_rect.height = 0;
 			new_rect.width = 0;
 		}
@@ -726,7 +728,7 @@ void Camera::thresholded_images_settings()
 	
 	// Blue Ball HSV values 
 	namedWindow(BLUE_THRESHOLD_WINDOWS+"calibration "+m_camera_name);
-	cv::resizeWindow(BLUE_THRESHOLD_WINDOWS+"calibration "+m_camera_name,640,1);
+	cv::resizeWindow(BLUE_THRESHOLD_WINDOWS+"calibration "+m_camera_name,m_image_height,1);
 	createTrackbar("H lower",BLUE_THRESHOLD_WINDOWS+"calibration "+m_camera_name,&m_lb_b[0],180,0,0);
 	createTrackbar("S lower",BLUE_THRESHOLD_WINDOWS+"calibration "+m_camera_name,&m_lb_b[1],255,0,0);
 	createTrackbar("V lower",BLUE_THRESHOLD_WINDOWS+"calibration "+m_camera_name,&m_lb_b[2],255,0,0);
@@ -737,7 +739,7 @@ void Camera::thresholded_images_settings()
 
 	//      Green Ball HSV values
 	namedWindow(GREEN_THRESHOLD_WINDOWS+"calibration "+m_camera_name);
-	cv::resizeWindow(GREEN_THRESHOLD_WINDOWS+"calibration "+m_camera_name,640,1);
+	cv::resizeWindow(GREEN_THRESHOLD_WINDOWS+"calibration "+m_camera_name,m_image_height,1);
 	createTrackbar("H lower",GREEN_THRESHOLD_WINDOWS+"calibration "+m_camera_name,&m_lb_g[0],180,0,0);
 	createTrackbar("S lower",GREEN_THRESHOLD_WINDOWS+"calibration "+m_camera_name,&m_lb_g[1],255,0,0);
 	createTrackbar("V lower",GREEN_THRESHOLD_WINDOWS+"calibration "+m_camera_name,&m_lb_g[2],255,0,0);
@@ -748,7 +750,7 @@ void Camera::thresholded_images_settings()
 
 	//      Red Ball HSV values (H had *0.5 scale factor)
 	namedWindow(RED_THRESHOLD_WINDOWS+"calibration "+m_camera_name);
-	cv::resizeWindow(RED_THRESHOLD_WINDOWS+"calibration "+m_camera_name,640,1);
+	cv::resizeWindow(RED_THRESHOLD_WINDOWS+"calibration "+m_camera_name,m_image_height,1);
 	createTrackbar("H lower (lower red)",RED_THRESHOLD_WINDOWS+"calibration "+m_camera_name,&m_lower_lb_r[0],180,0,0);
 	createTrackbar("S lower (lower red)",RED_THRESHOLD_WINDOWS+"calibration "+m_camera_name,&m_lower_lb_r[1],255,0,0);
 	createTrackbar("V lower (lower red)",RED_THRESHOLD_WINDOWS+"calibration "+m_camera_name,&m_lower_lb_r[2],255,0,0);
@@ -765,7 +767,7 @@ void Camera::thresholded_images_settings()
 	
 	//      Yellow Ball HSV values
 	namedWindow(YELLOW_THRESHOLD_WINDOWS+"calibration "+m_camera_name);
-	cv::resizeWindow(YELLOW_THRESHOLD_WINDOWS+"calibration "+m_camera_name,640,1);
+	cv::resizeWindow(YELLOW_THRESHOLD_WINDOWS+"calibration "+m_camera_name,m_image_height,1);
 	createTrackbar("H lower",YELLOW_THRESHOLD_WINDOWS+"calibration "+m_camera_name,&m_lb_y[0],180,0,0);
 	createTrackbar("S lower",YELLOW_THRESHOLD_WINDOWS+"calibration "+m_camera_name,&m_lb_y[1],255,0,0);
 	createTrackbar("V lower",YELLOW_THRESHOLD_WINDOWS+"calibration "+m_camera_name,&m_lb_y[2],255,0,0);
@@ -805,8 +807,8 @@ ball_position Camera::W_to_cam(ball_position& pos_in)
 {
 	ball_position pos_cam_pixel;
 	float pos_cam_cm[3],pos_world[3],o01[3];
-	float iFOVx = (m_focal_angle_x*M_PI/180)/640;
-	float iFOVy = (m_focal_angle_y*M_PI/180)/480;
+	float iFOVx = (m_focal_angle_x*M_PI/180)/m_image_width;
+	float iFOVy = (m_focal_angle_y*M_PI/180)/m_image_height;
 	float azimuth,elevation;
 	float psi1,psi2,rx;
 	float distance_from_center_x,distance_from_center_y;
@@ -852,8 +854,8 @@ ball_position Camera::W_to_cam(ball_position& pos_in)
 	  
 	x_SR_centered = x_roll_corrected*cos(m_roll)+y_roll_corrected*sin(m_roll);
 	y_SR_centered = -x_roll_corrected*sin(m_roll)+y_roll_corrected*cos(m_roll);
-	pos_cam_pixel.x = x_SR_centered+320.5;
-	pos_cam_pixel.y = y_SR_centered+240.5;
+	pos_cam_pixel.x = x_SR_centered+m_image_width/2;
+	pos_cam_pixel.y = y_SR_centered+m_image_height/2;
 	pos_cam_pixel.height = 2*g_ball_radius;
 	pos_cam_pixel.width = 2*g_ball_radius;
 	return pos_cam_pixel;

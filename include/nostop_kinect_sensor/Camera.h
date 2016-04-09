@@ -166,6 +166,10 @@ namespace Robotics
 			// BALL DIMENSION
 			int m_min_area,m_max_area;
 			
+			// IMAGE DIMS
+			float m_image_width;
+			float m_image_height;
+			
 			// BALLS ARRAY
 			std::vector<ball_position>  m_blue_circles_W;
 			std::vector<ball_position>  m_green_circles_W;
