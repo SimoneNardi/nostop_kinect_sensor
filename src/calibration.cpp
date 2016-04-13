@@ -166,12 +166,18 @@ void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &confi
 	  rool_cal_window_on = true;
 	else
 	  rool_cal_window_on = false;
-	
-	
+
 	//TEST
 	message.data[10] = config.MinArea;
 	message.data[11] = config.MaxArea;
 
+	if(config.Viso2_ros_ON)
+	{
+		message.data[12] = 1;
+	}else{
+		message.data[12] = 0;
+	}
+	// TO FILE
 	configuration_file[0] = R;
 	configuration_file[1] = xC;
 	configuration_file[2] = yC;
@@ -184,8 +190,7 @@ void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &confi
 	configuration_file[9] = config.Roll_cal_window;
 	configuration_file[10] = config.MinArea;
 	configuration_file[11] = config.MaxArea;
-	if(config.Viso2_ros_ON)
-		configuration_file[12] = 1;
+
 
 	to_publish = true;
 }
@@ -214,7 +219,14 @@ int main(int argc, char **argv)
 	// initialization
 	rool_cal_window_on = false;
 	to_publish = false;
-	callback_on = false;;
+	callback_on = false;
+
+	//DINAMYC RECONFIGURE
+	dynamic_reconfigure::Server<nostop_kinect_sensor::Camera_calibrationConfig> camera_calibration;
+	dynamic_reconfigure::Server<nostop_kinect_sensor::Camera_calibrationConfig>::CallbackType callback;
+	callback = boost::bind(&calibration_callback,_1,_2);
+	camera_calibration.setCallback(callback);
+	
 
 	// PARAM FROM ROSLAUNCH
 	calibrator.getParam("camera_name",cam_name);
@@ -232,28 +244,21 @@ int main(int argc, char **argv)
 	calibrator_pub = calibrator.advertise<std_msgs::Float64MultiArray>(calibration_topic,10);
 	camera_in_pub = calibrator.serviceClient<nostop_kinect_sensor::Camera_data_srv>("/camera_in");
 
-	// RECONFIGURATION FROM LIBVISO NODE
-	ros::Subscriber libviso_sub = calibrator.subscribe("/"+cam_name+"/lib_viso_recalibration",2,&libviso_recalibration);
-	
-	//DINAMYC RECONFIGURE
-	dynamic_reconfigure::Server<nostop_kinect_sensor::Camera_calibrationConfig> camera_calibration;
-	dynamic_reconfigure::Server<nostop_kinect_sensor::Camera_calibrationConfig>::CallbackType callback;
-	callback = boost::bind(&calibration_callback,_1,_2);
-	camera_calibration.setCallback(callback);
 	nostop_kinect_sensor::Camera_data_srv camera_in;
-
 	camera_in.request.calibration_topic = calibration_topic;
 	camera_in.request.ifovx = iFOVx;
 	camera_in.request.ifovy = iFOVy;
 	camera_in.request.name = cam_name;
 	camera_in.request.topic_name = image_topic;
 	bool camera_in_setted = false;
-	while(!camera_in_setted)//TODO
+	while(!camera_in_setted)
 	{
 		if(camera_in_pub.call<nostop_kinect_sensor::Camera_data_srv>(camera_in))
 			camera_in_setted = true;
 		ros::spinOnce();
 	}
+	// RECONFIGURATION FROM LIBVISO NODE
+	ros::Subscriber libviso_sub = calibrator.subscribe("/"+cam_name+"/lib_viso_recalibration",2,&libviso_recalibration);
 	
  	std::ofstream outputFile;
  	std::ifstream inputFile;
@@ -281,6 +286,10 @@ int main(int argc, char **argv)
  		std::cout<<"Calibration file not founded in: "+file_name.substr(0,file_name.find_last_of("/"))<<std::endl;
  	}
  	inputFile.close();
+
+
+
+
 	A_toimage.x=image_width/2;
 	A_toimage.y=image_height/2;
 

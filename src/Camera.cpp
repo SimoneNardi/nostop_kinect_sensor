@@ -201,14 +201,13 @@ void Camera::camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg
 	m_max_area = msg->data[11];
 	m_image_height = m_stream_video.rows;
 	m_image_width = m_stream_video.cols;
-	float pitch = -atan(m_R/m_zCamera)+M_PI/2;
 	std_msgs::Float64MultiArray to_libviso;
-	to_libviso.data.resize(2);
-	if(msg->data[12] > 0)
+	if(msg->data[12] > 0.1)
 		{
+			double pitch = -atan(m_R/m_zCamera)+M_PI/2;
 			to_libviso.data.push_back(1.0);
-			to_libviso.data.push_back(pitch);
-			to_libviso.data.push_back(m_zCamera);
+			to_libviso.data.push_back(-pitch);//negative because camera watch downwards
+			to_libviso.data.push_back(m_zCamera*0.01);// the measurement is in cm, viso2_ros want meters
 			m_libviso_pub.publish(to_libviso);
 		}
 }
