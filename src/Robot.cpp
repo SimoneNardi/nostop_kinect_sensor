@@ -177,9 +177,9 @@ sensor_msgs::NavSatFix Robot::enu2geodetic(double x,double y,double z)
 	GPS.latitude = lat;
 	GPS.longitude = lon;
 	GPS.altitude = h;
-	GPS.position_covariance.at(0) = 0.1;
-	GPS.position_covariance.at(4) = 0.1;
-	GPS.position_covariance.at(8) = 0.1;
+	GPS.position_covariance.at(0) = 0.5;
+	GPS.position_covariance.at(4) = 0.5;
+	GPS.position_covariance.at(8) = 0.5;
 // 	GPS.header.frame_id = m_name+"/base_link";// antenna location
 	GPS.header.frame_id = "map";//TEST
 	m_gps_time = ros::Time::now().toSec();

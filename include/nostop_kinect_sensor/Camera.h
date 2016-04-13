@@ -26,7 +26,7 @@
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <geometry_msgs/PointStamped.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <nav_msgs/Odometry.h>
 #include "opencv2/imgproc/imgproc.hpp"
@@ -131,6 +131,7 @@ namespace Robotics
 			ros::NodeHandle m_node;
 			ros::Subscriber m_calibration_sub,m_autocalibration_sub;
 			ros::Subscriber m_robot_init_pose_sub;
+			ros::Publisher m_libviso_pub;
 			std::vector<ros::Subscriber> m_robot_feedback_pose_sub,m_robot_feedback_GPS_sub;
 			image_transport::ImageTransport m_it;
 			image_transport::Subscriber m_image_sub;
@@ -202,9 +203,7 @@ namespace Robotics
 			void video_acquisition(const sensor_msgs::ImageConstPtr& msg);
 			void thresholded_images_settings();
 			ball_position W_to_cam(ball_position& in);
-			
-			// TEST
-			void auto_recalibration(const geometry_msgs::PoseWithCovarianceStamped& msg);
+			void auto_recalibration(const geometry_msgs::PoseStamped& msg);
 		};
 
 	}

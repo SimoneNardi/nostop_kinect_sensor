@@ -64,8 +64,8 @@ Camera::Camera(std::string name_,std::string image_topic_name,std::string calibr
 	filtering_initialization();
 	ROS_INFO("CAMERA %s ON!",m_camera_name.c_str());
 	m_calibration_sub = m_node.subscribe(calibration_topic,10,&Camera::camera_calibration,this);
-	//TEST
-// 	m_autocalibration_sub = m_node.subscribe("/"+m_camera_name+"/svo/pose",1,&Camera::auto_recalibration,this);
+	m_libviso_pub = m_node.advertise<std_msgs::Float64MultiArray>("/"+m_camera_name+"/camera_pitch_and_zC",1);
+ 	m_autocalibration_sub = m_node.subscribe("/"+m_camera_name+"/TODO",1,&Camera::auto_recalibration,this);
 	subscribe();  
 }
 
@@ -201,6 +201,16 @@ void Camera::camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg
 	m_max_area = msg->data[11];
 	m_image_height = m_stream_video.rows;
 	m_image_width = m_stream_video.cols;
+	float pitch = -atan(m_R/m_zCamera)+M_PI/2;
+	std_msgs::Float64MultiArray to_libviso;
+	to_libviso.data.resize(2);
+	if(msg->data[12] > 0)
+		{
+			to_libviso.data.push_back(1.0);
+			to_libviso.data.push_back(pitch);
+			to_libviso.data.push_back(m_zCamera);
+			m_libviso_pub.publish(to_libviso);
+		}
 }
 
 
@@ -535,14 +545,6 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 
 	Lock l_lock(m_mutex);
 	cv::Rect new_rect;
-	ROS_INFO("min: x   y");
-	ROS_INFO("    %f  %f",x_min,y_min);
-	ROS_INFO("max: x   y");
-	ROS_INFO("    %f  %f",x_max,y_max);
-	ROS_INFO("CORNER");
-	ROS_INFO("x--> %f %f %f %f",corners_cm_w.at(0).x,corners_cm_w.at(1).x,corners_cm_w.at(1).x,corners_cm_w.at(3).x);
-	ROS_INFO("y--> %f %f %f %f",corners_cm_w.at(0).y,corners_cm_w.at(1).y,corners_cm_w.at(1).y,corners_cm_w.at(3).y);
-	ROS_INFO("Cm world--> x=%f y=%f",robot_position_cm_W.x,robot_position_cm_W.y);
 	if (robot_position_cm_W.x<x_max && 
 	    robot_position_cm_W.x>x_min && 
 	    robot_position_cm_W.y<y_max && 
@@ -568,8 +570,8 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 					robot_position_pixel.height = m_robot_array[to_update].pose_rect.height+25;
 					robot_position_pixel.width = m_robot_array[to_update].pose_rect.width+25;
 				}else{
-					robot_position_pixel.height = 250;
-					robot_position_pixel.width = 250;
+					robot_position_pixel.height = 200;
+					robot_position_pixel.width = 200;
 				}
  				l_tl.x = robot_position_pixel.x-robot_position_pixel.height/2;
  				l_tl.y = robot_position_pixel.y-robot_position_pixel.width/2;
@@ -586,8 +588,8 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 					robot_position_pixel.height = m_robot_array[to_update].pose_rect.height+25;
 					robot_position_pixel.width = m_robot_array[to_update].pose_rect.width+25;
 				}else{
-					robot_position_pixel.height = 175;
-					robot_position_pixel.width = 175;
+					robot_position_pixel.height = 150;
+					robot_position_pixel.width = 150;
 				}
 				l_tl.x = robot_position_pixel.x-robot_position_pixel.height/2;
  				l_tl.y = robot_position_pixel.y-robot_position_pixel.width/2;
@@ -866,7 +868,7 @@ ball_position Camera::W_to_cam(ball_position& pos_in)
 
 
 ////////////////////////// TEST FUNCTION AUTO RECALIBRATION
-void Camera::auto_recalibration(const geometry_msgs::PoseWithCovarianceStamped& msg)
+void Camera::auto_recalibration(const geometry_msgs::PoseStamped& msg)
 {
   Lock l_lock(m_mutex);
   //TODO

@@ -102,7 +102,6 @@ set(sensor_SOURCES
 
 set(calibration_SOURCES
         src/calibration.cpp
-
 )
 
 set(cam_view_angle_SOURCES
@@ -127,11 +126,6 @@ add_executable(test_Hough src/test.cpp)
 add_dependencies(test_Hough nostop_kinect_sensor_gencpp)
 target_link_libraries(test_Hough ${catkin_LIBRARIES} ${OpenCV_LIBS} base_math lemon nostop_agent nostop_learning )
 
-
-#TEST 
-add_executable(calib_to_file src/calib_to_file.cpp)
-add_dependencies(calib_to_file nostop_kinect_sensor_gencpp)
-target_link_libraries(calib_to_file ${catkin_LIBRARIES})
 
 #############
 ## Install ##
