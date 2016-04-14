@@ -241,11 +241,9 @@ int main(int argc, char **argv)
 	camera_in_pub = calibrator.serviceClient<nostop_kinect_sensor::Camera_data_srv>("/camera_in");
 
 	nostop_kinect_sensor::Camera_data_srv camera_in;
-	camera_in.request.calibration_topic = calibration_topic;
 	camera_in.request.ifovx = iFOVx;
 	camera_in.request.ifovy = iFOVy;
 	camera_in.request.name = cam_name;
-	camera_in.request.topic_name = image_topic;
 	bool camera_in_setted = false;
 	while(!camera_in_setted)
 	{

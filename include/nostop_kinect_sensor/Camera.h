@@ -183,8 +183,7 @@ namespace Robotics
 			std::vector<ball_position>  m_yellow_circles_W;
  
 		public:
-			Camera(std::string name_,std::string topic_name,
-			       std::string calibration_topic,float ifovx,float ifovy);
+			Camera(std::string name_,float ifovx,float ifovy);
 			~Camera();
 			void camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg);
 			std::vector<ball_position> cam_to_W(std::vector<ball_position>& array);

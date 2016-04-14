@@ -1,5 +1,3 @@
 string name
-string topic_name
-string calibration_topic
 float64 ifovx
 float64 ifovy

@@ -23,7 +23,7 @@ static const float g_ball_radius = 3.5;
 
 
 /// CONSTRUCTOR
-Camera::Camera(std::string name_,std::string image_topic_name,std::string calibration_topic,float ifovx,float ifovy)
+Camera::Camera(std::string name_,float ifovx,float ifovy)
 : m_available(false)
 , m_it(m_node)
 , m_camera_name(name_)

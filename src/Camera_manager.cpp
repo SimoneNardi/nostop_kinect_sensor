@@ -26,11 +26,9 @@ bool Camera_manager::new_camera_service(nostop_kinect_sensor::Camera_data_srv::R
 					nostop_kinect_sensor::Camera_data_srv::Response& res)
 {
   nostop_kinect_sensor::Camera_data_msg::Ptr l_data(new nostop_kinect_sensor::Camera_data_msg);
-  l_data->calibration_topic = req.calibration_topic;
   l_data->ifovx = req.ifovx;
   l_data->ifovy = req.ifovy;
   l_data->name = req.name;
-  l_data->topic_name = req.topic_name;
   new_camera_topic(l_data);
   return true;
 }
@@ -38,14 +36,12 @@ bool Camera_manager::new_camera_service(nostop_kinect_sensor::Camera_data_srv::R
 /////////////////////////////////////////////
 void Camera_manager::new_camera_topic(const nostop_kinect_sensor::Camera_data_msg::ConstPtr& msg)
 {	
-	std::string camera_name,image_topic,calibration_topic;
+	std::string camera_name;
 	camera_name.assign( msg->name);
-	image_topic.assign(msg->topic_name);
-	calibration_topic.assign(msg->calibration_topic);
 	float ifovx,ifovy;
 	ifovx = msg->ifovx;
 	ifovy = msg->ifovy;
-	m_camera_array.push_back( std::make_shared<Camera>(camera_name,image_topic,calibration_topic,ifovx,ifovy) );
+	m_camera_array.push_back( std::make_shared<Camera>(camera_name,ifovx,ifovy) );
 	CameraImgName camera;
 	camera.camera_name =  camera_name;
 	camera.waiting_for_head_click = false;
