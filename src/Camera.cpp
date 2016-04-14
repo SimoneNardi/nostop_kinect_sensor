@@ -1,25 +1,7 @@
 #include "Camera.h"
 
 #include "Robot_manager.h"
-#include <nostop_kinect_sensor/Camera_data.h>
 
-
-#include <opencv2/core/core.hpp>
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
-#include <sensor_msgs/NavSatFix.h>
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/video/video.hpp"
-#include "highgui.h"
-#include "ros/ros.h"
-#include <std_msgs/Float64MultiArray.h>
-#include <dynamic_reconfigure/server.h>
-#include <nav_msgs/Odometry.h>
-#include <math.h>
-#include <iostream>
 
 
 using namespace std;
@@ -65,7 +47,7 @@ Camera::Camera(std::string name_,std::string image_topic_name,std::string calibr
 	ROS_INFO("CAMERA %s ON!",m_camera_name.c_str());
 	m_calibration_sub = m_node.subscribe(calibration_topic,10,&Camera::camera_calibration,this);
 	m_libviso_pub = m_node.advertise<std_msgs::Float64MultiArray>("/"+m_camera_name+"/camera_pitch_and_zC",1);
- 	m_autocalibration_sub = m_node.subscribe("/"+m_camera_name+"/TODO",1,&Camera::auto_recalibration,this);
+ 	m_autocalibration_sub = m_node.subscribe("/"+m_camera_name+"/auto_recalibration",1,&Camera::auto_recalibration,this);
 	subscribe();  
 }
 
@@ -209,6 +191,13 @@ void Camera::camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg
 			to_libviso.data.push_back(-pitch);//negative because camera watch downwards
 			to_libviso.data.push_back(m_zCamera*0.01);// the measurement is in cm, viso2_ros want meters
 			m_libviso_pub.publish(to_libviso);
+			tf::Transform l_transform;
+   			l_transform.setOrigin( tf::Vector3(m_xCamera, m_yCamera, m_zCamera) ); //zCamera or 0.0?
+    		tf::Quaternion q;
+     		q.setRPY(0, 0, m_omegaz);
+  			l_transform.setRotation(q);
+  			tf::TransformBroadcaster l_broadcast;
+  			l_broadcast.sendTransform(tf::StampedTransform(l_transform, ros::Time::now(), "map", m_camera_name+"/odom"));
 		}
 }
 
@@ -866,9 +855,26 @@ ball_position Camera::W_to_cam(ball_position& pos_in)
 
 
 
-////////////////////////// TEST FUNCTION AUTO RECALIBRATION
+/////////////////////////////////////////////////////////////////
 void Camera::auto_recalibration(const geometry_msgs::PoseStamped& msg)
 {
-  Lock l_lock(m_mutex);
-  //TODO
+  	Lock l_lock(m_mutex);
+  	// AUTOCALIBRATION TF TRANSFORM
+	tf::StampedTransform l_transform;
+	tf::TransformListener l_listener;
+
+  try{
+  	l_listener.lookupTransform("map",m_camera_name+"/base_link",ros::Time(0),l_transform);
+  	m_xCamera = l_transform.getOrigin().x();
+  	m_yCamera = l_transform.getOrigin().y();
+  	tf::Quaternion q = l_transform.getRotation();
+  	tf::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+    m_omegaz = yaw;
+  } catch (tf::TransformException ex){
+  	  	ROS_ERROR("%s",ex.what());
+        ros::Duration(1.0).sleep();
+       }
+
 }
