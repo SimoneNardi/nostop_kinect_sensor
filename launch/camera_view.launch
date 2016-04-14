@@ -1,11 +1,10 @@
-<!-- Logitech Cam -->
-<!-- TO SET BEFORE EXPERIMENT -->
-
+<!-- to view image-->
 <launch>
 
     
   <node name="camera" pkg="usb_cam" type="usb_cam_node" output="screen">
   	<param name="video_device" value="/dev/video0" />
+  	<param name="pixel_format" value="yuyv" />
   </node> 
   
 </launch>

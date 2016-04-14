@@ -127,8 +127,7 @@ namespace Robotics
 		 
 			Mutex m_mutex;
 			std::string m_camera_name;
-			std::string m_topic_name;
-			bool m_available,m_HSV_calibration_on;
+			bool m_available,m_HSV_calibration_on,m_map2camera_odom_on;
 			
 			ros::NodeHandle m_node;
 			ros::Subscriber m_calibration_sub,m_autocalibration_sub;
@@ -150,6 +149,8 @@ namespace Robotics
 			int m_focal_angle_x,m_focal_angle_y;
 
 
+			// STATIC TF MAP2ODOM_CAM
+			tf::Transform m_static_tf_map2cam_odom;
 			
 			// HSV
 			int m_blue_threshold_on,m_green_threshold_on,m_red_threshold_on,m_yellow_threshold_on;
@@ -208,6 +209,7 @@ namespace Robotics
 			void thresholded_images_settings();
 			ball_position W_to_cam(ball_position& in);
 			void auto_recalibration(const geometry_msgs::PoseStamped& msg);
+			void map2camera_odom();
 		};
 
 	}

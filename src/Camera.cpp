@@ -27,7 +27,6 @@ Camera::Camera(std::string name_,std::string image_topic_name,std::string calibr
 : m_available(false)
 , m_it(m_node)
 , m_camera_name(name_)
-, m_topic_name(image_topic_name)
 , m_min_area(0)
 , m_max_area(600)
 , m_R(120)
@@ -42,10 +41,11 @@ Camera::Camera(std::string name_,std::string image_topic_name,std::string calibr
 , m_focal_angle_y(ifovy)
 , m_lost_gps_time(5)
 , m_HSV_calibration_on(false)
+, m_map2camera_odom_on(false)
 {
 	filtering_initialization();
 	ROS_INFO("CAMERA %s ON!",m_camera_name.c_str());
-	m_calibration_sub = m_node.subscribe(calibration_topic,10,&Camera::camera_calibration,this);
+	m_calibration_sub = m_node.subscribe("/"+m_camera_name+"/calibration_topic",10,&Camera::camera_calibration,this);
 	m_libviso_pub = m_node.advertise<std_msgs::Float64MultiArray>("/"+m_camera_name+"/camera_pitch_and_zC",1);
  	m_autocalibration_sub = m_node.subscribe("/"+m_camera_name+"/auto_recalibration",1,&Camera::auto_recalibration,this);
 	subscribe();  
@@ -191,13 +191,6 @@ void Camera::camera_calibration(const std_msgs::Float64MultiArray::ConstPtr& msg
 			to_libviso.data.push_back(-pitch);//negative because camera watch downwards
 			to_libviso.data.push_back(m_zCamera*0.01);// the measurement is in cm, viso2_ros want meters
 			m_libviso_pub.publish(to_libviso);
-			tf::Transform l_transform;
-   			l_transform.setOrigin( tf::Vector3(m_xCamera, m_yCamera, m_zCamera) ); //zCamera or 0.0?
-    		tf::Quaternion q;
-     		q.setRPY(0, 0, m_omegaz);
-  			l_transform.setRotation(q);
-  			tf::TransformBroadcaster l_broadcast;
-  			l_broadcast.sendTransform(tf::StampedTransform(l_transform, ros::Time::now(), "map", m_camera_name+"/odom"));
 		}
 }
 
@@ -493,9 +486,24 @@ void Camera::GPS_sub(const nav_msgs::Odometry::ConstPtr& msg)
 }
 
 
+void Camera::map2camera_odom()
+{
+	// map-> camera/odom transform broadcasting
+   	m_static_tf_map2cam_odom.setOrigin( tf::Vector3(m_xCamera, m_yCamera, m_zCamera) ); //zCamera or 0.0?
+    tf::Quaternion q;
+    q.setRPY(0, 0, m_omegaz);
+  	m_static_tf_map2cam_odom.setRotation(q);
+}
+
 // FEEDBACK OF EKF NODE 
 void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 {
+	if(!m_map2camera_odom_on)
+	{
+		map2camera_odom();
+	}
+	tf::TransformBroadcaster l_broadcast;
+  	l_broadcast.sendTransform((tf::StampedTransform(m_static_tf_map2cam_odom, ros::Time::now(), "map", m_camera_name+"/odom")));
 	std::vector<ball_position> corners_pixel,corners_cm_w;
 	ball_position corn;
 	int robot_number;
@@ -699,7 +707,7 @@ void Camera::search_ball_pos()
 void Camera::subscribe()
 {
 	cv::namedWindow(SENSOR_CV_WINDOW+m_camera_name);
-	m_image_sub = m_it.subscribe(m_topic_name, 1, &Camera::video_acquisition, this, image_transport::TransportHints("raw")); 
+	m_image_sub = m_it.subscribe("/usb/"+m_camera_name+"/cam_img", 1, &Camera::video_acquisition, this, image_transport::TransportHints("raw")); 
 }
 
 

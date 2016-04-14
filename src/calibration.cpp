@@ -197,9 +197,7 @@ void calibration_callback(nostop_kinect_sensor::Camera_calibrationConfig  &confi
 
 void libviso_recalibration(const geometry_msgs::PoseStamped& msg)
 {
-	//TODO
-	/////
-
+//TODO
 }
 
 
@@ -230,8 +228,6 @@ int main(int argc, char **argv)
 
 	// PARAM FROM ROSLAUNCH
 	calibrator.getParam("camera_name",cam_name);
-	calibrator.getParam("image_topic",image_topic);
-	calibrator.getParam("calibration_topic_name",calibration_topic);
 	calibrator.getParam("iFOVx",iFOVx);
 	calibrator.getParam("iFOVy",iFOVy);
 	calibrator.getParam("user_name",user_name);
@@ -240,8 +236,8 @@ int main(int argc, char **argv)
 
 	image_transport::ImageTransport it(calibrator);
 	image_transport::Subscriber subscriber;
-	subscriber = it.subscribe(image_topic.c_str(),3, &subscriber_callback,image_transport::TransportHints("raw"));
-	calibrator_pub = calibrator.advertise<std_msgs::Float64MultiArray>(calibration_topic,10);
+	subscriber = it.subscribe("/usb/"+cam_name+"/cam_img",3, &subscriber_callback,image_transport::TransportHints("raw"));
+	calibrator_pub = calibrator.advertise<std_msgs::Float64MultiArray>("/"+cam_name+"/calibration_topic",10);
 	camera_in_pub = calibrator.serviceClient<nostop_kinect_sensor::Camera_data_srv>("/camera_in");
 
 	nostop_kinect_sensor::Camera_data_srv camera_in;
