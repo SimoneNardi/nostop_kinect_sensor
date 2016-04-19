@@ -6,6 +6,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <std_msgs/Float64MultiArray.h>
 #include <dynamic_reconfigure/server.h>
+#include <dynamic_reconfigure/Reconfigure.h>
+#include <dynamic_reconfigure/Config.h>
 #include <nostop_kinect_sensor/Camera_calibrationConfig.h>
 #include <nostop_kinect_sensor/Camera_data_msg.h>
 #include <nostop_kinect_sensor/Camera_data_srv.h>
@@ -14,8 +16,6 @@
 #include <cv.h>
 #include <stdlib.h>
 #include "Threads.h"
-#include <dynamic_reconfigure/Reconfigure.h>
-#include <dynamic_reconfigure/Config.h>
 #include <geometry_msgs/PoseStamped.h>
 
 

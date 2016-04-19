@@ -354,36 +354,36 @@ void Camera::filtering_initialization()
 	// BLUE
 	m_blue_threshold_on = false;
 	m_lb_b[0] = 100;
-	m_lb_b[1] = 100;
-	m_lb_b[2] = 100;
+	m_lb_b[1] = 50;
+	m_lb_b[2] = 50;
 	m_ub_b[0] = 160;
 	m_ub_b[1] = 255;
 	m_ub_b[2] = 255;
-	m_dim_kernel_blue = 1;
+	m_dim_kernel_blue = 0;
 	//GREEN
 	m_green_threshold_on = false;
 	m_lb_g[0] = 40;
-	m_lb_g[1] = 150;
+	m_lb_g[1] = 60;
 	m_lb_g[2] = 50;
 	m_ub_g[0] = 60;
 	m_ub_g[1] = 255;
 	m_ub_g[2] = 255;
-	m_dim_kernel_green = 2;
+	m_dim_kernel_green = 0;
 	//RED
 	m_red_threshold_on = false;
 	m_lower_lb_r[0] = 0;
-	m_lower_lb_r[1] = 125;
-	m_lower_lb_r[2] = 115;
+	m_lower_lb_r[1] = 50;
+	m_lower_lb_r[2] = 50;
 	m_lower_ub_r[0] = 20;
 	m_lower_ub_r[1] = 255;
 	m_lower_ub_r[2] = 255;
 	m_upper_lb_r[0] = 160;
-	m_upper_lb_r[1] = 100;
-	m_upper_lb_r[2] = 150;
+	m_upper_lb_r[1] = 90;
+	m_upper_lb_r[2] = 90;
 	m_upper_ub_r[0] = 179;
 	m_upper_ub_r[1] = 255;
 	m_upper_ub_r[2] = 255;
-	m_dim_kernel_red = 1;
+	m_dim_kernel_red = 0;
 	//YELLOW
 	m_yellow_threshold_on = false;
 	m_lb_y[0] = 20;
@@ -392,7 +392,7 @@ void Camera::filtering_initialization()
 	m_ub_y[0] = 45;
 	m_ub_y[1] = 255;
 	m_ub_y[2] = 255;
-	m_dim_kernel_yellow = 2;
+	m_dim_kernel_yellow = 5;
 }
 
 
@@ -502,8 +502,8 @@ void Camera::pose_feedback(const nav_msgs::Odometry::ConstPtr& msg)
 	{
 		map2camera_odom();
 	}
-	tf::TransformBroadcaster l_broadcast;
-  	l_broadcast.sendTransform((tf::StampedTransform(m_static_tf_map2cam_odom, ros::Time::now(), "map", m_camera_name+"/odom")));
+	//tf::TransformBroadcaster l_broadcast;
+  	//l_broadcast.sendTransform((tf::StampedTransform(m_static_tf_map2cam_odom, ros::Time::now(), "map", m_camera_name+"/odom")));
 	std::vector<ball_position> corners_pixel,corners_cm_w;
 	ball_position corn;
 	int robot_number;
