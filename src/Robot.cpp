@@ -16,6 +16,7 @@ using namespace Robotics::GameTheory;
 Robot::Robot(std::string name_):
  m_heading(0)
 ,found(false)
+, m_notFoundCount(0)
 { 
   m_name = name_;
   m_front_marker_color = m_name.substr(0,m_name.find("_"));
@@ -23,6 +24,7 @@ Robot::Robot(std::string name_):
   m_robot_pub = m_robot.advertise<nostop_agent::Id_robot>("/localizer/kinect/add_robot",1);
   Front_ptr = std::make_shared<Tracker>();
   Back_ptr = std::make_shared<Tracker>();
+  ROS_INFO("ROBOT %s ON!",m_name.c_str());
 }
 
 Robot::~Robot()
@@ -43,7 +45,7 @@ void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vecto
   if(!found)
   {
    for (size_t i = 0;i < front_array.size();i++)
-   { 
+    { 
      for(size_t j = 0;j < back_array.size();j++)
      {
 	distance = sqrt(pow((front_array[i].x-back_array[j].x),2)+pow((front_array[i].y-back_array[j].y),2));
@@ -51,14 +53,14 @@ void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vecto
 	  {
 	    m_front_pos = front_array[i];
 	    m_back_pos = back_array[j]; 
-	    found =true;
-	    m_f_rect = Front_ptr->kalman_update(m_front_pos,found);
-	    m_b_rect = Back_ptr->kalman_update(m_back_pos,found);
+	    found = true;
+	    m_f_rect = Front_ptr->kalman_update(m_front_pos);
+	    m_b_rect = Back_ptr->kalman_update(m_back_pos);
 	  }else{
 	    found = false;
 	    }
+      }
     }
-  }
   }else{
 	for (size_t i = 0;i < front_array.size();i++)
 	{ 
@@ -74,20 +76,50 @@ void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vecto
 	    {
 	      m_front_pos = front_array[i];
 	      m_back_pos = back_array[j]; 
-	      found =true;
-	      m_f_rect = Front_ptr->kalman_update(m_front_pos,found);
-	      m_b_rect = Back_ptr->kalman_update(m_back_pos,found);
+	      found = true;
+	      m_f_rect = Front_ptr->kalman_update(m_front_pos);
+	      m_b_rect = Back_ptr->kalman_update(m_back_pos);
 	      }else{
-		    found = false;
+		    if(m_notFoundCount >= 10 )
+		    {
+		      m_notFoundCount = 0;
+		      found = false;
+		    }else{
+		      m_f_rect = Front_ptr->kalman_update(m_front_pos);
+		      m_b_rect = Back_ptr->kalman_update(m_back_pos);
+		      m_front_pos.x = m_f_rect.x;
+		      m_front_pos.y = m_f_rect.y;
+		      m_back_pos.x = m_b_rect.x;
+		      m_back_pos.y = m_b_rect.y;
+		      m_notFoundCount++;
+		    }
 	    }
 	  }
 	}
     }
-   
+//      ROS_INFO("x-->%f",m_front_pos.x);
+//        ROS_INFO("y-->%f",m_front_pos.y);
 //   draw_circles(src);
-  m_heading = -atan2((m_back_pos.y-m_front_pos.y),(m_back_pos.x-m_front_pos.x))+M_PI;
-  ROS_INFO("%f",m_heading);
+  m_heading = atan2((m_back_pos.y-m_front_pos.y),(m_back_pos.x-m_front_pos.x));
+//   ROS_INFO("%f",m_heading);
 }
+
+
+std::string Robot::color_f()
+{
+  std::string front;
+  front.assign(m_front_marker_color);
+  return front;
+}
+
+std::string Robot::color_b()
+{
+  std::string back;
+  back.assign(m_back_marker_color);
+  return back;
+}
+
+
 
 
 // void Robot::draw_circles(cv::Mat src)
@@ -109,18 +141,3 @@ void Robot::select_robot_pose(std::vector<ball_position>& front_array,std::vecto
 //   imshow("robot "+ m_name,src );
 // }
 
-
-
-std::string Robot::color_f()
-{
-  std::string front;
-  front.assign(m_front_marker_color);
-  return front;
-}
-
-std::string Robot::color_b()
-{
-  std::string back;
-  back.assign(m_back_marker_color);
-  return back;
-}

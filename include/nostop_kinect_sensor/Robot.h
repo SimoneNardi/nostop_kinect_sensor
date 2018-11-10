@@ -35,6 +35,7 @@ namespace Robotics
 		  ball_position m_back_pos;
 		  float m_heading;
 		  bool found;
+		  bool m_notFoundCount;
 		  cv::Rect m_f_rect;
 		  cv::Rect m_b_rect;
 		  
