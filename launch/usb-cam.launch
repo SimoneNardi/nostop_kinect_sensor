@@ -9,13 +9,14 @@
  
 <arg name="camera_name" default="usb" />
 <arg name="topic_name" default="/usb/cam_img" />
-<arg name="xC" default="10" />
-<arg name="yC" default="10" />
-<arg name="zC" default="10" />
+<arg name="xC" default="0" />
+<arg name="yC" default="0" />
+<arg name="zC" default="100" />
 <arg name="Pitch" default="45" />
 <arg name="omega" default="0" />
+<arg name="gamma" default="180" />
   <node pkg="nostop_kinect_sensor" type="script.sh" 
-    args="$(arg camera_name) $(arg topic_name) $(arg xC) $(arg yC) $(arg zC) $(arg Pitch) $(arg omega)" 
+    args="$(arg camera_name) $(arg topic_name) $(arg xC) $(arg yC) $(arg zC) $(arg Pitch) $(arg omega) $(arg gamma)" 
     name="pub" output="screen">
   </node>
 </launch>
