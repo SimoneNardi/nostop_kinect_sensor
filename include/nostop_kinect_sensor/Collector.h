@@ -24,7 +24,7 @@ namespace Robotics
 	{
 		class Collection;
 		
-		class Collector//: public ThreadBase	  	
+		class Collector
 		{
 
 		  mutable Mutex m_mutex;
@@ -41,8 +41,7 @@ namespace Robotics
 		  std::vector<ball_position> m_yellow_ball_W;
 
 		  ros::NodeHandle m_node;
-		protected:
-		  //virtual void run();
+		
 		public:
 			Collector();
 			~Collector();
