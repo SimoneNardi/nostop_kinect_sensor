@@ -9,8 +9,6 @@ int main(int argc, char **argv)
 {
 	ROS_INFO("Sensor node : ON");
 	
-	
-	
 	ros::init(argc, argv, "sensor"); 
 	
 	

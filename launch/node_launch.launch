@@ -1,6 +1,8 @@
 <launch>
   
    
+   <node pkg="nostop_kinect_sensor" type="sensor_node" name="sensor_node" required="true" output="screen" />
+   
    
   <!-- N KINECT CAMERAS ( N CAMERAS = N LAUNCH FILE )-->
    <include file="$(find nostop_kinect_sensor)/launch/kinect.launch"/>
@@ -9,7 +11,7 @@
    <!-- M USB-CAM ( M CAMERAS = M LAUNCH FILE ) -->
    <include file="$(find nostop_kinect_sensor)/launch/usb-cam.launch"/>
   
- <node pkg="nostop_kinect_sensor" type="sensor_node" name="sensor_node" required="true" output="screen" />
+ 
   
   
 </launch>
